@@ -1,5 +1,5 @@
 [package]
-name = "something-frontend"
+name = "something-frontend-tokenizer"
 version = "0.1.0"
 edition = "2021"
 
@@ -7,4 +7,3 @@ edition = "2021"
 
 [dependencies]
 something-dev-tools = { path = "../something-dev-tools" }
-something-frontend-tokenizer = { path = "../something-frontend-tokenizer" }

@@ -21,6 +21,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "something-ast"
+version = "0.1.0"
+
+[[package]]
 name = "something-dev-tools"
 version = "0.1.0"
 dependencies = [
@@ -30,6 +34,14 @@ dependencies = [
 
 [[package]]
 name = "something-frontend"
+version = "0.1.0"
+dependencies = [
+ "something-dev-tools",
+ "something-frontend-tokenizer",
+]
+
+[[package]]
+name = "something-frontend-tokenizer"
 version = "0.1.0"
 dependencies = [
  "something-dev-tools",

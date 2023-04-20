@@ -1,7 +1,5 @@
 use std::error::Error;
 
-use something_dev_tools::TOKENS;
-
 #[derive(Debug)]
 pub struct Token<'a> {
     pub kind: TokenKind,
@@ -73,6 +71,7 @@ impl<'a> Tokenizer<'a> {
             }
         }
         let lexeme = &self.input[self.starting..self.current];
+        use something_dev_tools::TOKENS;
 
         TOKENS!(If, Fn, Let, False, True, Return, While, For);
         Ok(Token {
