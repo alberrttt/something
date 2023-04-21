@@ -19,7 +19,7 @@ impl Display for Idents {
     }
 }
 #[proc_macro]
-pub fn TOKENS(input: TokenStream) -> TokenStream {
+pub fn tokens(input: TokenStream) -> TokenStream {
     let tokens = parse_macro_input!(input as Idents);
     let arms = tokens
         .0
@@ -27,15 +27,15 @@ pub fn TOKENS(input: TokenStream) -> TokenStream {
         .map(|ident| {
             let str_str = ident.to_string().to_lowercase();
             quote! {
-                #str_str => return Token!(self, #ident),
+                #str_str => Token!(self, #ident),
             }
         })
         .collect::<Vec<_>>();
 
     quote! {
-        match lexeme {
+        match ident.name.as_str() {
             #(#arms)*
-            _ => {}
+            _ => Token::Ident(ident)
         }
     }
     .into()

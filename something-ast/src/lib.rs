@@ -1,5 +1,11 @@
+use declaration::Declaration;
+
 pub struct Ast {
-    pub statements: Vec<Statement>,
+    pub nodes: Vec<Node>,
 }
 
-pub struct Statement();
+pub enum Node {
+    Declaration(Declaration),
+}
+
+pub mod declaration;

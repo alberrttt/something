@@ -23,6 +23,9 @@ dependencies = [
 [[package]]
 name = "something-ast"
 version = "0.1.0"
+dependencies = [
+ "something-frontend-tokenizer",
+]
 
 [[package]]
 name = "something-dev-tools"

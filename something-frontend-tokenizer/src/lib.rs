@@ -1,67 +1,45 @@
-use std::error::Error;
-
+use std::{error::Error, fmt::Display};
 #[derive(Debug)]
-pub struct Token<'a> {
-    pub kind: TokenKind,
-    lexeme: &'a str,
-    span: Span,
-}
-#[derive(Debug)]
-pub struct Span {
-    start: usize,
-    end: usize,
-}
-
 pub struct Tokenizer<'a> {
     input: &'a str,
     starting: usize,
     current: usize,
 }
-macro_rules! Token {
-    ($self: ident, $kind:ident) => {
-        Ok(Token {
-            kind: TokenKind::$kind,
-            lexeme: &$self.input[$self.starting..$self.current],
-            span: Span {
-                start: $self.starting,
-                end: $self.current,
-            },
-        })
-    };
-}
-#[derive(Debug, PartialEq, Eq)]
-pub enum TokenKind {
-    Let,
-    Identifier,
-    If,
-    Fn,
-    While,
-    For,
-    Return,
-    False,
-    True,
 
-    Number,
-    String,
-    LeftBrace,
-    RightBrace,
-    LeftParen,
-    RightParen,
-    LeftBracket,
-    RightBracket,
-    Comma,
-    Equal,
-    EqualEqual,
-    GreaterEqual,
-    LessEqual,
-    Greater,
-    Less,
-    Semicolon,
-    Whitespace,
-    Eof,
+pub mod tokens;
+use tokens::*;
+mod lit;
+pub use lit::Literal;
+pub struct Tokens(pub(crate) Vec<Token>, pub(crate) usize);
+
+impl Display for Tokens {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        for token in &self.0 {
+            writeln!(f, "{:?},", token)?;
+        }
+        Ok(())
+    }
+}
+impl Tokenizer<'_> {
+    pub fn tokens(&mut self) -> Result<Tokens, Box<dyn Error>> {
+        let mut tokens = Vec::new();
+        loop {
+            let token = self.next_token();
+            if let Ok(token) = token {
+                match token {
+                    Token::Eof(_) => break,
+                    Token::Whitespace(_) => {}
+                    _ => tokens.push(token),
+                }
+            } else if let Err(e) = token {
+                return Err(e);
+            }
+        }
+        Ok(Tokens(tokens, 0))
+    }
 }
 impl<'a> Tokenizer<'a> {
-    fn identifier(&mut self) -> Result<Token<'a>, Box<dyn Error>> {
+    fn identifier(&mut self) -> Result<Ident, Box<dyn Error>> {
         while let Some(c) = self.peek() {
             match c {
                 'a'..='z' | 'A'..='Z' | '0'..='9' => {
@@ -70,17 +48,11 @@ impl<'a> Tokenizer<'a> {
                 _ => break,
             }
         }
-        let lexeme = &self.input[self.starting..self.current];
-        use something_dev_tools::TOKENS;
+        let lexeme = self.input[self.starting..self.current].to_string();
 
-        TOKENS!(If, Fn, Let, False, True, Return, While, For);
-        Ok(Token {
-            kind: TokenKind::Identifier,
-            lexeme,
-            span: Span {
-                start: self.starting,
-                end: self.current,
-            },
+        Ok(Ident {
+            name: lexeme,
+            span: span![self.starting, self.current],
         })
     }
     pub fn new(input: &'a str) -> Self {
@@ -90,61 +62,47 @@ impl<'a> Tokenizer<'a> {
             current: 0,
         }
     }
-    pub fn all_tokens(&mut self) -> Result<Vec<Token<'a>>, Box<dyn Error>> {
-        let mut tokens = Vec::new();
-        while let Ok(token) = self.next_token() {
-            if token.kind == TokenKind::Eof {
-                tokens.push(token);
-                break;
-            }
-            if token.kind == TokenKind::Whitespace {
-                continue;
-            }
-            tokens.push(token)
-        }
-        Ok(tokens)
-    }
-    pub fn next_token(&mut self) -> Result<Token<'a>, Box<dyn Error>> {
+
+    fn next_token(&mut self) -> Result<Token, Box<dyn Error>> {
         if self.current >= self.input.len() {
-            return Token!(self, Eof);
+            return Ok(Token!(self, Eof));
         }
         self.starting = self.current;
         let c = self.advance().unwrap();
         match c {
-            'a'..='z' | 'A'..='Z' => self.identifier(),
-            '0'..='9' => self.number(),
-            '"' => self.string(),
-            '=' => {
-                if self.try_consume('=').is_ok() {
-                    Token!(self, EqualEqual)
-                } else {
-                    Token!(self, Equal)
-                }
+            'a'..='z' | 'A'..='Z' => {
+                let ident = self.identifier()?;
+                use something_dev_tools::tokens;
+                let tmp: Token = tokens!(If, Let, False, True, While, Return, For, Fn);
+                Ok(tmp)
             }
-            '>' => {
-                if self.try_consume('=').is_ok() {
-                    Token!(self, GreaterEqual)
-                } else {
-                    Token!(self, Greater)
-                }
-            }
-            '<' => {
-                if self.try_consume('=').is_ok() {
-                    Token!(self, LessEqual)
-                } else {
-                    Token!(self, Less)
-                }
-            }
-            ';' => Token!(self, Semicolon),
-            '(' => Token!(self, LeftParen),
-            ')' => Token!(self, RightParen),
-            '{' => Token!(self, LeftBrace),
-            '}' => Token!(self, RightBrace),
-            '[' => Token!(self, LeftBracket),
-            ']' => Token!(self, RightBracket),
-            ',' => Token!(self, Comma),
-            x if x.is_whitespace() => Token!(self, Whitespace),
-            x => Err(x.to_string().into()),
+            '0'..='9' => Ok(Token::Lit(self.number()?)),
+            '"' => Ok(Token::Lit(self.string()?)),
+            '=' => Ok(if self.try_consume('=').is_ok() {
+                Token!(self, EqualEqual)
+            } else {
+                Token!(self, Equal)
+            }),
+            '>' => Ok(if self.try_consume('=').is_ok() {
+                Token!(self, GreaterEqual)
+            } else {
+                Token!(self, Greater)
+            }),
+            '<' => Ok(if self.try_consume('=').is_ok() {
+                Token!(self, LessEqual)
+            } else {
+                Token!(self, Less)
+            }),
+            ';' => Ok(Token!(self, Semicolon)),
+            // '(' => Ok(Token!(self, LeftParen)),
+            // ')' => Ok(Token!(self, RightParen)),
+            // '{' => Ok(Token!(self, LeftBrace)),
+            // '}' => Ok(Token!(self, RightBrace)),
+            // '[' => Ok(Token!(self, LeftBracket)),
+            // ']' => Ok(Token!(self, RightBracket)),
+            ',' => Ok(Token!(self, Comma)),
+            x if x.is_whitespace() => Ok(Token!(self, Whitespace)),
+            x => Err(format!("Error with `{}`", x.to_string()).into()),
         }
     }
     /// if it matches, it will consume, if not it will return Err
@@ -156,7 +114,7 @@ impl<'a> Tokenizer<'a> {
             Err(format!("Expected {}, got {:?}", expected, self.peek()).into())
         }
     }
-    fn string(&mut self) -> Result<Token<'a>, Box<dyn Error>> {
+    fn string(&mut self) -> Result<Literal, Box<dyn Error>> {
         while let Some(c) = self.peek() {
             if c == '"' {
                 self.advance();
@@ -164,16 +122,11 @@ impl<'a> Tokenizer<'a> {
             }
             self.advance();
         }
-        Ok(Token {
-            kind: TokenKind::String,
-            lexeme: &self.input[self.starting..self.current],
-            span: Span {
-                start: self.starting,
-                end: self.current,
-            },
-        })
+        let span = span![self.starting, self.current];
+        let lexeme = self.input[self.starting..self.current].to_owned();
+        Ok(Literal::new_str(span, lexeme))
     }
-    fn number(&mut self) -> Result<Token<'a>, Box<dyn Error>> {
+    fn number(&mut self) -> Result<Literal, Box<dyn Error>> {
         while let Some(c) = self.peek() {
             if c.is_numeric() {
                 self.advance();
@@ -181,14 +134,10 @@ impl<'a> Tokenizer<'a> {
                 break;
             }
         }
-        Ok(Token {
-            kind: TokenKind::Number,
-            lexeme: &self.input[self.starting..self.current],
-            span: Span {
-                start: self.starting,
-                end: self.current,
-            },
-        })
+        let span = span![self.starting, self.current];
+        let lexeme = self.input[self.starting..self.current].parse::<f64>()?;
+
+        Ok(Literal::new_num(span, lexeme))
     }
 
     fn peek(&self) -> Option<char> {
@@ -197,12 +146,5 @@ impl<'a> Tokenizer<'a> {
     fn advance(&mut self) -> Option<char> {
         self.current += 1;
         self.input.chars().nth(self.current - 1)
-    }
-}
-
-pub fn tokenize(input: &str) {
-    let mut tokenizer = Tokenizer::new("let a = 1;");
-    while let Ok(token) = tokenizer.next_token() {
-        println!("{:?}", token);
     }
 }
