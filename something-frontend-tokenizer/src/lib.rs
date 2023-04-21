@@ -14,9 +14,11 @@ pub struct Tokens(pub(crate) Vec<Token>, pub(crate) usize);
 
 impl Display for Tokens {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{{")?;
         for token in &self.0 {
-            writeln!(f, "{:?},", token)?;
+            write!(f, "{:?},", token)?;
         }
+        write!(f, "}}")?;
         Ok(())
     }
 }
@@ -123,7 +125,7 @@ impl<'a> Tokenizer<'a> {
             self.advance();
         }
         let span = span![self.starting, self.current];
-        let lexeme = self.input[self.starting..self.current].to_owned();
+        let lexeme = self.input[self.starting + 1..self.current - 1].to_owned();
         Ok(Literal::new_str(span, lexeme))
     }
     fn number(&mut self) -> Result<Literal, Box<dyn Error>> {

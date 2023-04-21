@@ -21,12 +21,11 @@ macro_rules! DefineTokens {
 
             impl std::fmt::Debug for $keyword {
                 fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                    write!(f, "{}", stringify!($name))
+                    write!(f, "{}", stringify!($keyword))
                 }
             }
         )+
         $(
-
             pub struct $token {
                 pub(crate)span: Span
             }
@@ -36,6 +35,7 @@ macro_rules! DefineTokens {
                     write!(f, "{}", stringify!($token))
                 }
             }
+
         )+
         $(
 
@@ -49,6 +49,7 @@ macro_rules! DefineTokens {
                 }
             }
         )+
+
     };
 }
 pub trait Parse: Sized {
