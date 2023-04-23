@@ -1,10 +1,28 @@
 use std::{error::Error, fmt::Formatter};
 
 use crate::Tokens;
+macro_rules! create_token {
+    ($name:ident) => {
+        #[derive(Clone, Debug)]
+        pub struct $name {
+            pub(crate) span: Span,
+        }
 
+        impl Parse for $name {
+            fn parse(input: &mut Tokens) -> Result<Self, Box<dyn Error>> {
+                let token = input.advance().clone();
+                if let Token::$name(token) = token {
+                    Ok(token)
+                } else {
+                    Err(format!("Expected {}, got {:?}", stringify!($name), token).into())
+                }
+            }
+        }
+    };
+}
 macro_rules! DefineTokens {
     ([$($keyword:ident),+],[$([$t:tt] => $token:ident),+],[$($misc:ident),+]) => {
-        #[derive(Debug)]
+        #[derive(Debug, Clone)]
         pub enum Token{
             Ident(Ident),
             Lit(crate::Literal),
@@ -14,31 +32,13 @@ macro_rules! DefineTokens {
 
         }
         $(
-
-            pub struct $keyword {
-                pub(crate)span: Span
-            }
-
-            impl std::fmt::Debug for $keyword {
-                fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                    write!(f, "{}", stringify!($keyword))
-                }
-            }
+            create_token!($keyword);
         )+
         $(
-            pub struct $token {
-                pub(crate)span: Span
-            }
-
-            impl std::fmt::Debug for $token {
-                fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                    write!(f, "{}", stringify!($token))
-                }
-            }
-
+            create_token!($token);
         )+
         $(
-
+            #[derive(Clone)]
             pub struct $misc {
                 pub(crate)span: Span
             }
@@ -48,23 +48,35 @@ macro_rules! DefineTokens {
                     write!(f, "{}", stringify!($misc))
                 }
             }
+
+            impl std::fmt::Display for $misc {
+                fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                    write!(f, "{}", stringify!($misc))
+                }
+            }
         )+
 
     };
 }
 pub trait Parse: Sized {
-    fn parse(input: Tokens) -> Result<Self, Box<dyn Error>>;
+    fn parse(input: &mut Tokens) -> Result<Self, Box<dyn Error>>;
 }
+#[derive(Clone, Debug)]
 pub struct Ident {
     pub name: String,
     pub span: Span,
 }
-
-impl std::fmt::Debug for Ident {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.name)
+impl Parse for Ident {
+    fn parse(input: &mut Tokens) -> Result<Self, Box<dyn Error>> {
+        let token = input.advance().clone();
+        if let Token::Ident(token) = token {
+            Ok(token)
+        } else {
+            Err(format!("Expected Ident, got {:?}", token).into())
+        }
     }
 }
+
 #[macro_export]
 macro_rules! Token {
     [$self:ident, $name:ident] => {
@@ -116,4 +128,9 @@ pub trait Token__: std::fmt::Debug {
     fn display(&self) -> String
     where
         Self: Sized;
+}
+impl Parse for () {
+    fn parse(input: &mut Tokens) -> Result<Self, Box<dyn Error>> {
+        Ok(())
+    }
 }

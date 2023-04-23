@@ -14,12 +14,38 @@ pub struct Tokens(pub(crate) Vec<Token>, pub(crate) usize);
 
 impl Display for Tokens {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{{")?;
+        write!(f, "[")?;
         for token in &self.0 {
-            write!(f, "{:?},", token)?;
+            write!(f, "{:?}, ", token)?;
         }
-        write!(f, "}}")?;
+        write!(f, "]")?;
         Ok(())
+    }
+}
+
+impl Tokens {
+    pub fn advance(&mut self) -> &Token {
+        let token = &self.0[self.1];
+        self.1 += 1;
+        &token
+    }
+    pub fn peek(&self) -> &Token {
+        self.0.get(self.1).unwrap()
+    }
+
+    pub fn step<R>(
+        &mut self,
+        F: impl FnOnce(&mut Self) -> Result<R, Box<dyn Error>>,
+    ) -> Result<R, Box<dyn Error>> {
+        let starting = self.1;
+        let stepped = F(self);
+        match stepped {
+            Ok(ok) => Ok(ok),
+            Err(e) => {
+                self.1 = starting;
+                Err(e)
+            }
+        }
     }
 }
 impl Tokenizer<'_> {
