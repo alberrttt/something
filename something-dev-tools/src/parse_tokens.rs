@@ -64,7 +64,6 @@ Err(
                 }
             });
             return quote! {
-                use something_frontend_tokenizer::Tokens;
                 impl Parse for #name {
                     fn parse(input: &mut Tokens) -> Result<Self, Box<dyn std::error::Error>> {
                         Ok(Self {#(#variants)*})

@@ -12,6 +12,7 @@ pub mod lit;
 pub mod tokens;
 use ident::*;
 use lit::*;
+pub use tokens::Parse;
 use tokens::*;
 #[derive(Debug, Clone)]
 pub struct Tokens(pub Vec<Token>, pub usize);
@@ -171,6 +172,10 @@ impl<'a> Tokenizer<'a> {
             ',' => Ok(Token!(self, Comma)),
             '#' => Ok(Token!(self, Hash)),
             ':' => Ok(Token!(self, Colon)),
+            '+' => Ok(Token!(self, Plus)),
+            '-' => Ok(Token!(self, Minus)),
+            '*' => Ok(Token!(self, Star)),
+            '/' => Ok(Token!(self, Slash)),
             x if x.is_whitespace() => Ok(Token!(self, Whitespace)),
             x => Err(format!("Error with `{}`", x.to_string()).into()),
         }

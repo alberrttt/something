@@ -12,7 +12,7 @@ pub struct Ident {
 }
 impl Parse for Ident {
     fn parse(input: &mut Tokens) -> Result<Self, Box<dyn Error>> {
-        let token = input.advance().clone();
+        let token = input.advance();
         if let Some(Token::Ident(token)) = token {
             Ok(token.clone())
         } else {

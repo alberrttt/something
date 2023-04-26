@@ -14,4 +14,4 @@ macro_rules! gen_tests {
         )*
     };
 }
-gen_tests!["fn" = fn_test, "var" = var_test];
+gen_tests!["fn" = fn_test, "var" = var_test, "expr" = expr];
