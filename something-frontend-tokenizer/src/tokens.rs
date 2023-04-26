@@ -11,8 +11,8 @@ macro_rules! create_token {
         impl Parse for $name {
             fn parse(input: &mut Tokens) -> Result<Self, Box<dyn Error>> {
                 let token = input.advance().clone();
-                if let Token::$name(token) = token {
-                    Ok(token)
+                if let Some(Token::$name(token)) = token {
+                    Ok(token.clone())
                 } else {
                     Err(format!("Expected {}, got {:?}", stringify!($name), token).into())
                 }
@@ -104,7 +104,7 @@ DefineTokens!(
     ]
 );
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Default)]
 pub struct Span {
     pub end: usize,
     pub start: usize,

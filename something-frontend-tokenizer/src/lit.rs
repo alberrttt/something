@@ -16,8 +16,8 @@ pub struct Literal {
 impl Parse for Literal {
     fn parse(input: &mut Tokens) -> Result<Self, Box<dyn Error>> {
         let token = input.advance().clone();
-        if let Token::Lit(token) = token {
-            Ok(token)
+        if let Some(Token::Lit(token)) = token {
+            Ok(token.clone())
         } else {
             Err(format!("Expected {}, got {:?}", stringify!(Literal), token).into())
         }

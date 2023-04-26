@@ -13,8 +13,8 @@ pub struct Ident {
 impl Parse for Ident {
     fn parse(input: &mut Tokens) -> Result<Self, Box<dyn Error>> {
         let token = input.advance().clone();
-        if let Token::Ident(token) = token {
-            Ok(token)
+        if let Some(Token::Ident(token)) = token {
+            Ok(token.clone())
         } else {
             Err(format!("Expected Ident, got {:?}", token).into())
         }

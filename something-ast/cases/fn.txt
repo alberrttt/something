@@ -1,0 +1,4 @@
+[cuda python311 node_stable x86 arm riscv]: fn main(x y z) {
+    let var = 1;
+    let var = 2;
+}

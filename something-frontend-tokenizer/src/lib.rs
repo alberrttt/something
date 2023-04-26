@@ -14,7 +14,7 @@ use ident::*;
 use lit::*;
 use tokens::*;
 #[derive(Debug, Clone)]
-pub struct Tokens(pub(crate) Vec<Token>, pub(crate) usize);
+pub struct Tokens(pub Vec<Token>, pub usize);
 impl From<Vec<Token>> for Tokens {
     fn from(tokens: Vec<Token>) -> Self {
         Self(tokens, 0)
@@ -43,10 +43,9 @@ impl Tokens {
     pub fn iter(&self) -> std::slice::Iter<'_, Token> {
         self.0.iter()
     }
-    pub fn advance(&mut self) -> &Token {
-        let token = &self.0[self.1];
+    pub fn advance(&mut self) -> Option<&Token> {
         self.1 += 1;
-        &token
+        self.0.get(self.1 - 1)
     }
     pub fn peek(&self) -> Option<&Token> {
         self.0.get(self.1)
@@ -141,9 +140,28 @@ impl<'a> Tokenizer<'a> {
                 Token!(self, Less)
             }),
             ';' => Ok(Token!(self, Semicolon)),
-            '(' => Ok(Token::Paren(self.paren_delimiter().unwrap())),
-            '[' => Ok(Token::Bracket(self.bracket_delimiter().unwrap())),
-            '{' => Ok(Token::Brace(self.brace_delimiter().unwrap())),
+            '(' => Ok(Token::Paren(self.paren_delimiter())),
+            '[' => Ok(Token::Bracket(self.bracket_delimiter())),
+            '{' => Ok(Token::Brace(self.brace_delimiter())),
+            ')' => Ok(Token::ClosingParen {
+                span: Span {
+                    start: self.starting,
+                    end: self.current,
+                },
+            }),
+            ']' => Ok(Token::ClosingBracket {
+                span: Span {
+                    start: self.starting,
+                    end: self.current,
+                },
+            }),
+            '}' => Ok(Token::ClosingBrace {
+                span: Span {
+                    start: self.starting,
+                    end: self.current,
+                },
+            }),
+
             // '(' => Ok(Token!(self, LeftParen)),
             // ')' => Ok(Token!(self, RightParen)),
             // '{' => Ok(Token!(self, LeftBrace)),

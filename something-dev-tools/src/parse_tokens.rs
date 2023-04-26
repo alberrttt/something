@@ -1,7 +1,7 @@
 use proc_macro::TokenStream;
-use syn::{parse_macro_input, token::Token, Data, DeriveInput, Type};
-
 use quote::quote;
+
+use syn::{parse_macro_input, token::Token, Data, DeriveInput, Type};
 pub fn parse_tokens(input: TokenStream) -> TokenStream {
     let derive = parse_macro_input!(input as DeriveInput);
     match derive.data {
@@ -11,17 +11,38 @@ pub fn parse_tokens(input: TokenStream) -> TokenStream {
             let variants = enum_data.variants.iter().map(|f| {
                 let variant_ident = &f.ident;
                 quote! {
-                    if let Ok(variant) = input.step(|input| Parse::parse(input)) {
-                        return Ok(#name::#variant_ident(variant));
+
+                    match input.step(|input| Parse::parse(input)) {
+                        Ok(variant) => return Ok(#name::#variant_ident(variant)),
+                        Err(x) => err = x,
+                    }
+                }
+            });
+            let boxed_variants = enum_data.variants.iter().map(|f| {
+                let variant_ident = &f.ident;
+                quote! {
+
+                    match input.step(|input| Parse::parse(input)) {
+                        Ok(variant) => return Ok(Box::new(#name::#variant_ident(variant))),
+                        Err(x) => err = x,
                     }
                 }
             });
             return quote! {
-                use something_frontend_tokenizer::Tokens;
                 impl Parse for #name {
                     fn parse(input: &mut Tokens) -> Result<Self, Box<dyn std::error::Error>> {
+                        let mut err: Box<dyn std::error::Error> = "".into();
                         #(#variants)*
-                        Err(format!("unexpected token(s) {}", input).into())
+Err(
+    err
+
+)                    }
+                }
+                impl Parse for Box<#name> {
+                    fn parse(input: &mut Tokens) -> Result<Self, Box<dyn std::error::Error>> {
+                        let mut err: Box<dyn std::error::Error> = "".into();
+                        #(#boxed_variants)*
+                       Err(err)
                     }
                 }
             }

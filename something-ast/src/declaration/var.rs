@@ -10,6 +10,7 @@ pub struct VariableDeclaration {
     pub name: Ident,
     pub equal: tokens::Equal,
     pub value: Literal,
+    pub semicolon: tokens::Semicolon,
 }
 impl Parse for VariableDeclaration {
     fn parse(
@@ -20,6 +21,7 @@ impl Parse for VariableDeclaration {
             name: Parse::parse(input)?,
             equal: Parse::parse(input)?,
             value: Parse::parse(input)?,
+            semicolon: Parse::parse(input)?,
         })
     }
 }
