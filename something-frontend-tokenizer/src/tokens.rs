@@ -20,6 +20,8 @@ macro_rules! create_token {
         }
     };
 }
+use super::delimiter::*;
+use super::ident::*;
 macro_rules! DefineTokens {
     ([$($keyword:ident),+],[$([$t:tt] => $token:ident),+],[$($misc:ident),+]) => {
         #[derive(Debug, Clone)]
@@ -29,6 +31,12 @@ macro_rules! DefineTokens {
             $($keyword($keyword)),+,
             $($token($token)),+,
             $($misc($misc)),+,
+            Paren(Delimiter<'(',')'>),
+            Brace(Delimiter<'{','}'>),
+            Bracket(Delimiter<'[',']'>),
+            ClosingParen {span: Span},
+            ClosingBrace {span: Span},
+            ClosingBracket {span: Span},
 
         }
         $(
@@ -61,21 +69,6 @@ macro_rules! DefineTokens {
 pub trait Parse: Sized {
     fn parse(input: &mut Tokens) -> Result<Self, Box<dyn Error>>;
 }
-#[derive(Clone, Debug)]
-pub struct Ident {
-    pub name: String,
-    pub span: Span,
-}
-impl Parse for Ident {
-    fn parse(input: &mut Tokens) -> Result<Self, Box<dyn Error>> {
-        let token = input.advance().clone();
-        if let Token::Ident(token) = token {
-            Ok(token)
-        } else {
-            Err(format!("Expected Ident, got {:?}", token).into())
-        }
-    }
-}
 
 #[macro_export]
 macro_rules! Token {
@@ -102,7 +95,9 @@ DefineTokens!(
         [!=]  => BangEqual,
         [!]  => Bang,
         [;]  => Semicolon,
-        [,]  => Comma
+        [,]  => Comma,
+        [:] => Colon,
+        [#] => Hash
     ], [
         Eof,
         Whitespace

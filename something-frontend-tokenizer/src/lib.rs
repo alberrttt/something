@@ -6,12 +6,28 @@ pub struct Tokenizer<'a> {
     current: usize,
 }
 
+pub mod delimiter;
+pub mod ident;
+pub mod lit;
 pub mod tokens;
+use ident::*;
+use lit::*;
 use tokens::*;
-mod lit;
-pub use lit::Literal;
+#[derive(Debug, Clone)]
 pub struct Tokens(pub(crate) Vec<Token>, pub(crate) usize);
+impl From<Vec<Token>> for Tokens {
+    fn from(tokens: Vec<Token>) -> Self {
+        Self(tokens, 0)
+    }
+}
+impl IntoIterator for Tokens {
+    type Item = Token;
+    type IntoIter = std::vec::IntoIter<Self::Item>;
 
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.into_iter()
+    }
+}
 impl Display for Tokens {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "[")?;
@@ -24,13 +40,16 @@ impl Display for Tokens {
 }
 
 impl Tokens {
+    pub fn iter(&self) -> std::slice::Iter<'_, Token> {
+        self.0.iter()
+    }
     pub fn advance(&mut self) -> &Token {
         let token = &self.0[self.1];
         self.1 += 1;
         &token
     }
-    pub fn peek(&self) -> &Token {
-        self.0.get(self.1).unwrap()
+    pub fn peek(&self) -> Option<&Token> {
+        self.0.get(self.1)
     }
 
     pub fn step<R>(
@@ -70,7 +89,7 @@ impl<'a> Tokenizer<'a> {
     fn identifier(&mut self) -> Result<Ident, Box<dyn Error>> {
         while let Some(c) = self.peek() {
             match c {
-                'a'..='z' | 'A'..='Z' | '0'..='9' => {
+                'a'..='z' | 'A'..='Z' | '0'..='9' | '-' | '_' => {
                     self.advance();
                 }
                 _ => break,
@@ -122,6 +141,9 @@ impl<'a> Tokenizer<'a> {
                 Token!(self, Less)
             }),
             ';' => Ok(Token!(self, Semicolon)),
+            '(' => Ok(Token::Paren(self.paren_delimiter().unwrap())),
+            '[' => Ok(Token::Bracket(self.bracket_delimiter().unwrap())),
+            '{' => Ok(Token::Brace(self.brace_delimiter().unwrap())),
             // '(' => Ok(Token!(self, LeftParen)),
             // ')' => Ok(Token!(self, RightParen)),
             // '{' => Ok(Token!(self, LeftBrace)),
@@ -129,6 +151,8 @@ impl<'a> Tokenizer<'a> {
             // '[' => Ok(Token!(self, LeftBracket)),
             // ']' => Ok(Token!(self, RightBracket)),
             ',' => Ok(Token!(self, Comma)),
+            '#' => Ok(Token!(self, Hash)),
+            ':' => Ok(Token!(self, Colon)),
             x if x.is_whitespace() => Ok(Token!(self, Whitespace)),
             x => Err(format!("Error with `{}`", x.to_string()).into()),
         }

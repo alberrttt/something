@@ -21,7 +21,7 @@ pub fn parse_tokens(input: TokenStream) -> TokenStream {
                 impl Parse for #name {
                     fn parse(input: &mut Tokens) -> Result<Self, Box<dyn std::error::Error>> {
                         #(#variants)*
-                        Err("unexpected token".into())
+                        Err(format!("unexpected token(s) {}", input).into())
                     }
                 }
             }
@@ -33,7 +33,7 @@ pub fn parse_tokens(input: TokenStream) -> TokenStream {
             let variants = struct_data.fields.iter().map(|f| {
                 let ident = f.ident.as_ref().expect("unnamed fields unsupported");
                 if let Type::Tuple(typetuple) = &f.ty {
-                    if typetuple.elems.len() == 0 {
+                    if typetuple.elems.is_empty() {
                         quote! {#ident: (),}
                     } else {
                         panic!("only empty types r supported")

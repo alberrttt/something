@@ -4,8 +4,8 @@ use something_frontend_tokenizer::{
     Token,
 };
 mod function;
-use self::function::*;
-use self::var::*;
+pub use self::function::*;
+pub use self::var::*;
 #[derive(Debug, ParseTokens)]
 pub enum Declaration {
     Var(VariableDeclaration),

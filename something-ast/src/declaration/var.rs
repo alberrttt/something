@@ -1,6 +1,8 @@
 use something_frontend_tokenizer::{
-    tokens::{self, Ident, Parse},
-    Literal, Token,
+    ident::Ident,
+    lit::Literal,
+    tokens::{self, Parse},
+    Token,
 };
 #[derive(Debug)]
 pub struct VariableDeclaration {
