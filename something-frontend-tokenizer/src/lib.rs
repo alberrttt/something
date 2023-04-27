@@ -51,6 +51,18 @@ impl Tokens {
     pub fn peek(&self) -> Option<&Token> {
         self.0.get(self.1)
     }
+    pub fn peek_n(&self, n: usize) -> Option<&Token> {
+        self.0.get(self.1 + n)
+    }
+    pub fn peek1(&self) -> Option<&Token> {
+        self.0.get(self.1 + 1)
+    }
+    pub fn peek2(&self) -> Option<&Token> {
+        self.0.get(self.1 + 2)
+    }
+    pub fn peek3(&self) -> Option<&Token> {
+        self.0.get(self.1 + 3)
+    }
 
     pub fn step<R>(
         &mut self,

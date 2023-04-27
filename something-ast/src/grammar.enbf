@@ -1,0 +1,23 @@
+<declaration>  ::= <fndec> | <vardec>
+<vardec> ::= "let" <ident> "=" <expression> ";"
+<fndec> ::= [<modifier>] "fn" <ident> "(" <params> ")" "{" <body> "}"
+<modifier> ::= "[" <ident-list> "]:"
+<ident-list> ::= <ident> | <ident> " " <ident-list>
+
+<ident> ::= /* a valid identifier */
+<params> ::= /* zero or more comma-separated parameters */
+            | <param>
+            | <param> "," <params>
+<param> ::= /* a valid identifier */
+<body> ::= /* zero or more statements */
+          | <statement>
+          | <statement> <body>
+<statement> ::= <expression> ";"
+              | <vardec>
+              | <if>
+              | <while>
+              | <return>
+
+<expression> ::= <ident> | <literal> | <binary>
+<binary> ::= <expression> <operator> <expression>
+<operator> ::= "+" | "-" | "*" | "/" | "%"

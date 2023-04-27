@@ -18,33 +18,16 @@ pub fn parse_tokens(input: TokenStream) -> TokenStream {
                     }
                 }
             });
-            let boxed_variants = enum_data.variants.iter().map(|f| {
-                let variant_ident = &f.ident;
-                quote! {
 
-                    match input.step(|input| Parse::parse(input)) {
-                        Ok(variant) => return Ok(Box::new(#name::#variant_ident(variant))),
-                        Err(x) => err = x,
-                    }
-                }
-            });
             return quote! {
                 impl Parse for #name {
                     fn parse(input: &mut Tokens) -> Result<Self, Box<dyn std::error::Error>> {
                         let mut err: Box<dyn std::error::Error> = "".into();
                         #(#variants)*
-Err(
-    err
-
-)                    }
-                }
-                impl Parse for Box<#name> {
-                    fn parse(input: &mut Tokens) -> Result<Self, Box<dyn std::error::Error>> {
-                        let mut err: Box<dyn std::error::Error> = "".into();
-                        #(#boxed_variants)*
-                       Err(err)
+                        Err(err)
                     }
                 }
+
             }
             .into();
         }

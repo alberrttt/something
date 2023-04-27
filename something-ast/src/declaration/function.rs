@@ -29,6 +29,7 @@ impl Parse for FunctionDeclaration {
         let name = Parse::parse(input)?;
         let params = Parse::parse(input)?;
         let body = Parse::parse(input)?;
+
         Ok(Self {
             modifiers,
             colon,
