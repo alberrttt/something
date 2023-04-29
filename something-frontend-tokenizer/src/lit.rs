@@ -1,21 +1,26 @@
 use std::{
     error::Error,
-    fmt::{Display, Formatter},
+    fmt::{Debug, Display, Formatter},
 };
 
 use crate::{
     tokens::{Parse, Span, Token__},
     Token, Tokens,
 };
-#[derive(Debug, Clone, PartialEq, PartialOrd)]
+#[derive(Clone, PartialEq, PartialOrd)]
 pub struct Literal {
     /// discriminant
     pub span: Span,
     pub(crate) inner: implementation::Inner,
 }
+impl std::fmt::Debug for Literal {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self.inner)
+    }
+}
 impl Parse for Literal {
     fn parse(input: &mut Tokens) -> Result<Self, Box<dyn Error>> {
-        let token = input.advance().clone();
+        let token = input.advance();
         if let Some(Token::Lit(token)) = token {
             Ok(token.clone())
         } else {

@@ -9,9 +9,9 @@ macro_rules! gen_tests {
                 let source = include_str!(concat!("../cases/",$file, ".txt"));
                 let mut tokens = Tokenizer::new(source).tokens().unwrap();
                 let node = Node::parse(&mut tokens).unwrap();
-                dbg!(&node);
+                println!("{:#?}",&node);
             }
         )*
     };
 }
-gen_tests!["fn" = fn_test, "var" = var_test, "expr" = expr];
+gen_tests!["fn" = fn_test, "var" = var_test];

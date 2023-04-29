@@ -1,9 +1,10 @@
 use proc_macro::TokenStream;
-use quote::quote;
+use quote::{format_ident, quote};
 
 use syn::{parse_macro_input, token::Token, Data, DeriveInput, Type};
 pub fn parse_tokens(input: TokenStream) -> TokenStream {
     let derive = parse_macro_input!(input as DeriveInput);
+
     match derive.data {
         Data::Enum(enum_data) => {
             let name = derive.ident;
@@ -18,15 +19,22 @@ pub fn parse_tokens(input: TokenStream) -> TokenStream {
                     }
                 }
             });
-
+            let ident = format_ident!("__{}", name);
             return quote! {
-                impl Parse for #name {
-                    fn parse(input: &mut Tokens) -> Result<Self, Box<dyn std::error::Error>> {
-                        let mut err: Box<dyn std::error::Error> = "".into();
-                        #(#variants)*
-                        Err(err)
+                mod #ident {
+                    use something_frontend_tokenizer::tokens::Parse;
+                    use something_frontend_tokenizer::Tokens;
+                    use super::#name;
+                    impl Parse for #name {
+                        fn parse(input: &mut Tokens) -> Result<Self, Box<dyn std::error::Error>> {
+                            let mut err: Box<dyn std::error::Error> = "".into();
+                            #(#variants)*
+                            Err(err)
+                        }
                     }
+
                 }
+                pub use #ident::*;
 
             }
             .into();
@@ -46,12 +54,19 @@ pub fn parse_tokens(input: TokenStream) -> TokenStream {
                     quote! {#ident: Parse::parse(input)?,}
                 }
             });
+            let ident = format_ident!("__{}", name);
             return quote! {
-                impl Parse for #name {
-                    fn parse(input: &mut Tokens) -> Result<Self, Box<dyn std::error::Error>> {
-                        Ok(Self {#(#variants)*})
+                mod #ident {
+                    use something_frontend_tokenizer::tokens::Parse;
+                    impl Parse for #name {
+                        fn parse(input: &mut Tokens) -> Result<Self, Box<dyn std::error::Error>> {
+                            Ok(Self {#(#variants)*})
+                        }
                     }
+
                 }
+                pub use #ident::*;
+
             }
             .into();
         }

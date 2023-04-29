@@ -9,13 +9,15 @@ pub enum Expression {
 
 impl Parse for Expression {
     fn parse(input: &mut Tokens) -> Result<Self, Box<dyn std::error::Error>> {
-        let tmp = input.peek().unwrap().clone();
+        let tmp = match input.advance() {
+            Some(token) => token.clone(),
+            None => {
+                return Err(format!("end of file").into());
+            }
+        };
         parse_expr(
             match tmp {
-                Token::Lit(lit) => {
-                    input.advance().unwrap();
-                    Self::Lit(lit)
-                }
+                Token::Lit(lit) => Self::Lit(lit),
                 x => panic!("{:?}", x),
             },
             input,
@@ -33,8 +35,35 @@ fn parse_expr(
         }
     };
     match token {
-        Token::Plus(_) => Ok(parse_binary(left, input)),
-        _ => Ok(left),
+        Token::Plus(_) | Token::Minus(_) => match Operator::parse(input) {
+            Ok(operator) => {
+                let right = Expression::parse(input).expect("Expected Expression");
+                Ok(Expression::Binary(Binary {
+                    left: Box::new(left),
+                    operator,
+                    right: Box::new(right),
+                }))
+            }
+
+            Err(_) => Ok(left),
+        },
+        Token::Star(_) | Token::Slash(_) => match Operator::parse(input) {
+            Ok(operator) => {
+                let right = Literal::parse(input).expect("Expected Expression");
+                parse_expr(
+                    Expression::Binary(Binary {
+                        left: Box::new(left),
+                        operator,
+                        right: Box::new(Expression::Lit(right)),
+                    }),
+                    input,
+                )
+            }
+
+            Err(_) => Ok(left),
+        },
+
+        token => Err(format!("Expected Token, got {:?}", token).into()),
     }
 }
 #[derive(Debug, Clone)]
@@ -48,22 +77,11 @@ impl From<Binary> for Expression {
         Self::Binary(binary)
     }
 }
-fn parse_binary(left: Expression, input: &mut Tokens) -> Expression {
-    let operator = Operator::parse(input).unwrap();
-    let right = Expression::parse(input).unwrap();
-    Expression::Binary(Binary {
-        left: Box::new(left),
-        operator,
-        right: Box::new(right),
-    })
-}
+
 impl Parse for Binary {
     fn parse(input: &mut Tokens) -> Result<Self, Box<dyn std::error::Error>> {
-        Ok(Self {
-            left: Box::new(Expression::parse(input)?),
-            operator: Operator::parse(input)?,
-            right: Box::new(Expression::parse(input)?),
-        })
+        let expr = Expression::parse(input)?;
+        todo!();
     }
 }
 #[derive(Debug, Clone)]
