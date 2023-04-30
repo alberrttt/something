@@ -10,7 +10,7 @@ use crate::{
     Statement,
 };
 
-#[derive(Debug)]
+#[derive(Debug, ParseTokens)]
 pub struct FunctionDeclaration {
     pub modifiers: Brackets<Ident>,
     pub colon: Colon,
@@ -18,25 +18,4 @@ pub struct FunctionDeclaration {
     pub name: Ident,
     pub params: Parenthesis<Ident>, // todo
     pub body: Braces<Statement>,    // todo
-}
-impl Parse for FunctionDeclaration {
-    fn parse(
-        input: &mut something_frontend_tokenizer::Tokens,
-    ) -> Result<Self, Box<dyn std::error::Error>> {
-        let modifiers = Parse::parse(input)?;
-        let colon = Parse::parse(input)?;
-        let fn_token = Parse::parse(input)?;
-        let name = Parse::parse(input)?;
-        let params = Parse::parse(input)?;
-        let body = Parse::parse(input)?;
-
-        Ok(Self {
-            modifiers,
-            colon,
-            fn_token,
-            name,
-            params,
-            body,
-        })
-    }
 }
