@@ -5,11 +5,13 @@ pub mod precedence;
 pub enum Expression {
     Lit(Literal),
     Binary(Binary),
+    Call(Call),
 }
-
+mod call;
+pub use self::call::*;
 impl Parse for Expression {
     fn parse(input: &mut Tokens) -> Result<Self, Box<dyn std::error::Error>> {
-        let tmp = match input.advance() {
+        let tmp = match input.peek() {
             Some(token) => token.clone(),
             None => {
                 return Err(format!("end of file").into());
@@ -17,7 +19,11 @@ impl Parse for Expression {
         };
         parse_expr(
             match tmp {
-                Token::Lit(lit) => Self::Lit(lit),
+                Token::Lit(lit) => {
+                    input.advance();
+                    Self::Lit(lit)
+                }
+                Token::Ident(ident) => Expression::Call(Call::parse(input)?),
                 x => panic!("{:?}", x),
             },
             input,
@@ -63,7 +69,7 @@ fn parse_expr(
             Err(_) => Ok(left),
         },
 
-        token => Err(format!("Expected Token, got {:?}", token).into()),
+        token => Ok(left),
     }
 }
 #[derive(Debug, Clone)]

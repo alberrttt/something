@@ -1,5 +1,5 @@
 use proc_macro::TokenStream;
-use quote::{format_ident, quote};
+use quote::{format_ident, quote, ToTokens};
 
 use syn::{parse_macro_input, token::Token, Data, DeriveInput, Type};
 pub fn parse_tokens(input: TokenStream) -> TokenStream {
@@ -11,15 +11,29 @@ pub fn parse_tokens(input: TokenStream) -> TokenStream {
 
             let variants = enum_data.variants.iter().map(|f| {
                 let variant_ident = &f.ident;
-                quote! {
-
-                    match input.step(|input| Parse::parse(input)) {
-                        Ok(variant) => return Ok(#name::#variant_ident(variant)),
-                        Err(x) => err = x,
+                let fields = &f.fields;
+                match fields {
+                    syn::Fields::Named(_) => todo!(),
+                    syn::Fields::Unnamed(fields) => {
+                        let fields = &fields.unnamed;
+                        let create = fields
+                            .iter()
+                            .skip(1)
+                            .map(|f| {
+                                quote! {input.step(|input| Parse::parse(input)).unwrap()}
+                            })
+                            .collect::<Vec<_>>();
+                        return quote! {
+                            match input.step(|input| Parse::parse(input)) {
+                                Ok(variant) => return Ok(#name::#variant_ident(variant, #(#create),*)),
+                                Err(x) => err = x,
+                            }
+                        };
                     }
+                    syn::Fields::Unit => todo!(),
                 }
             });
-            let ident = format_ident!("__{}", name);
+            let ident = format_ident!("__{}", name.to_string().to_lowercase());
             return quote! {
                 mod #ident {
                     use something_frontend_tokenizer::tokens::Parse;
@@ -54,10 +68,12 @@ pub fn parse_tokens(input: TokenStream) -> TokenStream {
                     quote! {#ident: Parse::parse(input)?,}
                 }
             });
-            let ident = format_ident!("__{}", name);
+            let ident = format_ident!("__{}", name.to_string().to_lowercase());
             return quote! {
                 mod #ident {
                     use something_frontend_tokenizer::tokens::Parse;
+                    use something_frontend_tokenizer::Tokens;
+                    use super::#name;
                     impl Parse for #name {
                         fn parse(input: &mut Tokens) -> Result<Self, Box<dyn std::error::Error>> {
                             Ok(Self {#(#variants)*})

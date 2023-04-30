@@ -9,13 +9,10 @@ pub struct Ast {
 }
 #[derive(Debug, ParseTokens)]
 pub enum Node {
-    Statement(Statement),
+    Statement(statement::Statement),
 }
-#[derive(Debug, ParseTokens)]
-pub enum Statement {
-    Declaration(Declaration),
-    Expression(Expression),
-}
+pub use statement::Statement;
 pub mod declaration;
 pub mod delimiter;
 pub mod expression;
+pub mod statement;
