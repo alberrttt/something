@@ -1,13 +1,18 @@
 use something_dev_tools::ParseTokens;
-use something_frontend_tokenizer::{ident::Ident, lit::Literal, tokens::Token, Parse, Tokens};
+use something_frontend_tokenizer::{
+    delimiter::Delimiter, ident::Ident, lit::Literal, tokens::Token, Parse, Tokens,
+};
 pub mod precedence;
 #[derive(Debug, Clone)]
 pub enum Expression {
     Lit(Literal),
     Binary(Binary),
     Call(Call),
+    Grouping(Parenthesis<Box<Expression>>),
 }
 mod call;
+use crate::delimiter::Parenthesis;
+
 pub use self::call::*;
 impl Parse for Expression {
     fn parse(input: &mut Tokens) -> Result<Self, Box<dyn std::error::Error>> {

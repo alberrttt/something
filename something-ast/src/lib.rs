@@ -15,4 +15,5 @@ pub use statement::Statement;
 pub mod declaration;
 pub mod delimiter;
 pub mod expression;
+pub mod punctuated;
 pub mod statement;

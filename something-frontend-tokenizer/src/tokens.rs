@@ -80,7 +80,7 @@ macro_rules! Token {
 
 }
 DefineTokens!(
-    [If, Fn, Let, False, True, Return, While, For],
+    [If, Fn, Let, Return, While, For],
     [
         [==]  => EqualEqual,
         [=]  => Equal,

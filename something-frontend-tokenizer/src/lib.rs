@@ -41,6 +41,34 @@ impl Display for Tokens {
 }
 
 impl Tokens {
+    pub fn at_end(&self) -> bool {
+        self.1 >= self.0.len()
+    }
+    pub fn distance_from_end(&self) -> usize {
+        self.0.len() - self.1
+    }
+    pub fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
+    pub fn len(&self) -> usize {
+        self.0.len()
+    }
+    pub fn get(&self, i: usize) -> Option<&Token> {
+        self.0.get(i)
+    }
+    pub fn get_mut(&mut self, i: usize) -> Option<&mut Token> {
+        self.0.get_mut(i)
+    }
+    pub fn first(&self) -> Option<&Token> {
+        self.0.first()
+    }
+    pub fn last(&self) -> Option<&Token> {
+        self.0.last()
+    }
+    pub fn iter_mut(&mut self) -> std::slice::IterMut<'_, Token> {
+        self.0.iter_mut()
+    }
+
     pub fn iter(&self) -> std::slice::Iter<'_, Token> {
         self.0.iter()
     }
@@ -133,7 +161,12 @@ impl<'a> Tokenizer<'a> {
             'a'..='z' | 'A'..='Z' => {
                 let ident = self.identifier()?;
                 use something_dev_tools::tokens;
-                let tmp: Token = tokens!(If, Let, False, True, While, Return, For, Fn);
+                match ident.name.as_ref() {
+                    "false" => return Ok(Token::Lit(Literal::new_bool(ident.span, true))),
+                    "true" => return Ok(Token::Lit(Literal::new_bool(ident.span, true))),
+                    _ => {}
+                }
+                let tmp: Token = tokens!(If, Let, While, Return, For, Fn);
                 Ok(tmp)
             }
             '0'..='9' => Ok(Token::Lit(self.number()?)),

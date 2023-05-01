@@ -4,7 +4,7 @@ use something_frontend_tokenizer::{
     Tokens,
 };
 #[derive(Debug, Clone)]
-pub struct Parenthesis<T>(pub Span, pub Vec<T>);
+pub struct Parenthesis<T>(pub Span, pub T);
 impl<T> Parse for Parenthesis<T>
 where
     T: Parse,
@@ -15,12 +15,10 @@ where
         let Some( Token::Paren(paren)) = input.advance() else {
             return Err(format!("Expected Parenthesis, got {:?}", input.advance().clone()).into())
         };
-        let mut parsed = Vec::new();
-        let mut inner = Tokens::from(paren.tokens.clone());
-        while let Ok(parsed_t) = Parse::parse(&mut inner) {
-            parsed.push(parsed_t);
-        }
-        Ok(Self(paren.span, parsed))
+        Ok(Self(
+            paren.span,
+            Parse::parse(&mut (paren.tokens.clone()).into())?,
+        ))
     }
 }
 #[derive(Debug, Clone)]

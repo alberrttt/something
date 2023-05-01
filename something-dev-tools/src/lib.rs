@@ -12,3 +12,8 @@ mod parse_tokens;
 pub fn parse_tokens(input: TokenStream) -> TokenStream {
     parse_tokens::parse_tokens(input)
 }
+mod ast_test_gen;
+#[proc_macro]
+pub fn ast_test_gen(input: TokenStream) -> TokenStream {
+    ast_test_gen::ast_test_gen(input)
+}
