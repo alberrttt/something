@@ -3,6 +3,15 @@ use something_frontend_tokenizer::{Parse, Tokens};
 // prolly need better error handling soon
 #[derive(Debug, Clone)]
 pub struct Punctuated<T, P>(pub Vec<(T, Option<P>)>);
+impl<T, P> Parse for Punctuated<T, P>
+where
+    T: Parse,
+    P: Parse,
+{
+    fn parse(input: &mut Tokens) -> Result<Self, Box<dyn std::error::Error>> {
+        Self::parse_terminated(input)
+    }
+}
 impl<T, P> Punctuated<T, P>
 where
     T: Parse,

@@ -29,7 +29,7 @@ impl Parse for Expression {
                     Self::Lit(lit)
                 }
                 Token::Ident(ident) => Expression::Call(Call::parse(input)?),
-                x => panic!("{:?}", x),
+                x => panic!("Expected a token to start an expression, but got {:?}", x),
             },
             input,
         )
