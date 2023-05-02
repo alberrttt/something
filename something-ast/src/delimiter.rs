@@ -22,7 +22,7 @@ where
     }
 }
 #[derive(Debug, Clone)]
-pub struct Brackets<T>(pub Span, pub Vec<T>);
+pub struct Brackets<T>(pub Span, pub T);
 impl<T> Parse for Brackets<T>
 where
     T: Parse,
@@ -31,25 +31,15 @@ where
         input: &mut something_frontend_tokenizer::Tokens,
     ) -> Result<Self, Box<dyn std::error::Error>> {
         let Some(Token::Bracket(brackets)) = input.advance() else {
-            return Err(format!("Expected Brackets, got {:?} ", input.advance().clone()).into())
+            panic!("expected brackets but got: {:?}", input.peek())
         };
-        let mut parsed = Vec::new();
-        let mut inner = Tokens::from(brackets.tokens.clone());
-        loop {
-            match Parse::parse(&mut inner) {
-                Ok(parsed_t) => parsed.push(parsed_t),
-                Err(v) => {
-                    println!("{}", v);
-                    break;
-                }
-            }
-        }
-        Ok(Self(brackets.span, parsed))
+        let tmp = Parse::parse(&mut brackets.tokens.clone().into())?;
+        Ok(Self(brackets.span, tmp))
     }
 }
 
 #[derive(Debug, Clone)]
-pub struct Braces<T>(pub Span, pub Vec<T>);
+pub struct Braces<T>(pub Span, pub T);
 impl<T> Parse for Braces<T>
 where
     T: Parse,
@@ -60,17 +50,7 @@ where
         let Some(Token::Brace(braces)) = input.advance() else {
             panic!()
         };
-        let mut parsed = Vec::new();
-        let mut inner = Tokens::from(braces.tokens.clone());
-        loop {
-            match Parse::parse(&mut inner) {
-                Ok(parsed_t) => parsed.push(parsed_t),
-                Err(v) => {
-                    println!("for braces: {}", v);
-                    break;
-                }
-            }
-        }
-        Ok(Self(braces.span, parsed))
+        let tmp = Parse::parse(&mut braces.tokens.clone().into())?;
+        Ok(Self(braces.span, tmp))
     }
 }

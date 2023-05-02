@@ -16,6 +16,6 @@ pub struct FunctionDeclaration {
     pub colon: Colon,
     pub fn_token: tokens::Fn,
     pub name: Ident,
-    pub params: Parenthesis<Ident>, // todo
-    pub body: Braces<Statement>,    // todo
+    pub params: Parenthesis<Ident>,   // todo
+    pub body: Braces<Vec<Statement>>, // todo
 }

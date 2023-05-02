@@ -129,3 +129,12 @@ impl Parse for () {
         Ok(())
     }
 }
+impl<T: Parse> Parse for Vec<T> {
+    fn parse(input: &mut Tokens) -> Result<Self, Box<dyn Error>> {
+        let mut vec = Vec::new();
+        while !input.at_end() {
+            vec.push(T::parse(input)?);
+        }
+        Ok(vec)
+    }
+}
