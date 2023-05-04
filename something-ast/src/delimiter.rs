@@ -31,7 +31,7 @@ where
         input: &mut something_frontend_tokenizer::Tokens,
     ) -> Result<Self, Box<dyn std::error::Error>> {
         let Some(Token::Bracket(brackets)) = input.advance() else {
-            panic!("expected brackets but got: {:?}", input.peek())
+            return Err(format!("expected brackets but got: {:?}", input.peek()).into());
         };
         let tmp = Parse::parse(&mut brackets.tokens.clone().into())?;
         Ok(Self(brackets.span, tmp))
@@ -48,7 +48,7 @@ where
         input: &mut something_frontend_tokenizer::Tokens,
     ) -> Result<Self, Box<dyn std::error::Error>> {
         let Some(Token::Brace(braces)) = input.advance() else {
-            panic!()
+            return Err("expected braces ".into())
         };
         let tmp = Parse::parse(&mut braces.tokens.clone().into())?;
         Ok(Self(braces.span, tmp))

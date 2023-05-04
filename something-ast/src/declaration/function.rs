@@ -14,12 +14,12 @@ use crate::{
 
 #[derive(Debug)]
 pub struct FunctionDeclaration {
-    pub modifiers: Brackets<Ident>,
+    pub modifiers: Brackets<Vec<Ident>>,
     pub colon: Colon,
     pub fn_token: tokens::Fn,
     pub name: Ident,
     pub params: Parenthesis<Ident>, // todo
-    pub body: Braces<Punctuated<Expression, tokens::Semicolon>>, // todo
+    pub body: Braces<Vec<Statement>>, // todo
 }
 impl Parse for FunctionDeclaration {
     fn parse(input: &mut Tokens) -> Result<Self, Box<dyn std::error::Error>> {
