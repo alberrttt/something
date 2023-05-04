@@ -21,7 +21,6 @@ impl Tokenizer<'_> {
                 Token::ClosingBrace { span } => todo!(),
                 Token::ClosingBracket { span } => todo!(),
                 Token::ClosingParen { span: tmp } => {
-                    dbg!(tmp);
                     span.end = tmp.end;
                     break;
                 }

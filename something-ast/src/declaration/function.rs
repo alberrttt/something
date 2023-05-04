@@ -18,12 +18,11 @@ pub struct FunctionDeclaration {
     pub colon: Colon,
     pub fn_token: tokens::Fn,
     pub name: Ident,
-    pub params: Parenthesis<Ident>, // todo
+    pub params: Parenthesis<Ident>,   // todo
     pub body: Braces<Vec<Statement>>, // todo
 }
 impl Parse for FunctionDeclaration {
     fn parse(input: &mut Tokens) -> Result<Self, Box<dyn std::error::Error>> {
-        dbg!(input.peek());
         let modifiers = Brackets::parse(input)?;
 
         let colon = Colon::parse(input)?;
