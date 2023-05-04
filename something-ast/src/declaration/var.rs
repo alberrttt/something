@@ -5,7 +5,7 @@ use something_frontend_tokenizer::{
     tokens::{self, Parse},
     Token,
 };
-#[derive(Debug, ParseTokens)]
+#[derive(Debug, ParseTokens, Clone)]
 pub struct VariableDeclaration {
     pub let_token: tokens::Let,
     pub name: Ident,

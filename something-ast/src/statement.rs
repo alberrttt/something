@@ -3,7 +3,7 @@ use something_frontend_tokenizer::tokens::Semicolon;
 
 use crate::{declaration::Declaration, expression::Expression};
 
-#[derive(Debug, ParseTokens)]
+#[derive(Debug, ParseTokens, Clone)]
 pub enum Statement {
     Declaration(Declaration),
     Expression(Expression, Semicolon),

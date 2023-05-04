@@ -2,6 +2,7 @@ use something_dev_tools::ParseTokens;
 use something_frontend_tokenizer::{
     delimiter::Delimiter, ident::Ident, lit::Literal, tokens::Token, Parse, Tokens,
 };
+pub mod if_expr;
 pub mod precedence;
 #[derive(Debug, Clone)]
 pub enum Expression {
@@ -9,6 +10,7 @@ pub enum Expression {
     Binary(Binary),
     Call(Call),
     Grouping(Parenthesis<Box<Expression>>),
+    If(if_expr::If),
 }
 mod call;
 use crate::delimiter::Parenthesis;

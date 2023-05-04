@@ -9,34 +9,16 @@ use crate::{
     delimiter::{Braces, Brackets, Parenthesis},
     expression::Expression,
     punctuated::Punctuated,
-    Statement,
+    Statement, Node,
 };
 
-#[derive(Debug)]
+#[derive(Debug, ParseTokens, Clone)]
 pub struct FunctionDeclaration {
     pub modifiers: Brackets<Vec<Ident>>,
     pub colon: Colon,
     pub fn_token: tokens::Fn,
     pub name: Ident,
     pub params: Parenthesis<Ident>,   // todo
-    pub body: Braces<Vec<Statement>>, // todo
+    pub body: Braces<Vec<Node>>, // todo
 }
-impl Parse for FunctionDeclaration {
-    fn parse(input: &mut Tokens) -> Result<Self, Box<dyn std::error::Error>> {
-        let modifiers = Brackets::parse(input)?;
 
-        let colon = Colon::parse(input)?;
-        let fn_token = tokens::Fn::parse(input)?;
-        let name = Ident::parse(input)?;
-        let params = Parenthesis::parse(input)?;
-        let body = Braces::parse(input)?;
-        Ok(Self {
-            modifiers,
-            colon,
-            fn_token,
-            name,
-            params,
-            body,
-        })
-    }
-}

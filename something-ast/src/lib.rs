@@ -7,7 +7,7 @@ use something_frontend_tokenizer::Tokens;
 pub struct Ast {
     pub nodes: Vec<Node>,
 }
-#[derive(Debug, ParseTokens)]
+#[derive(Debug, ParseTokens, Clone)]
 pub enum Node {
     Statement(statement::Statement),
 }

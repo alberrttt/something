@@ -9,7 +9,7 @@ mod function;
 pub use self::function::*;
 pub use self::var::*;
 
-#[derive(Debug, ParseTokens)]
+#[derive(Debug, ParseTokens, Clone)]
 pub enum Declaration {
     Function(FunctionDeclaration),
     Var(VariableDeclaration),
