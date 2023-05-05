@@ -2,18 +2,20 @@ use something_dev_tools::ParseTokens;
 use something_frontend_tokenizer::{
     delimiter::Delimiter, ident::Ident, lit::Literal, tokens::Token, Parse, Tokens,
 };
+pub mod call;
 pub mod if_expr;
 pub mod precedence;
+
 #[derive(Debug, Clone)]
 pub enum Expression {
     Lit(Literal),
     Binary(Binary),
     Call(Call),
-    Grouping(Parenthesis<Box<Expression>>),
+    Grouping(Parentheses<Box<Expression>>),
     If(if_expr::If),
 }
-mod call;
-use crate::delimiter::Parenthesis;
+
+use crate::delimiter::Parentheses;
 
 pub use self::call::*;
 impl Parse for Expression {
@@ -35,6 +37,11 @@ impl Parse for Expression {
             },
             input,
         )
+    }
+}
+impl Parse for Box<Expression> {
+    fn parse(input: &mut Tokens) -> Result<Self, Box<dyn std::error::Error>> {
+        Ok(Box::new(Expression::parse(input)?))
     }
 }
 fn parse_expr(

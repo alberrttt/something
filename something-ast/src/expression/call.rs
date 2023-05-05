@@ -1,14 +1,14 @@
 use something_dev_tools::ParseTokens;
 use something_frontend_tokenizer::{ident::Ident, tokens, Parse};
 
-use crate::{delimiter::Parenthesis, punctuated::Punctuated};
+use crate::{delimiter::Parentheses, punctuated::Punctuated};
 
 use super::Expression;
 
 #[derive(Debug, Clone)]
 pub struct Call {
     pub ident: Ident,
-    pub args: Parenthesis<Punctuated<Expression, tokens::Comma>>,
+    pub args: Parentheses<Punctuated<Expression, tokens::Comma>>,
 }
 impl Parse for Call {
     fn parse(
@@ -16,17 +16,17 @@ impl Parse for Call {
     ) -> Result<Self, Box<dyn std::error::Error>> {
         let ident = Ident::parse(input)?;
         let delimiter = match input.advance() {
-            Some(tokens::Token::Paren(paren)) => paren,
+            Some(tokens::Token::Parentheses(paren)) => paren,
             _ => {
                 return Err(
-                    format!("Expected Parenthesis, got {:?}", input.advance().clone()).into(),
+                    format!("Expected Parentheses, got {:?}", input.advance().clone()).into(),
                 )
             }
         };
 
         Ok(Self {
             ident,
-            args: Parenthesis(
+            args: Parentheses(
                 delimiter.span,
                 Punctuated::parse_terminated(&mut delimiter.tokens.clone().into())?,
             ),

@@ -41,6 +41,12 @@ impl Display for Tokens {
 }
 
 impl Tokens {
+    pub fn parse<T>(&mut self) -> Result<T, Box<dyn Error>>
+    where
+        T: Parse,
+    {
+        T::parse(self)
+    }
     pub fn at_end(&self) -> bool {
         self.1 >= self.0.len()
     }
@@ -183,13 +189,15 @@ impl<'a> Tokenizer<'a> {
             }),
             '<' => Ok(if self.try_consume('=').is_ok() {
                 Token!(self, LessEqual)
+            } else if self.try_consume('-').is_ok() {
+                Token!(self, LeftArrow)
             } else {
                 Token!(self, Less)
             }),
             ';' => Ok(Token!(self, Semicolon)),
-            '(' => Ok(Token::Paren(self.paren_delimiter())),
-            '[' => Ok(Token::Bracket(self.bracket_delimiter())),
-            '{' => Ok(Token::Brace(self.brace_delimiter())),
+            '(' => Ok(Token::Parentheses(self.paren_delimiter())),
+            '[' => Ok(Token::Brackets(self.bracket_delimiter())),
+            '{' => Ok(Token::Braces(self.brace_delimiter())),
             ')' => Ok(Token::ClosingParen {
                 span: Span {
                     start: self.starting,
@@ -208,6 +216,7 @@ impl<'a> Tokenizer<'a> {
                     end: self.current,
                 },
             }),
+            '$' => Ok(Token!(self, Dollar)),
 
             // '(' => Ok(Token!(self, LeftParen)),
             // ')' => Ok(Token!(self, RightParen)),
@@ -219,7 +228,13 @@ impl<'a> Tokenizer<'a> {
             '#' => Ok(Token!(self, Hash)),
             ':' => Ok(Token!(self, Colon)),
             '+' => Ok(Token!(self, Plus)),
-            '-' => Ok(Token!(self, Minus)),
+            '-' => {
+                if self.try_consume('>').is_ok() {
+                    Ok(Token!(self, RightArrow))
+                } else {
+                    Ok(Token!(self, Minus))
+                }
+            }
             '*' => Ok(Token!(self, Star)),
             '/' => Ok(Token!(self, Slash)),
             x if x.is_whitespace() => Ok(Token!(self, Whitespace)),

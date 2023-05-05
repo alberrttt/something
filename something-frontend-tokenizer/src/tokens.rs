@@ -31,9 +31,9 @@ macro_rules! DefineTokens {
             $($keyword($keyword)),+,
             $($token($token)),+,
             $($misc($misc)),+,
-            Paren(Delimiter<'(',')'>),
-            Brace(Delimiter<'{','}'>),
-            Bracket(Delimiter<'[',']'>),
+            Parentheses(Delimiter<'(',')'>),
+            Braces(Delimiter<'{','}'>),
+            Brackets(Delimiter<'[',']'>),
             ClosingParen {span: Span},
             ClosingBrace {span: Span},
             ClosingBracket {span: Span},
@@ -97,7 +97,10 @@ DefineTokens!(
         [;]  => Semicolon,
         [,]  => Comma,
         [:] => Colon,
-        [#] => Hash
+        [#] => Hash,
+        [->] => RightArrow,
+        [<-] => LeftArrow,
+        [$] => Dollar
     ], [
         Eof,
         Whitespace

@@ -33,6 +33,31 @@ pub fn parse_tokens(input: TokenStream) -> TokenStream {
                     syn::Fields::Unit => todo!(),
                 }
             });
+            let variants_boxed = enum_data.variants.iter().map(|f| {
+                let variant_ident = &f.ident;
+                let fields = &f.fields;
+                match fields {
+                    syn::Fields::Named(_) => todo!(),
+                    syn::Fields::Unnamed(fields) => {
+                        let fields = &fields.unnamed;
+                        let create = fields
+                            .iter()
+                            .skip(1)
+                            .map(|f| {
+                                quote! {input.step(|input| Parse::parse(input)).unwrap()}
+                            })
+                            .collect::<Vec<_>>();
+                        return quote! {
+                            match input.step(|input| Parse::parse(input)) {
+                                Ok(variant) => return Ok(Box::new(#name::#variant_ident(variant, #(#create),*))),
+                                Err(x) => err = x,
+                            }
+                        };
+                    }
+                    syn::Fields::Unit => todo!(),
+                }
+            });
+
             let ident = format_ident!("__{}", name.to_string().to_lowercase());
             return quote! {
                 mod #ident {
@@ -46,7 +71,11 @@ pub fn parse_tokens(input: TokenStream) -> TokenStream {
                             Err(err)
                         }
                     }
-
+                    impl Parse for Box<#name> {
+                        fn parse(input: &mut Tokens) -> Result<Self, Box<dyn std::error::Error>> {
+                            Ok(Box::new(#name::parse(input)?))
+                        }
+                    }
                 }
                 pub use #ident::*;
 

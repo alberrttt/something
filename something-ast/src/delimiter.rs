@@ -3,54 +3,34 @@ use something_frontend_tokenizer::{
     tokens::{Parse, Span, Token},
     Tokens,
 };
-#[derive(Debug, Clone)]
-pub struct Parenthesis<T>(pub Span, pub T);
-impl<T> Parse for Parenthesis<T>
-where
-    T: Parse,
-{
-    fn parse(
-        input: &mut something_frontend_tokenizer::Tokens,
-    ) -> Result<Self, Box<dyn std::error::Error>> {
-        let Some( Token::Paren(paren)) = input.advance() else {
-            return Err(format!("Expected Parenthesis, got {:?}", input.advance().clone()).into())
-        };
-        Ok(Self(
-            paren.span,
-            Parse::parse(&mut (paren.tokens.clone()).into())?,
-        ))
-    }
-}
-#[derive(Debug, Clone)]
-pub struct Brackets<T>(pub Span, pub T);
-impl<T> Parse for Brackets<T>
-where
-    T: Parse,
-{
-    fn parse(
-        input: &mut something_frontend_tokenizer::Tokens,
-    ) -> Result<Self, Box<dyn std::error::Error>> {
-        let Some(Token::Bracket(brackets)) = input.advance() else {
-            return Err(format!("expected brackets but got: {:?}", input.peek()).into());
-        };
-        let tmp = Parse::parse(&mut brackets.tokens.clone().into())?;
-        Ok(Self(brackets.span, tmp))
-    }
-}
+macro_rules! delimiter_impl {
+    [$($delimiter:ident),*] => {
+        $(
+            #[derive(Debug, Clone)]
+            pub struct $delimiter<T>(pub Span, pub T);
+            impl<T> Parse for $delimiter<T>
+            where
+                T: Parse,
+                T: std::fmt::Debug,
+            {
+                fn parse(
+                    input: &mut something_frontend_tokenizer::Tokens,
+                ) -> Result<Self, Box<dyn std::error::Error>> {
+                    let Some(Token::$delimiter(delimiter)) = input.advance() else {
+                        return Err(format!("expected {} but got: {:?}", stringify!($delimiter), input.peek()).into());
+                    };
+                    let tokens = &mut delimiter.tokens.clone().into();
+                    let tmp = Parse::parse(tokens)?;
+                    if !tokens.at_end() {
+                        return Err(format!("Did not expect these tokens: {:?}", &tokens.0[tokens.1..]).into());
+                    }
+                    Ok(Self(delimiter.span, tmp))
+                }
+            }
+        )*
+    };
+    () => {
 
-#[derive(Debug, Clone)]
-pub struct Braces<T>(pub Span, pub T);
-impl<T> Parse for Braces<T>
-where
-    T: Parse,
-{
-    fn parse(
-        input: &mut something_frontend_tokenizer::Tokens,
-    ) -> Result<Self, Box<dyn std::error::Error>> {
-        let Some(Token::Brace(braces)) = input.advance() else {
-            return Err("expected braces ".into())
-        };
-        let tmp = Parse::parse(&mut braces.tokens.clone().into())?;
-        Ok(Self(braces.span, tmp))
-    }
+    };
 }
+delimiter_impl![Braces, Brackets, Parentheses];

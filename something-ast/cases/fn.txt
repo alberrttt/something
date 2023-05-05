@@ -1,4 +1,4 @@
-[cuda python311 node_stable x86 arm riscv]: fn main(x y z) {
+fn main(x y z) {
     1;
     print("hello world");
 }
