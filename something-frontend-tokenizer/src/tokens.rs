@@ -1,13 +1,30 @@
-use std::{error::Error, fmt::Formatter};
-
+use crate::traits::ParsingDisplay;
+use crate::Parse;
 use crate::Tokens;
+use casey::lower;
+
+use std::{error::Error, fmt::Formatter};
 macro_rules! create_token {
     ($name:ident) => {
         #[derive(Clone, Debug)]
         pub struct $name {
             pub(crate) span: Span,
         }
+        impl ParsingDisplay for $name {
+            fn display(&self) -> String
+            where
+                Self: Sized,
+            {
+                format!("{}", self)
+            }
 
+            fn placeholder() -> String
+            where
+                Self: Sized,
+            {
+                stringify!($name).into()
+            }
+        }
         impl Parse for $name {
             fn parse(input: &mut Tokens) -> Result<Self, Box<dyn Error>> {
                 let token = input.advance().clone();
@@ -41,9 +58,19 @@ macro_rules! DefineTokens {
         }
         $(
             create_token!($keyword);
+            impl std::fmt::Display for $keyword {
+                fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+                    write!(f, "{}", lower!(stringify!($keyword)))
+                }
+            }
         )+
         $(
             create_token!($token);
+            impl std::fmt::Display for $token {
+                fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+                    write!(f, "{}", stringify!($t))
+                }
+            }
         )+
         $(
             #[derive(Clone)]
@@ -59,15 +86,12 @@ macro_rules! DefineTokens {
 
             impl std::fmt::Display for $misc {
                 fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                    write!(f, "{}", stringify!($misc))
+                    write!(f, "{}", lower!(stringify!($misc)))
                 }
             }
         )+
 
     };
-}
-pub trait Parse: Sized {
-    fn parse(input: &mut Tokens) -> Result<Self, Box<dyn Error>>;
 }
 
 #[macro_export]
@@ -132,12 +156,18 @@ impl Parse for () {
         Ok(())
     }
 }
-impl<T: Parse> Parse for Vec<T> {
-    fn parse(input: &mut Tokens) -> Result<Self, Box<dyn Error>> {
-        let mut vec = Vec::new();
-        while !input.at_end() {
-            vec.push(T::parse(input)?);
-        }
-        Ok(vec)
+impl ParsingDisplay for () {
+    fn display(&self) -> String
+    where
+        Self: Sized,
+    {
+        "".to_string()
+    }
+
+    fn placeholder() -> std::string::String
+    where
+        Self: Sized,
+    {
+        "<empty>".into()
     }
 }

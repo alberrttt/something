@@ -1,8 +1,32 @@
-use something_frontend_tokenizer::{Parse, Tokens};
+use std::fmt::Display;
+
+use something_frontend_tokenizer::{Parse, ParsingDisplay, Tokens};
 
 // prolly need better error handling soon
 #[derive(Debug, Clone)]
 pub struct Punctuated<T, P>(pub Vec<(T, Option<P>)>);
+
+impl<T, P> ParsingDisplay for Punctuated<T, P>
+where
+    T: ParsingDisplay,
+    P: ParsingDisplay,
+{
+    fn display(&self) -> String {
+        self.0
+            .iter()
+            .map(|(t, p)| {
+                let mut tmp = t.display();
+                if let Some(p) = p {
+                    tmp.push_str(&p.display());
+                }
+                tmp
+            })
+            .collect::<String>()
+    }
+    fn placeholder() -> String {
+        todo!()
+    }
+}
 impl<T, P> Parse for Punctuated<T, P>
 where
     T: Parse,

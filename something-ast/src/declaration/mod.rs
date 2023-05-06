@@ -1,15 +1,9 @@
-use something_dev_tools::ParseTokens;
-use something_frontend_tokenizer::tokens::Parse;
-use something_frontend_tokenizer::Tokens;
-use something_frontend_tokenizer::{
-    tokens::{Let, Token},
-    Token,
-};
+use super::prelude::*;
 mod function;
 pub use self::function::*;
 pub use self::var::*;
 
-#[derive(Debug, ParseTokens, Clone)]
+#[derive(Debug, ParseTokens, Clone, ParseTokensDisplay)]
 pub enum Declaration {
     Function(FunctionDeclaration),
     Var(VariableDeclaration),

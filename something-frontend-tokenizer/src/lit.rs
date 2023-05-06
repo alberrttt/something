@@ -1,11 +1,12 @@
+use crate::traits::ParsingDisplay;
+use crate::Parse;
+use crate::{
+    tokens::{Span, Token__},
+    Token, Tokens,
+};
 use std::{
     error::Error,
     fmt::{Debug, Display, Formatter},
-};
-
-use crate::{
-    tokens::{Parse, Span, Token__},
-    Token, Tokens,
 };
 #[derive(Clone, PartialEq, PartialOrd)]
 pub struct Literal {
@@ -16,6 +17,28 @@ pub struct Literal {
 impl std::fmt::Debug for Literal {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:?}", self.inner)
+    }
+}
+impl ParsingDisplay for Literal {
+    fn display(&self) -> String
+    where
+        Self: Sized,
+    {
+        use std::fmt::Write;
+        let mut f = String::new();
+        match &self.inner {
+            implementation::Inner::String(s) => write!(f, "\"{}\"", s),
+            implementation::Inner::Number(n) => write!(f, "{}", n),
+            implementation::Inner::Boolean(b) => write!(f, "{}", b),
+        };
+        f
+    }
+
+    fn placeholder() -> String
+    where
+        Self: Sized,
+    {
+        "<literal>".into()
     }
 }
 impl Parse for Literal {

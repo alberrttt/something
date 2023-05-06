@@ -3,7 +3,7 @@ use something_ast::expression::Expression;
 use something_ast::punctuated::Punctuated;
 use something_ast::Node;
 use something_frontend_tokenizer::lit::Literal;
-use something_frontend_tokenizer::{tokens::Parse, *};
+use something_frontend_tokenizer::{Parse, *};
 macro_rules! gen_tests {
     [$($file:literal = $name:ident),*] => {
         $(
@@ -13,6 +13,7 @@ macro_rules! gen_tests {
                 let mut tokens = Tokenizer::new(source).tokens().unwrap();
                 let node = Node::parse(&mut tokens).unwrap();
                 println!("{:#?}",&node);
+                println!("{}",node.display());
             }
         )*
     };
@@ -34,4 +35,42 @@ fn expr_test() {
 
     dbg!(Expression::parse(&mut tokens));
 }
-mod punctuated;
+mod punctuated {
+    use something_ast::punctuated::Punctuated;
+    use something_dev_tools::tokens;
+    use something_frontend_tokenizer::{lit::Literal, tokens, ParsingDisplay, Tokenizer};
+
+    #[test]
+    fn punctuated_terminating_test() -> Result<(), Box<dyn std::error::Error>> {
+        let mut tokens = Tokenizer::new(include_str!("../cases/punctuated_terminating.txt"))
+            .tokens()
+            .unwrap();
+        dbg!(tokens.peek());
+        let tmp = Punctuated::<Literal, tokens::Comma>::parse_terminated(&mut tokens)?;
+        dbg!(&tmp);
+        println!("{}", tmp.display());
+        Ok(())
+    }
+    #[test]
+    fn punctuated_trailing_test() -> Result<(), Box<dyn std::error::Error>> {
+        let mut tokens = Tokenizer::new(include_str!("../cases/punctuated_trailing.txt"))
+            .tokens()
+            .unwrap();
+        dbg!(tokens.peek());
+
+        dbg!(Punctuated::<Literal, tokens::Comma>::parse_trailing(
+            &mut tokens
+        )?);
+        Ok(())
+    }
+    #[test]
+    fn punctuated_no_trailing_test() -> Result<(), Box<dyn std::error::Error>> {
+        let mut tokens = Tokenizer::new(include_str!("../cases/punctuated_no_trailing.txt"))
+            .tokens()
+            .unwrap();
+        dbg!(tokens.peek());
+
+        dbg!(Punctuated::<Literal, tokens::Comma>::parse_without_trailing(&mut tokens)?);
+        Ok(())
+    }
+}

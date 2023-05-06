@@ -1,11 +1,5 @@
-use something_dev_tools::ParseTokens;
-use something_frontend_tokenizer::{
-    ident::Ident,
-    lit::Literal,
-    tokens::{self, Parse},
-    Token,
-};
-#[derive(Debug, ParseTokens, Clone)]
+use super::super::prelude::*;
+#[derive(Debug, ParseTokens, ParseTokensDisplay, Clone)]
 pub struct VariableDeclaration {
     pub let_token: tokens::Let,
     pub name: Ident,

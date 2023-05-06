@@ -1,12 +1,14 @@
-use something_dev_tools::ParseTokens;
+use std::fmt::Display;
+
+use something_dev_tools::{ParseTokens, ParseTokensDisplay};
 use something_frontend_tokenizer::{
-    delimiter::Delimiter, ident::Ident, lit::Literal, tokens::Token, Parse, Tokens,
+    delimiter::Delimiter, ident::Ident, lit::Literal, tokens::Token, Parse, ParsingDisplay, Tokens,
 };
 pub mod call;
 pub mod if_expr;
 pub mod precedence;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, ParseTokensDisplay)]
 pub enum Expression {
     Lit(Literal),
     Binary(Binary),
@@ -86,7 +88,7 @@ fn parse_expr(
         token => Ok(left),
     }
 }
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, ParseTokensDisplay)]
 pub struct Binary {
     pub left: Box<Expression>,
     pub operator: Operator,
@@ -111,6 +113,26 @@ pub enum Operator {
     Multiply,
     Divide,
     Equal,
+}
+impl ParsingDisplay for Operator {
+    fn display(&self) -> String
+    where
+        Self: Sized,
+    {
+        match self {
+            Self::Plus => "+".into(),
+            Self::Minus => "-".into(),
+            Self::Multiply => "*".into(),
+            Self::Divide => "/".into(),
+            Self::Equal => "=".into(),
+        }
+    }
+    fn placeholder() -> String
+    where
+        Self: Sized,
+    {
+        "<operator>".into()
+    }
 }
 impl Parse for Operator {
     fn parse(input: &mut Tokens) -> Result<Self, Box<dyn std::error::Error>> {

@@ -12,6 +12,11 @@ mod parse_tokens;
 pub fn parse_tokens(input: TokenStream) -> TokenStream {
     parse_tokens::parse_tokens(input)
 }
+mod parse_tokens_display;
+#[proc_macro_derive(ParseTokensDisplay)]
+pub fn parse_tokens_display(input: TokenStream) -> TokenStream {
+    parse_tokens_display::parse_tokens_display(input)
+}
 mod ast_test_gen;
 #[proc_macro]
 pub fn ast_test_gen(input: TokenStream) -> TokenStream {

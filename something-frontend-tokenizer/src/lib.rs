@@ -8,12 +8,14 @@ pub struct Tokenizer<'a> {
 
 pub mod delimiter;
 pub mod ident;
+pub mod list;
 pub mod lit;
 pub mod tokens;
+pub mod traits;
 use ident::*;
 use lit::*;
-pub use tokens::Parse;
 use tokens::*;
+pub use traits::{Parse, ParsingDisplay};
 #[derive(Debug, Clone)]
 pub struct Tokens(pub Vec<Token>, pub usize);
 impl From<Vec<Token>> for Tokens {
@@ -44,6 +46,7 @@ impl Tokens {
     pub fn parse<T>(&mut self) -> Result<T, Box<dyn Error>>
     where
         T: Parse,
+        T: Clone + std::fmt::Debug + Clone,
     {
         T::parse(self)
     }

@@ -1,11 +1,11 @@
-use something_dev_tools::ParseTokens;
+use something_dev_tools::{ParseTokens, ParseTokensDisplay};
 use something_frontend_tokenizer::{ident::Ident, tokens, Parse};
 
 use crate::{delimiter::Parentheses, punctuated::Punctuated};
 
 use super::Expression;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, ParseTokensDisplay)]
 pub struct Call {
     pub ident: Ident,
     pub args: Parentheses<Punctuated<Expression, tokens::Comma>>,

@@ -1,5 +1,7 @@
+use something_frontend_tokenizer::Parse;
+
 use super::super::prelude::*;
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, ParseTokensDisplay)]
 pub struct If {
     if_token: tokens::If,
     predicate: Box<Expression>,

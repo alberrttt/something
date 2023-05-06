@@ -3,6 +3,15 @@
 version = 3
 
 [[package]]
+name = "casey"
+version = "0.3.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fabe85130dda9cf267715582ce6cf1ab581c8dfe3cb33f7065fee0f14e3fea14"
+dependencies = [
+ "syn 1.0.109",
+]
+
+[[package]]
 name = "proc-macro2"
 version = "1.0.56"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -32,15 +41,16 @@ dependencies = [
 name = "something-dev-tools"
 version = "0.1.0"
 dependencies = [
+ "proc-macro2",
  "quote",
- "syn",
+ "syn 2.0.15",
 ]
 
 [[package]]
 name = "something-frontend"
 version = "0.1.0"
 dependencies = [
- "something-dev-tools",
+ "something-ast",
  "something-frontend-tokenizer",
 ]
 
@@ -48,7 +58,19 @@ dependencies = [
 name = "something-frontend-tokenizer"
 version = "0.1.0"
 dependencies = [
+ "casey",
  "something-dev-tools",
+]
+
+[[package]]
+name = "syn"
+version = "1.0.109"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "72b64191b275b66ffe2469e8af2c1cfe3bafa67b529ead792a6d0160888b4237"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "unicode-ident",
 ]
 
 [[package]]
