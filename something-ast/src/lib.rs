@@ -1,7 +1,8 @@
 use something_dev_tools::{ParseTokens, ParseTokensDisplay};
-
+use something_frontend_tokenizer::list::List;
+#[derive(Debug, Clone, ParseTokens, ParseTokensDisplay)]
 pub struct Ast {
-    pub nodes: Vec<Node>,
+    pub nodes: List<Node>,
 }
 #[derive(Debug, ParseTokens, Clone, ParseTokensDisplay)]
 pub enum Node {
