@@ -22,3 +22,8 @@ mod ast_test_gen;
 pub fn ast_test_gen(input: TokenStream) -> TokenStream {
     ast_test_gen::ast_test_gen(input)
 }
+mod tuple_parse_impl;
+#[proc_macro]
+pub fn tuple_parse_impl(input: TokenStream) -> TokenStream {
+    tuple_parse_impl::tuple_parse_impl(input)
+}

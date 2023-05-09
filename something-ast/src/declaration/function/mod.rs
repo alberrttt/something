@@ -11,7 +11,7 @@ pub struct FunctionDeclaration {
     pub modifiers: Option<Attribute>,
     pub fn_token: tokens::Fn,
     pub name: Ident,
-    pub params: Parentheses<List<Ident>>,
+    pub params: Parentheses<List<(Ident, tokens::Colon, Ident)>>,
     pub body: Braces<List<Node>>,
     pub return_type: Option<ReturnType>,
 }
@@ -53,19 +53,23 @@ impl ParsingDisplay for FunctionDeclaration {
 impl Parse for FunctionDeclaration {
     fn parse(input: &mut Tokens) -> Result<Self, Box<dyn std::error::Error>> {
         let modifiers = input.step(|input| input.parse()).ok();
-        let fn_token = input.parse()?;
-        let name = input.parse()?;
-        let params = input.parse()?;
-        let body = input.parse()?;
-        let return_type = (input.parse()).ok();
-        Ok(Self {
-            modifiers,
-            fn_token,
-            name,
-            params,
-            body,
-            return_type,
-        })
+        let fn_token = input.parse();
+        if let Ok(fn_token) = fn_token {
+            let name = input.parse().unwrap();
+            let params = input.parse().unwrap();
+            let body = input.parse().unwrap();
+            let return_type = (input.parse()).ok();
+            Ok(Self {
+                modifiers,
+                fn_token,
+                name,
+                params,
+                body,
+                return_type,
+            })
+        } else {
+            Err(fn_token.err().unwrap())
+        }
     }
 }
 pub mod return_type;

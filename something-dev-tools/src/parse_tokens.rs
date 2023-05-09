@@ -26,7 +26,10 @@ pub fn parse_tokens(input: TokenStream) -> TokenStream {
                         quote! {
                             match input.step(|input| Parse::parse(input)) {
                                 Ok(variant) => return Ok(#name::#variant_ident(variant, #(#create),*)),
-                                Err(x) => err = x,
+                                Err(x) => {
+                                    println!("{}", x.to_string());
+                                    err = x;
+                                },
                             }
                         }
                     }

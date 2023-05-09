@@ -2,7 +2,7 @@ use something_ast::{declaration::FunctionDeclaration, expression::Expression, As
 use something_frontend_tokenizer::{Parse, ParsingDisplay};
 
 fn main() {
-    let mut tokens = something_frontend_tokenizer::Tokenizer::new(include_str!("./cases/fn.txt"))
+    let mut tokens = something_frontend_tokenizer::Tokenizer::new(include_str!("./main.txt"))
         .tokens()
         .unwrap();
     let parsed = Ast::parse(&mut tokens).unwrap();

@@ -151,11 +151,7 @@ pub trait Token__: std::fmt::Debug {
     where
         Self: Sized;
 }
-impl Parse for () {
-    fn parse(input: &mut Tokens) -> Result<Self, Box<dyn Error>> {
-        Ok(())
-    }
-}
+
 impl ParsingDisplay for () {
     fn display(&self) -> String
     where
