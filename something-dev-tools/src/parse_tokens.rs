@@ -27,7 +27,6 @@ pub fn parse_tokens(input: TokenStream) -> TokenStream {
                             match input.step(|input| Parse::parse(input)) {
                                 Ok(variant) => return Ok(#name::#variant_ident(variant, #(#create),*)),
                                 Err(x) => {
-                                    println!("{}", x.to_string());
                                     err = x;
                                 },
                             }
@@ -66,8 +65,9 @@ pub fn parse_tokens(input: TokenStream) -> TokenStream {
         }
         Data::Struct(struct_data) => {
             let name = derive.ident;
-
-            let variants = struct_data.fields.iter().map(|f| {
+            let mut iter = struct_data.fields.iter();
+            let variant = iter.next().unwrap().ident.as_ref().unwrap();
+            let variants = iter.map(|f| {
                 let ident = f.ident.as_ref().expect("unnamed fields unsupported");
                 if let Type::Tuple(typetuple) = &f.ty {
                     if typetuple.elems.is_empty() {
@@ -89,7 +89,16 @@ pub fn parse_tokens(input: TokenStream) -> TokenStream {
                     use super::#name;
                     impl Parse for #name {
                         fn parse(input: &mut Tokens) -> Result<Self, Box<dyn std::error::Error>> {
-                            Ok(Self {#(#variants)*})
+                            let tmp = input.step(|input| Parse::parse(input));
+                            match tmp {
+                                Ok(tmp) => {
+                                    Ok(Self {
+                                        #variant: tmp,
+                                        #(#variants)*
+                                    })
+                                }
+                                Err(err) => Err(err),
+                            }
                         }
                     }
 

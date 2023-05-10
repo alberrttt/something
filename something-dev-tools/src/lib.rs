@@ -18,9 +18,9 @@ pub fn parse_tokens_display(input: TokenStream) -> TokenStream {
     parse_tokens_display::parse_tokens_display(input)
 }
 mod ast_test_gen;
-#[proc_macro]
-pub fn ast_test_gen(input: TokenStream) -> TokenStream {
-    ast_test_gen::ast_test_gen(input)
+#[proc_macro_attribute]
+pub fn ast_test_gen(attr: TokenStream, item: TokenStream) -> TokenStream {
+    ast_test_gen::ast_test_gen(attr, item)
 }
 mod tuple_parse_impl;
 #[proc_macro]

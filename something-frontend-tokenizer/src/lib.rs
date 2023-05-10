@@ -31,6 +31,12 @@ impl IntoIterator for Tokens {
         self.0.into_iter()
     }
 }
+impl From<&str> for Tokens {
+    fn from(tokens: &str) -> Self {
+        let mut tokenizer = Tokenizer::new(tokens);
+        tokenizer.tokens().unwrap()
+    }
+}
 impl Display for Tokens {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "[")?;
