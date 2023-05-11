@@ -94,6 +94,7 @@ impl Tokens {
     pub fn peek(&self) -> Option<&Token> {
         self.0.get(self.1)
     }
+
     pub fn peek_n(&self, n: isize) -> Option<&Token> {
         let i: usize = ((self.1 as isize) + n).try_into().unwrap();
         self.0.get(i)

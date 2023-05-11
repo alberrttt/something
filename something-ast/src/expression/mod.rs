@@ -1,4 +1,4 @@
-use std::fmt::Display;
+use std::{backtrace, fmt::Display};
 
 use something_dev_tools::{ParseTokens, ParseTokensDisplay};
 use something_frontend_tokenizer::{
@@ -13,6 +13,7 @@ pub enum Expression {
     Lit(Literal),
     Binary(Binary),
     Call(Call),
+    Ident(Ident),
     Grouping(Parentheses<Box<Expression>>),
     If(if_expr::If),
 }
@@ -30,12 +31,25 @@ impl Parse for Expression {
         };
         parse_expr(
             match tmp {
+                Token::If(if_token) => {
+                    let tmp = if_expr::If::parse(input)?;
+                    let tmp = Ok(Expression::If(tmp));
+                    tmp
+                }
+
                 Token::Lit(lit) => {
                     input.advance();
-                    Self::Lit(lit)
+                    Ok(Self::Lit(lit))
                 }
-                Token::Ident(ident) => Expression::Call(Call::parse(input)?),
-                x => panic!("Expected a token to start an expression, but got {:?}", x),
+                Token::Ident(ident) => {
+                    if let Some(Token::Parentheses(_)) = input.peek1() {
+                        return Ok(Expression::Call(Call::parse(input)?));
+                    }
+                    Ok(Expression::Ident(ident))
+                }
+                x => {
+                    Err(format!("Expected a token to start an expression, but got {:?}", x).into())
+                }
             },
             input,
         )
@@ -47,9 +61,10 @@ impl Parse for Box<Expression> {
     }
 }
 fn parse_expr(
-    left: Expression,
+    left: Result<Expression, Box<dyn std::error::Error>>,
     input: &mut Tokens,
 ) -> Result<Expression, Box<dyn std::error::Error>> {
+    let left = left?;
     let token = match input.peek() {
         Some(token) => token.clone(),
         _ => {
@@ -73,11 +88,11 @@ fn parse_expr(
             Ok(operator) => {
                 let right = Literal::parse(input).expect("Expected Expression");
                 parse_expr(
-                    Expression::Binary(Binary {
+                    Ok(Expression::Binary(Binary {
                         left: Box::new(left),
                         operator,
                         right: Box::new(Expression::Lit(right)),
-                    }),
+                    })),
                     input,
                 )
             }

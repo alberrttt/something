@@ -10,8 +10,9 @@ pub struct If {
 impl Parse for If {
     fn parse(input: &mut Tokens) -> Result<Self, Box<dyn std::error::Error>> {
         let if_token = input.parse()?;
-        let predicate = input.parse()?;
-        let then_branch = input.parse()?;
+        let predicate = input.parse().unwrap();
+        let then_branch = input.parse().unwrap();
+
         Ok(Self {
             if_token,
             predicate,

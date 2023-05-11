@@ -58,7 +58,14 @@ impl Parse for FunctionDeclaration {
             let name = input.parse().unwrap();
             let params = input.parse().unwrap();
             let body = input.parse().unwrap();
-            let return_type = (input.parse()).ok();
+            let return_type = if let Some(return_type) = input.peek() {
+                match return_type {
+                    Token::RightArrow(_) => Some(input.parse().unwrap()),
+                    _ => None,
+                }
+            } else {
+                None
+            };
             Ok(Self {
                 modifiers,
                 fn_token,
