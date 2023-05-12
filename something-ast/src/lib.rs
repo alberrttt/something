@@ -1,3 +1,4 @@
+use prelude::Declaration;
 use something_dev_tools::{ParseTokens, ParseTokensDisplay};
 use something_frontend_tokenizer::list::List;
 #[derive(Debug, Clone, ParseTokens, ParseTokensDisplay)]
@@ -7,6 +8,7 @@ pub struct Ast {
 #[derive(Debug, ParseTokens, Clone, ParseTokensDisplay)]
 pub enum Node {
     Statement(statement::Statement),
+    Declaration(Declaration),
 }
 pub mod attribute;
 pub mod declaration;

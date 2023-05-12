@@ -35,6 +35,15 @@ fn expr_test() {
 
     dbg!(Expression::parse(&mut tokens));
 }
+#[test]
+fn if_expr_test() {
+    let mut tokens = Tokenizer::new(include_str!("../cases/if.txt"))
+        .tokens()
+        .unwrap();
+    dbg!(tokens.peek());
+
+    dbg!(Expression::parse(&mut tokens));
+}
 mod punctuated {
     use something_ast::punctuated::Punctuated;
     use something_dev_tools::tokens;

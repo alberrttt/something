@@ -32,8 +32,9 @@ impl Parse for Expression {
         parse_expr(
             match tmp {
                 Token::If(if_token) => {
-                    let tmp = if_expr::If::parse(input)?;
+                    let tmp = if_expr::If::parse(input).unwrap();
                     let tmp = Ok(Expression::If(tmp));
+
                     tmp
                 }
 
@@ -45,6 +46,7 @@ impl Parse for Expression {
                     if let Some(Token::Parentheses(_)) = input.peek1() {
                         return Ok(Expression::Call(Call::parse(input)?));
                     }
+                    input.advance();
                     Ok(Expression::Ident(ident))
                 }
                 x => {

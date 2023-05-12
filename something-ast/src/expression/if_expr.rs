@@ -1,4 +1,4 @@
-use something_frontend_tokenizer::Parse;
+use something_frontend_tokenizer::{list::List, Parse};
 
 use super::super::prelude::*;
 #[derive(Debug, Clone, ParseTokensDisplay)]
@@ -6,6 +6,10 @@ pub struct If {
     if_token: tokens::If,
     predicate: Box<Expression>,
     then_branch: Box<Statement>,
+}
+pub enum ThenBlock {
+    Statement(Statement),
+    Block(Braces<List<Node>>),
 }
 impl Parse for If {
     fn parse(input: &mut Tokens) -> Result<Self, Box<dyn std::error::Error>> {

@@ -1,5 +1,5 @@
 use super::super::prelude::*;
-#[derive(Debug, ParseTokensDisplay, ParseTokens, Clone)]
+#[derive(Debug, ParseTokensDisplay, Clone)]
 pub struct VariableDeclaration {
     pub let_token: tokens::Let,
     pub name: Ident,

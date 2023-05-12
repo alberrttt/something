@@ -42,11 +42,17 @@ pub fn calculate_display(derive: &DeriveInput) -> proc_macro2::TokenStream {
                 use std::fmt::Write;
             };
 
-            s.fields.iter().for_each(|f| {
-                let name = &f.ident;
-                stream.append_all(quote::quote! {
-                    write!(s, "{} ", &self.#name.display());
-                })
+            s.fields.iter().enumerate().for_each(|(i, f)| {
+                if let Some(name) = &f.ident {
+                    stream.append_all(quote::quote! {
+                        write!(s, "{} ", &self.#name.display());
+                    })
+                } else {
+                    let index = syn::Index::from(i);
+                    stream.append_all(quote::quote! {
+                        write!(s, "{} ", &self.#index.display());
+                    })
+                }
             });
             stream
         }
@@ -63,7 +69,7 @@ pub fn calculate_display(derive: &DeriveInput) -> proc_macro2::TokenStream {
                         .map(|(i, f)| {
                             let ident = format_ident!("__{}", i);
                             quote::quote! {
-                                write!(s, "{} ", #ident.display());
+                                write!(s, "{} ", #ident.display()).unwrap();
                             }
                         })
                         .collect::<Vec<_>>();

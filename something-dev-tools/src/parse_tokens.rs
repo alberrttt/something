@@ -1,7 +1,8 @@
 use proc_macro::TokenStream;
+use proc_macro2::Ident;
 use quote::{format_ident, quote, ToTokens};
 
-use syn::{parse_macro_input, token::Token, Data, DeriveInput, Type};
+use syn::{parse_macro_input, token::Token, Data, DataStruct, DeriveInput, Type};
 pub fn parse_tokens(input: TokenStream) -> TokenStream {
     let derive = parse_macro_input!(input as DeriveInput);
 
@@ -65,20 +66,11 @@ pub fn parse_tokens(input: TokenStream) -> TokenStream {
         }
         Data::Struct(struct_data) => {
             let name = derive.ident;
-            let mut iter = struct_data.fields.iter();
-            let variant = iter.next().unwrap().ident.as_ref().unwrap();
-            let variants = iter.map(|f| {
-                let ident = f.ident.as_ref().expect("unnamed fields unsupported");
-                if let Type::Tuple(typetuple) = &f.ty {
-                    if typetuple.elems.is_empty() {
-                        quote! {#ident: (),}
-                    } else {
-                        panic!("only empty types r supported")
-                    }
-                } else {
-                    quote! {#ident: Parse::parse(input)?,}
-                }
-            });
+            let parse_impl = if struct_data.fields.iter().any(|f| f.ident.is_some()) {
+                for_struct_w_named_fields(struct_data, &name)
+            } else {
+                for_struct_w_unamed_fields(struct_data, &name)
+            };
             let ident = format_ident!("__{}", name.to_string().to_lowercase());
 
             return quote! {
@@ -87,21 +79,12 @@ pub fn parse_tokens(input: TokenStream) -> TokenStream {
                     use something_frontend_tokenizer::Tokens;
                     use std::fmt::{Display, Formatter};
                     use super::#name;
-                    impl Parse for #name {
+                    #parse_impl
+                    impl Parse for Box<#name> {
                         fn parse(input: &mut Tokens) -> Result<Self, Box<dyn std::error::Error>> {
-                            let tmp = input.step(|input| Parse::parse(input));
-                            match tmp {
-                                Ok(tmp) => {
-                                    Ok(Self {
-                                        #variant: tmp,
-                                        #(#variants)*
-                                    })
-                                }
-                                Err(err) => Err(err),
-                            }
+                            Ok(Box::new(#name::parse(input)?))
                         }
                     }
-
                 }
                 pub use #ident::*;
 
@@ -111,4 +94,62 @@ pub fn parse_tokens(input: TokenStream) -> TokenStream {
         Data::Union(enum_data) => panic!("unions unsupported"),
     }
     panic!()
+}
+fn for_struct_w_named_fields(struct_data: DataStruct, name: &Ident) -> proc_macro2::TokenStream {
+    let mut iter = struct_data.fields.iter();
+    let variant = iter.next().unwrap();
+    let variants = iter.skip(1).map(|f| {
+        let ident = f.ident.as_ref().expect("unnamed fields unsupported");
+        if let Type::Tuple(typetuple) = &f.ty {
+            if typetuple.elems.is_empty() {
+                quote! {#ident: (),}
+            } else {
+                panic!("only empty types r supported")
+            }
+        } else {
+            quote! {#ident: Parse::parse(input)?,}
+        }
+    });
+
+    quote! {
+
+            impl Parse for #name {
+                fn parse(input: &mut Tokens) -> Result<Self, Box<dyn std::error::Error>> {
+                    let tmp = input.step(|input| Parse::parse(input));
+                    match tmp {
+                        Ok(tmp) => {
+                            Ok(Self {
+                                #variant: tmp,
+                                #(#variants)*
+                            })
+                        }
+                        Err(err) => Err(err),
+                    }
+                }
+            }
+
+    }
+}
+fn for_struct_w_unamed_fields(struct_data: DataStruct, name: &Ident) -> proc_macro2::TokenStream {
+    let mut fields = struct_data.fields.iter().skip(1).map(|field| {
+        quote! {
+            Parse::parse(input).unwrap()
+        }
+    });
+    quote! {
+
+
+            impl Parse for #name {
+                fn parse(input: &mut Tokens) -> Result<Self, Box<dyn std::error::Error>> {
+                    let tmp = input.step(|input| Parse::parse(input));
+                    match tmp {
+                        Ok(tmp) => {
+                            Ok(Self(tmp, #(#fields),*))
+                        }
+                        Err(err) => Err(err),
+                    }
+                }
+            }
+
+    }
 }
