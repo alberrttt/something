@@ -124,7 +124,11 @@ DefineTokens!(
         [#] => Hash,
         [->] => RightArrow,
         [<-] => LeftArrow,
-        [$] => Dollar
+        [$] => Dollar,
+        [+=] => PlusEqual,
+        [/=] => SlashEqual,
+        [-=] => MinusEqual,
+        [*=] => StarEqual
     ], [
         Eof,
         Whitespace

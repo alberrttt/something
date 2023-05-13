@@ -98,8 +98,9 @@ pub fn parse_tokens(input: TokenStream) -> TokenStream {
 fn for_struct_w_named_fields(struct_data: DataStruct, name: &Ident) -> proc_macro2::TokenStream {
     let mut iter = struct_data.fields.iter();
     let variant = iter.next().unwrap();
-    let variants = iter.skip(1).map(|f| {
+    let variants = iter.map(|f| {
         let ident = f.ident.as_ref().expect("unnamed fields unsupported");
+        dbg!(ident);
         if let Type::Tuple(typetuple) = &f.ty {
             if typetuple.elems.is_empty() {
                 quote! {#ident: (),}
@@ -110,7 +111,7 @@ fn for_struct_w_named_fields(struct_data: DataStruct, name: &Ident) -> proc_macr
             quote! {#ident: Parse::parse(input)?,}
         }
     });
-
+    let variant_identifier = &variant.ident;
     quote! {
 
             impl Parse for #name {
@@ -119,7 +120,7 @@ fn for_struct_w_named_fields(struct_data: DataStruct, name: &Ident) -> proc_macr
                     match tmp {
                         Ok(tmp) => {
                             Ok(Self {
-                                #variant: tmp,
+                                #variant_identifier: tmp,
                                 #(#variants)*
                             })
                         }

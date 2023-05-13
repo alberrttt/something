@@ -237,16 +237,37 @@ impl<'a> Tokenizer<'a> {
             ',' => Ok(Token!(self, Comma)),
             '#' => Ok(Token!(self, Hash)),
             ':' => Ok(Token!(self, Colon)),
-            '+' => Ok(Token!(self, Plus)),
+            '+' => {
+                if self.try_consume('=').is_ok() {
+                    Ok(Token!(self, PlusEqual))
+                } else {
+                    Ok(Token!(self, Plus))
+                }
+            }
             '-' => {
                 if self.try_consume('>').is_ok() {
                     Ok(Token!(self, RightArrow))
+                } else if self.try_consume('=').is_ok() {
+                    Ok(Token!(self, MinusEqual))
                 } else {
                     Ok(Token!(self, Minus))
                 }
             }
-            '*' => Ok(Token!(self, Star)),
-            '/' => Ok(Token!(self, Slash)),
+            '*' => {
+                if self.try_consume('=').is_ok() {
+                    Ok(Token!(self, StarEqual))
+                } else {
+                    Ok(Token!(self, Star))
+                }
+            }
+            '/' => {
+                if self.try_consume('=').is_ok() {
+                    Ok(Token!(self, SlashEqual))
+                } else {
+                    Ok(Token!(self, Slash))
+                }
+            }
+
             x if x.is_whitespace() => Ok(Token!(self, Whitespace)),
             x => Err(format!("Error with `{}`", x.to_string()).into()),
         }

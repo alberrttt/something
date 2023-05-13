@@ -5,7 +5,7 @@ use super::super::prelude::*;
 pub struct If {
     if_token: tokens::If,
     predicate: Box<Expression>,
-    then_branch: Box<Statement>,
+    then_branch: Box<Expression>,
 }
 pub enum ThenBlock {
     Statement(Statement),

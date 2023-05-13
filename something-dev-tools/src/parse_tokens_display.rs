@@ -45,12 +45,12 @@ pub fn calculate_display(derive: &DeriveInput) -> proc_macro2::TokenStream {
             s.fields.iter().enumerate().for_each(|(i, f)| {
                 if let Some(name) = &f.ident {
                     stream.append_all(quote::quote! {
-                        write!(s, "{} ", &self.#name.display());
+                        write!(s, "{} ", &self.#name.display()).unwrap();
                     })
                 } else {
                     let index = syn::Index::from(i);
                     stream.append_all(quote::quote! {
-                        write!(s, "{} ", &self.#index.display());
+                        write!(s, "{} ", &self.#index.display()).unwrap();
                     })
                 }
             });

@@ -4,10 +4,10 @@ use something_dev_tools::{ParseTokens, ParseTokensDisplay};
 use something_frontend_tokenizer::{
     delimiter::Delimiter, ident::Ident, lit::Literal, tokens::Token, Parse, ParsingDisplay, Tokens,
 };
+pub mod block;
 pub mod call;
 pub mod if_expr;
 pub mod precedence;
-
 #[derive(Debug, Clone, ParseTokensDisplay)]
 pub enum Expression {
     Lit(Literal),
@@ -16,6 +16,7 @@ pub enum Expression {
     Ident(Ident),
     Grouping(Parentheses<Box<Expression>>),
     If(if_expr::If),
+    Block(block::Block),
 }
 
 use crate::delimiter::Parentheses;
@@ -37,17 +38,22 @@ impl Parse for Expression {
 
                     tmp
                 }
+                Token::Braces(_) => {
+                    let tmp = block::Block::parse(input).unwrap();
 
+                    Ok(Expression::Block(tmp))
+                }
                 Token::Lit(lit) => {
                     input.advance();
                     Ok(Self::Lit(lit))
                 }
                 Token::Ident(ident) => {
                     if let Some(Token::Parentheses(_)) = input.peek1() {
-                        return Ok(Expression::Call(Call::parse(input)?));
+                        Ok(Expression::Call(Call::parse(input)?))
+                    } else {
+                        input.advance();
+                        Ok(Expression::Ident(ident))
                     }
-                    input.advance();
-                    Ok(Expression::Ident(ident))
                 }
                 x => {
                     Err(format!("Expected a token to start an expression, but got {:?}", x).into())
@@ -74,7 +80,14 @@ fn parse_expr(
         }
     };
     match token {
-        Token::Plus(_) | Token::Minus(_) => match Operator::parse(input) {
+        Token::Plus(_)
+        | Token::Minus(_)
+        | Token::Greater(_)
+        | Token::Less(_)
+        | Token::GreaterEqual(_)
+        | Token::LessEqual(_)
+        | Token::EqualEqual(_)
+        | Token::Equal(_) => match Operator::parse(input) {
             Ok(operator) => {
                 let right = Expression::parse(input).expect("Expected Expression");
                 Ok(Expression::Binary(Binary {
@@ -105,11 +118,36 @@ fn parse_expr(
         token => Ok(left),
     }
 }
-#[derive(Debug, Clone, ParseTokensDisplay)]
+#[derive(Debug, Clone)]
 pub struct Binary {
     pub left: Box<Expression>,
     pub operator: Operator,
     pub right: Box<Expression>,
+}
+impl ParsingDisplay for Binary {
+    fn display(&self) -> String
+    where
+        Self: Sized,
+    {
+        format!(
+            "{} {} {}",
+            self.left.display(),
+            self.operator.display(),
+            self.right.display()
+        )
+    }
+
+    fn placeholder() -> String
+    where
+        Self: Sized,
+    {
+        format!(
+            "{} {} {}",
+            Expression::placeholder(),
+            Operator::placeholder(),
+            Expression::placeholder()
+        )
+    }
 }
 impl From<Binary> for Expression {
     fn from(binary: Binary) -> Self {
@@ -130,6 +168,15 @@ pub enum Operator {
     Multiply,
     Divide,
     Equal,
+    Greater,
+    Less,
+    GreaterEqual,
+    LessEqual,
+    EqualEqual,
+    PlusEqual,
+    MinusEqual,
+    MultiplyEqual,
+    DivideEqual,
 }
 impl ParsingDisplay for Operator {
     fn display(&self) -> String
@@ -141,7 +188,16 @@ impl ParsingDisplay for Operator {
             Self::Minus => "-".into(),
             Self::Multiply => "*".into(),
             Self::Divide => "/".into(),
+            Self::EqualEqual => "==".into(),
             Self::Equal => "=".into(),
+            Self::Greater => ">".into(),
+            Self::Less => "<".into(),
+            Self::GreaterEqual => ">=".into(),
+            Self::LessEqual => "<=".into(),
+            Self::PlusEqual => "+=".into(),
+            Self::MinusEqual => "-=".into(),
+            Self::MultiplyEqual => "*=".into(),
+            Self::DivideEqual => "/=".into(),
         }
     }
     fn placeholder() -> String
@@ -159,7 +215,17 @@ impl Parse for Operator {
                 Token::Minus(_) => Self::Minus,
                 Token::Star(_) => Self::Multiply,
                 Token::Slash(_) => Self::Divide,
+                Token::EqualEqual(_) => Self::EqualEqual,
                 Token::Equal(_) => Self::Equal,
+                Token::Greater(_) => Self::Greater,
+                Token::Less(_) => Self::Less,
+                Token::GreaterEqual(_) => Self::GreaterEqual,
+                Token::LessEqual(_) => Self::LessEqual,
+                Token::PlusEqual(_) => Self::PlusEqual,
+                Token::MinusEqual(_) => Self::MinusEqual,
+                Token::StarEqual(_) => Self::MultiplyEqual,
+                Token::SlashEqual(_) => Self::DivideEqual,
+
                 _ => {
                     return Err(format!("Expected Operator, got {:?}", token.clone()).into());
                 }

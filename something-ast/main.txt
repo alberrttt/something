@@ -1,5 +1,8 @@
-$[]: fn main(x: int y: string z: bool) { 
-    if x {
-
+fn main(x: int y: string z: bool) { 
+    
+    if x > 8 {
+        let tmp = x * 2 + 5;
+        tmp += 1;
+        print("number is {}", x);
     };
 } -> ptr_size

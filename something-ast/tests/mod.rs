@@ -23,9 +23,25 @@ gen_tests![
     "var" = var_test,
     "stmt" = stmt_test,
     "call" = call_test,
-    "lit" = lit_test,
-    "call_binary" = call_binary_test
+    "lit" = lit_test
 ];
+#[test]
+fn binary_test() {
+    let mut tokens = Tokenizer::new(include_str!("../cases/binary.txt"))
+        .tokens()
+        .unwrap();
+
+    dbg!(Expression::parse(&mut tokens).unwrap());
+}
+#[test]
+fn call_binary_test() {
+    let mut tokens = Tokenizer::new(include_str!("../cases/call_binary.txt"))
+        .tokens()
+        .unwrap();
+    dbg!(tokens.peek());
+
+    dbg!(Expression::parse(&mut tokens).unwrap().display());
+}
 #[test]
 fn expr_test() {
     let mut tokens = Tokenizer::new(include_str!("../cases/expr.txt"))

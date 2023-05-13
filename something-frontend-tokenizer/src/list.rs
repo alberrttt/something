@@ -2,7 +2,7 @@ use std::fmt::Display;
 
 use crate::{traits::ParsingDisplay, Parse};
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub struct List<T>
 where
     T: Parse,

@@ -1,4 +1,4 @@
-$[]: fn main(x: int y: string z: bool) {
+fn main(x: int y: string z: bool) {
     1;
     print("hello world");
-}
+} -> ()
