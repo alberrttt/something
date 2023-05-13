@@ -101,12 +101,12 @@ fn parse_expr(
         },
         Token::Star(_) | Token::Slash(_) => match Operator::parse(input) {
             Ok(operator) => {
-                let right = Literal::parse(input).expect("Expected Expression");
+                let right = Expression::parse(input).expect("Expected Expression");
                 parse_expr(
                     Ok(Expression::Binary(Binary {
                         left: Box::new(left),
                         operator,
-                        right: Box::new(Expression::Lit(right)),
+                        right: Box::new(right),
                     })),
                     input,
                 )
