@@ -25,6 +25,7 @@ macro_rules! create_token {
                 stringify!($name).into()
             }
         }
+
         impl Parse for $name {
             fn parse(input: &mut Tokens) -> Result<Self, Box<dyn Error>> {
                 let token = input.advance().clone();
@@ -41,7 +42,7 @@ use super::delimiter::*;
 use super::ident::*;
 macro_rules! DefineTokens {
     ([$($keyword:ident),+],[$([$t:tt] => $token:ident),+],[$($misc:ident),+]) => {
-        #[derive(Debug, Clone)]
+        #[derive( Clone)]
         pub enum Token{
             Ident(Ident),
             Lit(crate::Literal),
@@ -56,6 +57,41 @@ macro_rules! DefineTokens {
             ClosingBracket {span: Span},
 
         }
+        impl std::fmt::Display for Token {
+            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                match self {
+                    Token::Ident(i) => write!(f, "{}", i),
+                    Token::Lit(l) => write!(f, "{}", l),
+                    $(Token::$keyword(k) => write!(f, "{}", k),)+
+                    $(Token::$token(t) => write!(f, "{}", t),)+
+                    $(Token::$misc(m) => write!(f, "{}", m),)+
+                    Token::Parentheses(_) => write!(f, "()"),
+                    Token::Braces(_) => write!(f, "{{}}"),
+                    Token::Brackets(_) => write!(f, "[]"),
+                    Token::ClosingParen {..} => write!(f, ")"),
+                    Token::ClosingBrace {..} => write!(f, "}}"),
+                    Token::ClosingBracket {..} => write!(f, "]"),
+                }
+            }
+        }
+        impl std::fmt::Debug for Token {
+            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                match self {
+                    Token::Ident(i) => write!(f, "{:?}", i),
+                    Token::Lit(l) => write!(f, "{:?}", l),
+                    $(Token::$keyword(k) => write!(f, "{:?}", k),)+
+                    $(Token::$token(t) => write!(f, "{:?}", t),)+
+                    $(Token::$misc(m) => write!(f, "{:?}", m),)+
+                    Token::Parentheses(_) => write!(f, "()"),
+                    Token::Braces(_) => write!(f, "{{}}"),
+                    Token::Brackets(_) => write!(f, "[]"),
+                    Token::ClosingParen {..} => write!(f, ")"),
+                    Token::ClosingBrace {..} => write!(f, "}}"),
+                    Token::ClosingBracket {..} => write!(f, "]"),
+                }
+            }
+        }
+
         $(
             create_token!($keyword);
             impl std::fmt::Display for $keyword {

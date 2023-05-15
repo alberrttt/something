@@ -10,7 +10,7 @@ pub fn parse_tokens(input: TokenStream) -> TokenStream {
         Data::Enum(enum_data) => {
             let name = derive.ident;
 
-            let variants = enum_data.variants.iter().map(|f| {
+            let variants = enum_data.variants.iter().enumerate().map(|(i,f)| {
                 let variant_ident = &f.ident;
                 let fields = &f.fields;
                 match fields {
@@ -20,15 +20,25 @@ pub fn parse_tokens(input: TokenStream) -> TokenStream {
                         let create = fields
                             .iter()
                             .skip(1)
-                            .map(|f| {
+                            .map(|_| {
                                 quote! {input.step(|input| Parse::parse(input)).unwrap()}
                             })
                             .collect::<Vec<_>>();
+                        let err_str = if i == enum_data.variants.len() - 1 {
+                            quote! {
+                                concat!("or ", stringify!(#variant_ident))
+                            }
+                        } else {
+                            quote! {
+                                concat!(stringify!(#variant_ident), ", ")
+                            }
+                        };
                         quote! {
                             match input.step(|input| Parse::parse(input)) {
                                 Ok(variant) => return Ok(#name::#variant_ident(variant, #(#create),*)),
                                 Err(x) => {
-                                    err = x;
+
+                                    err.push_str(#err_str);
                                 },
                             }
                         }
@@ -41,15 +51,17 @@ pub fn parse_tokens(input: TokenStream) -> TokenStream {
 
             return quote! {
                 mod #ident {
+                    use colored::Colorize;
                     use something_frontend_tokenizer::Parse;
                     use something_frontend_tokenizer::Tokens;
                     use std::fmt::{Display, Formatter};
                     use super::#name;
                     impl Parse for #name {
                         fn parse(input: &mut Tokens) -> Result<Self, Box<dyn std::error::Error>> {
-                            let mut err: Box<dyn std::error::Error> = "".into();
+                            let mut err = String::from("Expected ").yellow().to_string();
                             #(#variants)*
-                            Err(err)
+                            err.push_str(format!("\n{} {}","But got:".red(), input.peek().unwrap()).as_str());
+                            Err(err.into())
                         }
                     }
 
@@ -75,6 +87,7 @@ pub fn parse_tokens(input: TokenStream) -> TokenStream {
 
             return quote! {
                 mod #ident {
+                    use colored::Colorize;
                     use something_frontend_tokenizer::Parse;
                     use something_frontend_tokenizer::Tokens;
                     use std::fmt::{Display, Formatter};
