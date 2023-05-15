@@ -33,3 +33,5 @@ impl Parse for Call {
         })
     }
 }
+use something_dev_tools::item_name;
+item_name!(Call, "call");

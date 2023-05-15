@@ -6,3 +6,5 @@ pub struct ReturnType {
     pub arrow: tokens::RightArrow,
     pub ty: Ident,
 }
+use something_dev_tools::item_name;
+item_name!(ReturnType, "return type");

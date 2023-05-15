@@ -7,3 +7,5 @@ pub struct VariableDeclaration {
     pub value: Expression,
     pub semicolon: tokens::Semicolon,
 }
+use something_dev_tools::item_name;
+item_name!(VariableDeclaration, "variable declaration");

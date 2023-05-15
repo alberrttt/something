@@ -56,13 +56,14 @@ pub fn tuple_parse_impl(input: TokenStream) -> TokenStream {
         #(s.push_str(#format_string.as_str());)*
         s
     };
+    let tokens_parsing = tokens.iter().skip(1).collect::<Vec<_>>();
     quote::quote! {
         impl<#(#tokens),*> Parse for (#(#tokens),*)
         where
         #(#tokens: Parse),*
         {
             fn parse(input: &mut Tokens) -> Result<Self, Box<dyn Error>> where Self: Sized {
-                Ok((#(#tokens::parse(input)?),*))
+                Ok((A::parse(input)?, #(#tokens_parsing::parse(input).unwrap()),*))
             }
         }
         impl<#(#tokens),*> ParsingDisplay for (#(#tokens),*)
@@ -73,7 +74,7 @@ pub fn tuple_parse_impl(input: TokenStream) -> TokenStream {
                 #display
             }
             fn placeholder() -> String where Self: Sized {
-                format!(concat!(#(stringify!(#tokens), ": {} ",)*), #(#tokens::placeholder(),)*)
+                format!("{}", concat!(#(concat!(stringify!(#tokens), " ")),*))
             }
         }
     }

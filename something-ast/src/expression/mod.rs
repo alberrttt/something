@@ -1,6 +1,6 @@
 use std::{backtrace, fmt::Display};
 
-use something_dev_tools::{ParseTokens, ParseTokensDisplay};
+use something_dev_tools::{item_name, ParseTokens, ParseTokensDisplay};
 use something_frontend_tokenizer::{
     delimiter::Delimiter, ident::Ident, lit::Literal, tokens::Token, Parse, ParsingDisplay, Tokens,
 };
@@ -18,7 +18,7 @@ pub enum Expression {
     If(if_expr::If),
     Block(block::Block),
 }
-
+item_name!(Expression, "expression");
 use crate::delimiter::Parentheses;
 
 pub use self::call::*;

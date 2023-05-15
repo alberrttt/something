@@ -24,3 +24,5 @@ impl Parse for If {
         })
     }
 }
+use something_dev_tools::item_name;
+item_name!(If, "if");

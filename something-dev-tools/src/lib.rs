@@ -27,3 +27,8 @@ mod tuple_parse_impl;
 pub fn tuple_parse_impl(input: TokenStream) -> TokenStream {
     tuple_parse_impl::tuple_parse_impl(input)
 }
+mod item_name;
+#[proc_macro]
+pub fn item_name(input: TokenStream) -> TokenStream {
+    item_name::item_name(input)
+}

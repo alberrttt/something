@@ -15,5 +15,6 @@ pub struct FunctionDeclaration {
     pub body: Block,
     pub return_type: ReturnType,
 }
-
+use something_dev_tools::item_name;
+item_name!(FunctionDeclaration, "function declaration");
 pub mod return_type;

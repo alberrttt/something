@@ -18,3 +18,5 @@ impl Parse for Block {
         }
     }
 }
+use something_dev_tools::item_name;
+item_name!(Block, "block");
