@@ -1,5 +1,4 @@
-fn main(x: int y: string z: bool) { 
-    
+fn main(int x string y bool z ) { 
     if x > 8 {
         let tmp = x * 2 + 5;
         tmp += 1;

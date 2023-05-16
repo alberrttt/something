@@ -45,6 +45,8 @@ tuple_parse_impl!(A, B, C, D, E);
 tuple_parse_impl!(A, B, C, D);
 tuple_parse_impl!(A, B, C);
 tuple_parse_impl!(A, B);
+
+
 #[test]
 fn test_tuple() {
     let mut tokens = Tokens::from("a b c d e f");

@@ -1,2 +1,7 @@
 [workspace]
-members = ["something-frontend", "something-dev-tools", "something-ast", "something-frontend-tokenizer"]
+members = [
+    "crates/something-frontend",
+    "crates/something-dev-tools",
+    "crates/something-ast",
+    "crates/something-frontend-tokenizer",
+]

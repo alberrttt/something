@@ -22,9 +22,8 @@ impl Debug for Repl {
 use colored::Colorize;
 pub fn repl() {
     println!(
-        "{} {}\nRunning REPL.\nType `quit` to quit",
-        env!("CARGO_PKG_NAME"),
-        env!("CARGO_PKG_VERSION")
+        "{}\nRunning REPL.\nType `quit` to quit\n",
+        format!("{} {}", env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION")).bold()
     );
 
     loop {

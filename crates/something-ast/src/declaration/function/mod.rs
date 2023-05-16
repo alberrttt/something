@@ -11,7 +11,7 @@ pub struct FunctionDeclaration {
     // pub modifiers: Option<Attribute>,
     pub fn_token: tokens::Fn,
     pub name: Ident,
-    pub params: Parentheses<List<(Ident, tokens::Colon, Ident)>>,
+    pub params: Parentheses<List<(Ident, Ident)>>,
     pub body: Block,
     pub return_type: ReturnType,
 }

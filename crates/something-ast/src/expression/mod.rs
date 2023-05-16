@@ -8,7 +8,7 @@ pub mod block;
 pub mod call;
 pub mod if_expr;
 pub mod precedence;
-#[derive(Debug, Clone, ParseTokensDisplay)]
+#[derive(Clone, ParseTokensDisplay)]
 pub enum Expression {
     Lit(Literal),
     Binary(Binary),
@@ -17,6 +17,19 @@ pub enum Expression {
     Grouping(Parentheses<Box<Expression>>),
     If(if_expr::If),
     Block(block::Block),
+}
+impl std::fmt::Debug for Expression {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Lit(arg0) => write!(f, "{:#?}", arg0),
+            Self::Binary(arg0) => write!(f, "{:#?}", arg0),
+            Self::Call(arg0) => write!(f, "{:#?}", arg0),
+            Self::Ident(arg0) => write!(f, "{:#?}", arg0),
+            Self::Grouping(arg0) => write!(f, "{:?}", arg0),
+            Self::If(arg0) => write!(f, "{:#?}", arg0),
+            Self::Block(arg0) => write!(f, "{:#?}", arg0),
+        }
+    }
 }
 item_name!(Expression, "expression");
 use crate::delimiter::Parentheses;
@@ -86,8 +99,23 @@ fn parse_expr(
         | Token::Less(_)
         | Token::GreaterEqual(_)
         | Token::LessEqual(_)
-        | Token::EqualEqual(_)
-        | Token::Equal(_) => match Operator::parse(input) {
+        | Token::EqualEqual(_) => match Operator::parse(input) {
+            Ok(operator) => {
+                let right = Expression::parse(input).expect("Expected Expression");
+                Ok(Expression::Binary(Binary {
+                    left: Box::new(left),
+                    operator,
+                    right: Box::new(right),
+                }))
+            }
+
+            Err(_) => Ok(left),
+        },
+        Token::Equal(_)
+        | Token::PlusEqual(_)
+        | Token::MinusEqual(_)
+        | Token::StarEqual(_)
+        | Token::SlashEqual(_) => match Operator::parse(input) {
             Ok(operator) => {
                 let right = Expression::parse(input).expect("Expected Expression");
                 Ok(Expression::Binary(Binary {
