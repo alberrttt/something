@@ -1,4 +1,4 @@
-fn main(x: int y: string z: bool) {
+fn main(int x string y  bool z) {
     1;
     print("hello world");
 } -> ()

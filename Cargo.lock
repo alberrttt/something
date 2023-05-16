@@ -328,6 +328,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "something-typechecker"
+version = "0.1.0"
+dependencies = [
+ "something-ast",
+ "something-frontend-tokenizer",
+]
+
+[[package]]
 name = "static_assertions"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"

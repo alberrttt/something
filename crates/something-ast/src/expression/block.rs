@@ -3,6 +3,7 @@ use something_frontend_tokenizer::{list::List, Parse, Tokens};
 
 use crate::{
     prelude::{Braces, Statement},
+    traits::Children,
     Node,
 };
 
@@ -16,6 +17,11 @@ impl Parse for Block {
             Ok(tmp) => Ok(Self(tmp)),
             Err(err) => Err(err),
         }
+    }
+}
+impl Children<Node> for Block {
+    fn children(&self) -> std::slice::Iter<Node> {
+        self.0 .1.iter()
     }
 }
 use something_dev_tools::item_name;

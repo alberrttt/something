@@ -4,4 +4,5 @@ members = [
     "crates/something-dev-tools",
     "crates/something-ast",
     "crates/something-frontend-tokenizer",
+    "crates/something-typechecker"
 ]
