@@ -121,7 +121,10 @@ fn for_struct_w_named_fields(struct_data: DataStruct, name: &Ident) -> proc_macr
                 panic!("only empty types r supported")
             }
         } else {
-            quote! {#ident: Parse::parse(input)?,}
+            quote! {#ident: match Parse::parse(input) {Ok(ok) => ok, Err(err)  => {
+                println!("{}", err);
+                panic!()
+            }},}
         }
     });
     let variant_identifier = &variant.ident;

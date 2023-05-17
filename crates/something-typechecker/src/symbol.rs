@@ -1,14 +1,22 @@
 use something_ast::prelude::FunctionDeclaration;
+use something_frontend_tokenizer::ident::Ident;
 
-#[derive(Debug, Clone)]
-pub enum Symbol {
-    Fn { name: String },
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct Symbol {
+    pub name: Ident,
 }
 
 impl From<&FunctionDeclaration> for Symbol {
     fn from(value: &FunctionDeclaration) -> Self {
-        Self::Fn {
-            name: value.name.to_string(),
+        Self {
+            name: value.name.clone(),
+        }
+    }
+}
+impl From<&Ident> for Symbol {
+    fn from(value: &Ident) -> Self {
+        Self {
+            name: value.clone(),
         }
     }
 }

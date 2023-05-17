@@ -171,7 +171,7 @@ DefineTokens!(
     ]
 );
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Default, Hash)]
 pub struct Span {
     pub end: usize,
     pub start: usize,

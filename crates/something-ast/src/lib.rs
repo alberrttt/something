@@ -32,6 +32,12 @@ pub mod traits;
 impl From<&str> for Ast {
     fn from(value: &str) -> Self {
         let mut tokens = something_frontend_tokenizer::Tokens::from(value);
-        Ast::parse(&mut tokens).unwrap()
+        match Ast::parse(&mut tokens) {
+            Ok(ast) => ast,
+            Err(err) => {
+                println!("{}", err);
+                panic!();
+            }
+        }
     }
 }

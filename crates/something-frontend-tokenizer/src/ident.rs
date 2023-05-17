@@ -3,7 +3,7 @@ use crate::Parse;
 use crate::{tokens::Span, Token, Tokens};
 use std::{error::Error, fmt::Display};
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct Ident {
     pub name: String,
     pub span: Span,
