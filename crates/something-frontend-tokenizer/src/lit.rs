@@ -8,7 +8,7 @@ use std::{
     error::Error,
     fmt::{Debug, Display, Formatter},
 };
-#[derive(Clone, PartialEq, PartialOrd)]
+#[derive(Clone, PartialEq, PartialOrd, Eq)]
 pub struct Literal {
     /// discriminant
     pub span: Span,
@@ -98,4 +98,7 @@ pub mod lit_impl {
         Number(f64),
         Boolean(bool),
     }
+}
+impl Eq for lit_impl::Inner {
+    fn assert_receiver_is_total_eq(&self) {}
 }

@@ -5,7 +5,6 @@ use something_ast::{traits::Children, Ast, TopLevelNode};
 use traits::TypeCheck;
 
 pub struct TypeChecker {
-    // fuck? rc is not good
     pub symbols: Vec<Rc<Symbol>>,
     pub fn_decl: HashMap<Rc<Symbol>, Function>,
     pub ast: Ast,

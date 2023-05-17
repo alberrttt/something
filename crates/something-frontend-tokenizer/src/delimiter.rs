@@ -1,6 +1,6 @@
 use crate::Parse;
 use crate::{tokens::Span, Token, Tokenizer, Tokens};
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Delimiter<const Open: char, const Close: char> {
     pub tokens: Vec<Token>,
     pub span: Span,

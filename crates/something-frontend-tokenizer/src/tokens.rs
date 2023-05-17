@@ -6,7 +6,7 @@ use casey::lower;
 use std::{error::Error, fmt::Formatter};
 macro_rules! create_token {
     ($name:ident) => {
-        #[derive(Clone, Debug)]
+        #[derive(Clone, Debug, PartialEq, Eq)]
         pub struct $name {
             pub span: Span,
         }
@@ -42,7 +42,7 @@ use super::delimiter::*;
 use super::ident::*;
 macro_rules! DefineTokens {
     ([$($keyword:ident),+],[$([$t:tt] => $token:ident),+],[$($misc:ident),+]) => {
-        #[derive( Clone)]
+        #[derive( Clone, PartialEq, Eq)]
         pub enum Token{
             Ident(Ident),
             Lit(crate::Literal),
@@ -109,7 +109,7 @@ macro_rules! DefineTokens {
             }
         )+
         $(
-            #[derive(Clone)]
+            #[derive(Clone, PartialEq, Eq)]
             pub struct $misc {
                 pub(crate)span: Span
             }

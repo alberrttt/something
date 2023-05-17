@@ -1,9 +1,17 @@
+use std::rc::Rc;
+
 use crate::symbol::Symbol;
 use something_ast::prelude::{return_type::ReturnType, *};
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone)]
 pub struct Function {
     pub params: Vec<(Type, Symbol)>,
     pub return_type: Type,
+    pub fn_ast: Rc<FunctionDeclaration>,
+}
+impl PartialEq for Function {
+    fn eq(&self, other: &Self) -> bool {
+        self.params == other.params && self.return_type == other.return_type
+    }
 }
 impl From<&FunctionDeclaration> for Function {
     fn from(value: &FunctionDeclaration) -> Self {
@@ -15,6 +23,21 @@ impl From<&FunctionDeclaration> for Function {
                 .map(|(ty, name)| (Type::from(ty.clone()), Symbol::from(name)))
                 .collect(),
             return_type: Type::from(value.return_type.clone()),
+            fn_ast: Rc::new(value.clone()),
+        }
+    }
+}
+impl From<&Rc<FunctionDeclaration>> for Function {
+    fn from(value: &Rc<FunctionDeclaration>) -> Self {
+        Self {
+            params: value
+                .params
+                .1
+                .iter()
+                .map(|(ty, name)| (Type::from(ty.clone()), Symbol::from(name)))
+                .collect(),
+            return_type: Type::from(value.return_type.clone()),
+            fn_ast: value.clone(),
         }
     }
 }
