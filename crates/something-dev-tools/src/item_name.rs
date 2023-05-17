@@ -1,3 +1,4 @@
+use quote::format_ident;
 use syn::parse::Parse;
 use syn::token::Token;
 use syn::Token;
@@ -11,12 +12,22 @@ pub fn item_name(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let ident_name = syn::parse_macro_input!(input as IdentName);
     let ident = &ident_name.0;
     let name = &ident_name.2;
+    let fmtident = format_ident!("__{}", ident);
     quote::quote! {
-        impl #ident {
-            pub fn name() -> &'static str {
-                #name
+
+        mod #fmtident {
+            use super::#ident;
+            use crate::prelude::*;
+            impl Name for #ident {
+                 fn name() -> &'static str {
+                    #name
+                }
+                 fn named(&self) -> &'static str {
+                    #name
+                }
             }
         }
+        pub use #fmtident::*;
     }
     .into()
 }

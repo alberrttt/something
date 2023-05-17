@@ -8,7 +8,7 @@ macro_rules! create_token {
     ($name:ident) => {
         #[derive(Clone, Debug)]
         pub struct $name {
-            pub(crate) span: Span,
+            pub span: Span,
         }
         impl ParsingDisplay for $name {
             fn display(&self) -> String
@@ -173,8 +173,14 @@ DefineTokens!(
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Default, Hash)]
 pub struct Span {
-    pub end: usize,
     pub start: usize,
+
+    pub end: usize,
+}
+impl Span {
+    pub fn new(start: usize, end: usize) -> Self {
+        Self { start, end }
+    }
 }
 #[macro_export]
 macro_rules! span {
