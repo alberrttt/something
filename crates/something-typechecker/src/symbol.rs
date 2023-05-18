@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use something_ast::prelude::FunctionDeclaration;
 use something_frontend_tokenizer::ident::Ident;
 
@@ -5,7 +7,11 @@ use something_frontend_tokenizer::ident::Ident;
 pub struct Symbol {
     pub name: Ident,
 }
-
+impl Display for Symbol {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Ident<{}>", self.name)
+    }
+}
 impl From<&FunctionDeclaration> for Symbol {
     fn from(value: &FunctionDeclaration) -> Self {
         Self {

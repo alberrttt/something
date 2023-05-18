@@ -53,6 +53,14 @@ fn test() {
     );
     let mut type_checker = TypeChecker::new(ast);
     type_checker.link_global_symbols();
-    dbg!(&type_checker.symbols);
-    dbg!(&type_checker.fn_decl);
+
+    for (symbol, fn_decl) in type_checker.fn_decl.iter_mut() {
+        println!("{}", symbol);
+        println!("{}", fn_decl);
+
+        for decl in fn_decl.fn_ast.as_ref().body.iter() {
+            println!("{:?}", decl);
+        }
+        fn_decl.type_check(()).unwrap();
+    }
 }
