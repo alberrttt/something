@@ -152,6 +152,7 @@ pub struct Binary {
     pub operator: Operator,
     pub right: Box<Expression>,
 }
+
 impl ParsingDisplay for Binary {
     fn display(&self) -> String
     where
@@ -201,6 +202,7 @@ pub enum Operator {
     GreaterEqual,
     LessEqual,
     EqualEqual,
+    BangEqual,
     PlusEqual,
     MinusEqual,
     MultiplyEqual,
@@ -226,6 +228,7 @@ impl ParsingDisplay for Operator {
             Self::MinusEqual => "-=".into(),
             Self::MultiplyEqual => "*=".into(),
             Self::DivideEqual => "/=".into(),
+            Self::BangEqual => "!=".into(),
         }
     }
     fn placeholder() -> String
@@ -253,7 +256,7 @@ impl Parse for Operator {
                 Token::MinusEqual(_) => Self::MinusEqual,
                 Token::StarEqual(_) => Self::MultiplyEqual,
                 Token::SlashEqual(_) => Self::DivideEqual,
-
+                Token::BangEqual(_) => Self::BangEqual,
                 _ => {
                     return Err(format!("Expected Operator, got {:?}", token.clone()).into());
                 }

@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use prelude::{Children, Declaration, FunctionDeclaration};
 use something_dev_tools::{ParseTokens, ParseTokensDisplay};
 use something_frontend_tokenizer::{list::List, Parse};
@@ -8,6 +10,15 @@ pub struct Ast {
 #[derive(Debug, Clone, ParseTokens, ParseTokensDisplay)]
 pub enum TopLevelNode {
     FunctionDeclaration(FunctionDeclaration),
+}
+impl Display for TopLevelNode {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            TopLevelNode::FunctionDeclaration(function_declaration) => {
+                write!(f, "{}", function_declaration)
+            }
+        }
+    }
 }
 impl Children<TopLevelNode> for Ast {
     fn children(&self) -> std::slice::Iter<TopLevelNode> {

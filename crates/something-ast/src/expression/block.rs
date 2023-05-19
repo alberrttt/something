@@ -11,6 +11,7 @@ use crate::{
 
 #[derive(Debug, Clone, ParseTokensDisplay)]
 pub struct Block(pub Braces<List<Node>>);
+
 impl Block {
     pub fn iter(&self) -> Iter<Node> {
         self.0 .1.iter()

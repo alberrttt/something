@@ -14,7 +14,7 @@ impl Debug for Repl {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Repl::Expr(expr) => expr.fmt(f),
-            Repl::Fn(func) => func.fmt(f),
+            Repl::Fn(func) => std::fmt::Debug::fmt(&self, f),
             Repl::Node(node) => node.fmt(f),
         }
     }

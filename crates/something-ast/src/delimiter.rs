@@ -4,7 +4,12 @@ macro_rules! delimiter_impl {
         $(
             #[derive(Debug, Clone)]
             pub struct $delimiter<T>(pub Span, pub T);
-
+            impl<T> Deref for $delimiter<T> {
+                type Target = T;
+                fn deref(&self) -> &Self::Target {
+                    &self.1
+                }
+            }
             impl<T> Parse for $delimiter<T>
             where
                 T: Parse,
@@ -31,7 +36,7 @@ macro_rules! delimiter_impl {
     };
 }
 use something_dev_tools::item_name;
-
+use std::ops::Deref;
 delimiter_impl![Braces, Brackets, Parentheses];
 impl<T> ParsingDisplay for Brackets<T>
 where

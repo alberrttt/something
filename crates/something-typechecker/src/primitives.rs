@@ -2,6 +2,7 @@ use core::panic;
 use std::{error::Error, fmt::Display, rc::Rc};
 
 use crate::{symbol::Symbol, traits::TypeCheck};
+use colored::Colorize;
 use something_ast::prelude::{return_type::ReturnType, *};
 #[derive(Debug, Clone)]
 pub struct Function {
@@ -63,6 +64,39 @@ pub enum Type {
     Void(Void),
     Function(Box<Function>),
 }
+impl Type {
+    pub fn void() -> Self {
+        Self::Void(Void {})
+    }
+    pub fn function(fn_decl: FunctionDeclaration) -> Self {
+        Self::Function(Box::new(Function::from(&fn_decl)))
+    }
+    pub fn number() -> Self {
+        Self::Number(Number {})
+    }
+    pub fn string() -> Self {
+        Self::String(TypeString {})
+    }
+    pub fn boolean() -> Self {
+        Self::Boolean(Boolean {})
+    }
+
+    pub fn is_void(&self) -> bool {
+        matches!(self, Self::Void(_))
+    }
+    pub fn is_function(&self) -> bool {
+        matches!(self, Self::Function(_))
+    }
+    pub fn is_number(&self) -> bool {
+        matches!(self, Self::Number(_))
+    }
+    pub fn is_string(&self) -> bool {
+        matches!(self, Self::String(_))
+    }
+    pub fn is_boolean(&self) -> bool {
+        matches!(self, Self::Boolean(_))
+    }
+}
 impl Display for Type {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -123,37 +157,46 @@ impl From<Expression> for Type {
     fn from(value: Expression) -> Self {
         match value {
             Expression::Lit(lit) => lit.into(),
-            Expression::Binary(binary) => match binary.operator {
-                Operator::GreaterEqual => Type::Boolean(Boolean {}),
-                Operator::LessEqual => Type::Boolean(Boolean {}),
-                Operator::Greater => Type::Boolean(Boolean {}),
-                Operator::Less => Type::Boolean(Boolean {}),
-                Operator::EqualEqual => Type::Boolean(Boolean {}),
-
-                _ => todo!(),
-            },
-            _ => panic!(),
+            // this will work for now
+            Expression::Binary(binary) => binary.into(),
+            Expression::Call(_) => todo!(),
+            Expression::Ident(_) => todo!(),
+            Expression::Grouping(_) => todo!(),
+            Expression::If(_) => todo!(),
+            Expression::Block(_) => todo!(),
         }
     }
 }
-impl TypeCheck<()> for Function {
-    fn type_check(&mut self, other: ()) -> Result<(), Box<dyn Error>> {
-        self.fn_ast
-            .as_ref()
-            .body
-            .iter()
-            .for_each(|stmt| match stmt {
-                Node::Statement(stmt) => match stmt {
-                    Statement::Expression(_, _) => todo!(),
-                    Statement::Return(_, expr, _) => {
-                        let expr_type: Type = expr.clone().into();
-                        if expr_type != self.return_type {
-                            panic!("expected {}, got {expr_type}", self.return_type)
-                        }
-                    }
-                },
-                Node::Declaration(_) => todo!(),
-            });
+impl TypeCheck<(), ()> for Function {
+    fn type_check(&mut self, other: (), _: ()) -> Result<(), Box<dyn Error>> {
+        let return_type = &self.return_type;
+
+        {
+            let mut iter = self.fn_ast.body.0.iter().peekable();
+            loop {
+                let node = iter.next();
+
+                let node_type: Type = match node {
+                    Some(node) => match node {
+                        Node::Statement(stmt) => stmt.clone().into(),
+                        Node::Declaration(_) => todo!(),
+                    },
+                    None => break,
+                };
+                if iter.peek().is_none() && node_type != *return_type {
+                    let err = format!(
+                        "{} {} {expected} {} {actual}",
+                        "Expected".bold().red(),
+                        "return type of".bold(),
+                        " but got".bold(),
+                        expected = return_type.to_string().yellow(),
+                        actual = node_type.to_string().yellow(),
+                    );
+                    println!("{}", err);
+                    panic!();
+                }
+            }
+        }
         Ok(())
     }
 }

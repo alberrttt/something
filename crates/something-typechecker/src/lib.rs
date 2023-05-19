@@ -1,7 +1,8 @@
 use std::{collections::HashMap, rc::Rc};
 
 use prelude::*;
-use something_ast::{traits::Children, Ast, TopLevelNode};
+use something_ast::{prelude::Binary, statement::Statement, traits::Children, Ast, TopLevelNode};
+use something_frontend_tokenizer::ParsingDisplay;
 use traits::TypeCheck;
 
 pub struct TypeChecker {
@@ -33,34 +34,36 @@ impl TypeChecker {
         }
     }
 }
-impl TypeCheck<Ast> for TypeChecker {
-    fn type_check(&mut self, ast: Ast) -> Result<(), Box<dyn std::error::Error>> {
+impl TypeCheck<Ast, ()> for TypeChecker {
+    fn type_check(&mut self, ast: Ast, _: ()) -> Result<(), Box<dyn std::error::Error>> {
         todo!();
         Ok(())
     }
 }
-mod prelude;
+
+mod context;
+pub mod prelude;
 mod primitives;
 mod symbol;
 mod traits;
 
-#[test]
-fn test() {
-    let ast: Ast = Ast::from(
-        "fn main(number hello) {
-            return hello > 0;
-    } -> bool",
-    );
-    let mut type_checker = TypeChecker::new(ast);
-    type_checker.link_global_symbols();
-
-    for (symbol, fn_decl) in type_checker.fn_decl.iter_mut() {
-        println!("{}", symbol);
-        println!("{}", fn_decl);
-
-        for decl in fn_decl.fn_ast.as_ref().body.iter() {
-            println!("{:?}", decl);
+impl From<Statement> for Type {
+    fn from(value: Statement) -> Self {
+        match value {
+            Statement::Return(_, expression, _) => expression.into(),
+            Statement::Expression(expression, _) => Self::void(),
         }
-        fn_decl.type_check(()).unwrap();
+    }
+}
+impl From<Binary> for Type {
+    fn from(value: Binary) -> Self {
+        use something_ast::prelude::Operator::*;
+        match value.operator {
+            Plus | Minus | Multiply | Divide => Self::number(),
+            PlusEqual | MinusEqual | MultiplyEqual | DivideEqual => Self::number(),
+            EqualEqual | BangEqual => Self::boolean(),
+            Greater | Less | GreaterEqual | LessEqual => Self::boolean(),
+            _ => todo!(),
+        }
     }
 }
