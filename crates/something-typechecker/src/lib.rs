@@ -35,13 +35,14 @@ impl TypeChecker {
     }
 }
 impl TypeCheck<()> for TypeChecker {
-    fn type_check(& self, _: ()) -> Result<(), Box<dyn std::error::Error>> {
+    fn type_check(&self, _: ()) -> Result<(), Box<dyn std::error::Error>> {
         todo!();
         Ok(())
     }
 }
 
 mod context;
+mod error;
 mod function;
 pub mod prelude;
 mod primitives;

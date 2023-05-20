@@ -14,6 +14,12 @@ fn main() {
         println!("Symbol name: {}", symbol);
         println!("Function declaration: {}", fn_decl);
 
-        fn_decl.type_check(()).unwrap();
+        match fn_decl.type_check(()) {
+            Ok(ok) => {}
+            Err(err) => {
+                println!("{}", err);
+                panic!()
+            }
+        };
     }
 }

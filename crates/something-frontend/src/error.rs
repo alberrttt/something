@@ -43,10 +43,7 @@ impl std::fmt::Display for ParseError {
     }
 }
 
-pub enum TypeError {
-    MismatchedTypes(),
-    ExpectedType(),
-}
+
 
 #[test]
 fn test() {

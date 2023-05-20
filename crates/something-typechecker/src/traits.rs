@@ -4,7 +4,10 @@ pub trait TypeCheck<With> {
 
 use something_ast::prelude::{block::Block, *};
 
-use crate::{context::BlockCtx, prelude::Type};
+use crate::{
+    context::BlockCtx,
+    prelude::{Type, TypeError},
+};
 impl TypeCheck<&mut BlockCtx> for Block {
     fn type_check(&self, ctx: &mut BlockCtx) -> Result<(), Box<dyn std::error::Error>> {
         let mut nodes = self.0.iter().peekable();
@@ -28,7 +31,10 @@ impl TypeCheck<(&mut BlockCtx, bool)> for &Statement {
             Statement::Return(_, expr, _) => {
                 let return_type = Type::from(expr);
                 if ctx.should_eval_to.ne(&return_type) {
-                    Err("mismatched types".into())
+                    Err(Box::new(TypeError::MismatchedTypes {
+                        expected: ctx.should_eval_to.clone(),
+                        got: return_type,
+                    }))
                 } else {
                     Ok(())
                 }
