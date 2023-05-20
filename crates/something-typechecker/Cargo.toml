@@ -8,4 +8,5 @@ edition = "2021"
 [dependencies]
 something-frontend-tokenizer = { path = "../something-frontend-tokenizer" }
 something-ast = { path = "../something-ast" }
+something-frontend = { path = "../something-frontend" }
 colored = "2.0.0"

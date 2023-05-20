@@ -1,61 +1,9 @@
 use core::panic;
-use std::{error::Error, fmt::Display, rc::Rc};
+use std::{default, error::Error, fmt::Display, rc::Rc};
 
-use crate::{symbol::Symbol, traits::TypeCheck};
+use crate::prelude::*;
 use colored::Colorize;
 use something_ast::prelude::{return_type::ReturnType, *};
-#[derive(Debug, Clone)]
-pub struct Function {
-    pub params: Vec<(Type, Symbol)>,
-    pub return_type: Type,
-    pub fn_ast: Rc<FunctionDeclaration>,
-}
-impl PartialEq for Function {
-    fn eq(&self, other: &Self) -> bool {
-        self.params == other.params && self.return_type == other.return_type
-    }
-}
-impl From<&FunctionDeclaration> for Function {
-    fn from(value: &FunctionDeclaration) -> Self {
-        Self {
-            params: value
-                .params
-                .1
-                .iter()
-                .map(|(ty, name)| (Type::from(ty.clone()), Symbol::from(name)))
-                .collect(),
-            return_type: Type::from(value.return_type.clone()),
-            fn_ast: Rc::new(value.clone()),
-        }
-    }
-}
-impl From<&Rc<FunctionDeclaration>> for Function {
-    fn from(value: &Rc<FunctionDeclaration>) -> Self {
-        Self {
-            params: value
-                .params
-                .1
-                .iter()
-                .map(|(ty, name)| (Type::from(ty.clone()), Symbol::from(name)))
-                .collect(),
-            return_type: Type::from(value.return_type.clone()),
-            fn_ast: value.clone(),
-        }
-    }
-}
-impl Display for Function {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "[{}\n]",
-            self.params
-                .iter()
-                .map(|f| { format!("\n  {}: {}", f.1, f.0) })
-                .collect::<String>()
-        )?;
-        write!(f, " -> {}", self.return_type)
-    }
-}
 #[derive(Debug, Clone, PartialEq)]
 pub enum Type {
     Number(Number),
@@ -63,6 +11,11 @@ pub enum Type {
     Boolean(Boolean),
     Void(Void),
     Function(Box<Function>),
+}
+impl Default for Type {
+    fn default() -> Self {
+        Self::Void(Void::default())
+    }
 }
 impl Type {
     pub fn void() -> Self {
@@ -118,10 +71,19 @@ pub struct TypeString {}
 #[derive(Debug, Clone, PartialEq)]
 pub struct Boolean {}
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Default)]
 pub struct Void {}
 impl From<Literal> for Type {
     fn from(value: Literal) -> Self {
+        match value.inner {
+            lit_impl::Inner::Boolean(_) => Type::Boolean(Boolean {}),
+            lit_impl::Inner::Number(_) => Type::Number(Number {}),
+            lit_impl::Inner::String(_) => Type::String(TypeString {}),
+        }
+    }
+}
+impl From<&Literal> for Type {
+    fn from(value: &Literal) -> Self {
         match value.inner {
             lit_impl::Inner::Boolean(_) => Type::Boolean(Boolean {}),
             lit_impl::Inner::Number(_) => Type::Number(Number {}),
@@ -167,36 +129,17 @@ impl From<Expression> for Type {
         }
     }
 }
-impl TypeCheck<(), ()> for Function {
-    fn type_check(&mut self, other: (), _: ()) -> Result<(), Box<dyn Error>> {
-        let return_type = &self.return_type;
-
-        {
-            let mut iter = self.fn_ast.body.0.iter().peekable();
-            loop {
-                let node = iter.next();
-
-                let node_type: Type = match node {
-                    Some(node) => match node {
-                        Node::Statement(stmt) => stmt.clone().into(),
-                        Node::Declaration(_) => todo!(),
-                    },
-                    None => break,
-                };
-                if iter.peek().is_none() && node_type != *return_type {
-                    let err = format!(
-                        "{} {} {expected} {} {actual}",
-                        "Expected".bold().red(),
-                        "return type of".bold(),
-                        " but got".bold(),
-                        expected = return_type.to_string().yellow(),
-                        actual = node_type.to_string().yellow(),
-                    );
-                    println!("{}", err);
-                    panic!();
-                }
-            }
+impl From<&Expression> for Type {
+    fn from(value: &Expression) -> Self {
+        match value {
+            Expression::Lit(lit) => lit.into(),
+            // this will work for now
+            Expression::Binary(binary) => binary.into(),
+            Expression::Call(_) => todo!(),
+            Expression::Ident(_) => todo!(),
+            Expression::Grouping(_) => todo!(),
+            Expression::If(_) => todo!(),
+            Expression::Block(_) => todo!(),
         }
-        Ok(())
     }
 }

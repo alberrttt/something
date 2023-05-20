@@ -334,6 +334,7 @@ version = "0.1.0"
 dependencies = [
  "colored",
  "something-ast",
+ "something-frontend",
  "something-frontend-tokenizer",
 ]
 

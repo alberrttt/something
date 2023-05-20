@@ -34,36 +34,16 @@ impl TypeChecker {
         }
     }
 }
-impl TypeCheck<Ast, ()> for TypeChecker {
-    fn type_check(&mut self, ast: Ast, _: ()) -> Result<(), Box<dyn std::error::Error>> {
+impl TypeCheck<()> for TypeChecker {
+    fn type_check(& self, _: ()) -> Result<(), Box<dyn std::error::Error>> {
         todo!();
         Ok(())
     }
 }
 
 mod context;
+mod function;
 pub mod prelude;
 mod primitives;
 mod symbol;
 mod traits;
-
-impl From<Statement> for Type {
-    fn from(value: Statement) -> Self {
-        match value {
-            Statement::Return(_, expression, _) => expression.into(),
-            Statement::Expression(expression, _) => Self::void(),
-        }
-    }
-}
-impl From<Binary> for Type {
-    fn from(value: Binary) -> Self {
-        use something_ast::prelude::Operator::*;
-        match value.operator {
-            Plus | Minus | Multiply | Divide => Self::number(),
-            PlusEqual | MinusEqual | MultiplyEqual | DivideEqual => Self::number(),
-            EqualEqual | BangEqual => Self::boolean(),
-            Greater | Less | GreaterEqual | LessEqual => Self::boolean(),
-            _ => todo!(),
-        }
-    }
-}
