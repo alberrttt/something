@@ -52,3 +52,18 @@ impl From<&str> for Ast {
         }
     }
 }
+
+#[macro_export]
+macro_rules! ast {
+    ($str: tt) => {{
+        use something_frontend_tokenizer::Parse;
+        let mut tokens = something_frontend_tokenizer::Tokens::from($str);
+        match (&mut tokens).parse() {
+            Ok(value) => value,
+            Err(err) => {
+                println!("{}", err);
+                panic!();
+            }
+        }
+    }};
+}

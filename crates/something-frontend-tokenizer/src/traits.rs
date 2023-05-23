@@ -1,4 +1,7 @@
-use std::{error::Error, fmt::Display};
+use std::{
+    error::Error,
+    fmt::{Debug, Display},
+};
 
 use something_dev_tools::tuple_parse_impl;
 
@@ -46,6 +49,40 @@ tuple_parse_impl!(A, B, C, D);
 tuple_parse_impl!(A, B, C);
 tuple_parse_impl!(A, B);
 
+impl<T> Parse for Option<T>
+where
+    T: Debug + Parse + Clone,
+{
+    fn parse(input: &mut Tokens) -> Result<Self, Box<dyn Error>>
+    where
+        Self: Sized,
+    {
+        let tmp = match input.step(|f| match T::parse(f) {
+            Ok(value) => Ok(Some(value)),
+            Err(_) => Ok(None),
+        }) {
+            Ok(ok) => Ok(ok),
+            Err(err) => Ok(None),
+        };
+        dbg!(&tmp);
+        tmp
+    }
+}
+impl<T> ParsingDisplay for Option<T> {
+    fn display(&self) -> String
+    where
+        Self: Sized,
+    {
+        todo!()
+    }
+
+    fn placeholder() -> String
+    where
+        Self: Sized,
+    {
+        todo!()
+    }
+}
 
 #[test]
 fn test_tuple() {

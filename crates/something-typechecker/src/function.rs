@@ -57,7 +57,7 @@ impl std::fmt::Display for Function {
     }
 }
 impl TypeCheck<()> for Function {
-    fn type_check(&self, _: ()) -> Result<(), Box<dyn Error>> {
+    fn type_check(&self, _: ()) -> Result<(), TypeError> {
         let mut block_ctx = BlockCtx {
             should_eval_to: self.return_type.clone(),
             ..Default::default()

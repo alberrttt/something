@@ -4,7 +4,7 @@ use prelude::*;
 use something_ast::{prelude::Binary, statement::Statement, traits::Children, Ast, TopLevelNode};
 use something_frontend_tokenizer::ParsingDisplay;
 use traits::TypeCheck;
-
+mod expression;
 pub struct TypeChecker {
     pub symbols: Vec<Rc<Symbol>>,
     pub fn_decl: HashMap<Rc<Symbol>, Function>,
@@ -35,13 +35,13 @@ impl TypeChecker {
     }
 }
 impl TypeCheck<()> for TypeChecker {
-    fn type_check(&self, _: ()) -> Result<(), Box<dyn std::error::Error>> {
+    fn type_check(&self, _: ()) -> Result<(), TypeError> {
         todo!();
         Ok(())
     }
 }
-
 mod context;
+mod declaration;
 mod error;
 mod function;
 pub mod prelude;

@@ -1,12 +1,18 @@
 use crate::traits::ParsingDisplay;
 use crate::Parse;
 use crate::{tokens::Span, Token, Tokens};
+use std::fmt::Debug;
 use std::{error::Error, fmt::Display};
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, PartialEq, Eq, Hash)]
 pub struct Ident {
     pub name: String,
     pub span: Span,
+}
+impl Debug for Ident {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Ident<{}>", self.name)
+    }
 }
 impl ParsingDisplay for Ident {
     fn display(&self) -> String
