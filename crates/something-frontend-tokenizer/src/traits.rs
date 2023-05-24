@@ -57,14 +57,10 @@ where
     where
         Self: Sized,
     {
-        let tmp = match input.step(|f| match T::parse(f) {
+        let tmp = match input.step(|f| T::parse(f)) {
             Ok(value) => Ok(Some(value)),
             Err(_) => Ok(None),
-        }) {
-            Ok(ok) => Ok(ok),
-            Err(err) => Ok(None),
         };
-        dbg!(&tmp);
         tmp
     }
 }

@@ -3,10 +3,11 @@ use std::fmt::Display;
 use prelude::{Children, Declaration, FunctionDeclaration};
 use something_dev_tools::{ParseTokens, ParseTokensDisplay};
 use something_frontend_tokenizer::{list::List, Parse};
-#[derive(Debug, Clone, ParseTokens, ParseTokensDisplay)]
+#[derive(Debug, Clone, ParseTokens, ParseTokensDisplay, Default)]
 pub struct Ast {
     pub nodes: List<TopLevelNode>,
 }
+
 #[derive(Debug, Clone, ParseTokens, ParseTokensDisplay)]
 pub enum TopLevelNode {
     FunctionDeclaration(FunctionDeclaration),

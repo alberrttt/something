@@ -1,13 +1,19 @@
+use crate::tokens::Hash;
 use crate::traits::ParsingDisplay;
 use crate::Parse;
 use crate::{tokens::Span, Token, Tokens};
 use std::fmt::Debug;
 use std::{error::Error, fmt::Display};
 
-#[derive(Clone, PartialEq, Eq, Hash)]
+#[derive(Clone, PartialEq, Eq)]
 pub struct Ident {
     pub name: String,
     pub span: Span,
+}
+impl std::hash::Hash for Ident {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.name.hash(state);
+    }
 }
 impl Debug for Ident {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {

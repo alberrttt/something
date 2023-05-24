@@ -1,47 +1,23 @@
-use std::{collections::HashMap, fmt::Debug, rc::Rc, slice::Iter};
+use std::{collections::HashMap, rc::Rc};
 
-use crate::{prelude::Type, symbol::Symbol};
-pub enum ScopeTypes {
-    Block(BlockCtx),
-}
-pub trait Scope {
-    fn get(&self, symbol: Rc<Symbol>) -> Option<Type>;
-    fn set(&mut self, symbol: Symbol, ty: Type);
-}
-
-#[derive(Default, Clone)]
+use crate::prelude::*;
+use something_frontend::{block::Block, Ident};
+#[derive(Debug, Clone, Default)]
 pub struct BlockCtx {
-    pub parent: Option<Rc<ScopeTypes>>,
-    pub symbols: HashMap<Rc<Symbol>, Type>,
-    pub should_eval_to: Type,
+    pub vars: HashMap<Ident, Type>,
+    pub parent: Option<Rc<BlockCtx>>,
 }
 impl BlockCtx {
-    pub fn parents(&self) -> std::vec::IntoIter<std::rc::Rc<ScopeTypes>> {
-        let mut parents = vec![];
-        let mut current = self.parent.clone();
-        while let Some(parent) = current {
-            parents.push(parent.clone());
-            current = match parent.as_ref() {
-                ScopeTypes::Block(block) => block.parent.clone(),
-            }
+    pub fn get_var(&self, name: &Ident) -> Option<&Type> {
+        self.vars.get(name)
+    }
+    pub fn get_var_recursive(&self, name: &Ident) -> Option<&Type> {
+        if let Some(ty) = self.get_var(&name) {
+            Some(ty)
+        } else if let Some(parent) = &self.parent {
+            parent.get_var_recursive(name)
+        } else {
+            None
         }
-        parents.into_iter()
-    }
-}
-impl Scope for BlockCtx {
-    fn get(&self, symbol: Rc<Symbol>) -> Option<Type> {
-        self.symbols.get(&symbol).cloned()
-    }
-
-    fn set(&mut self, symbol: Symbol, ty: Type) {
-        self.symbols.insert(Rc::new(symbol), ty);
-    }
-}
-impl Debug for BlockCtx {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("BlockCtx")
-            .field("symbols", &self.symbols)
-            .field("should_eval_to", &self.should_eval_to)
-            .finish()
     }
 }
