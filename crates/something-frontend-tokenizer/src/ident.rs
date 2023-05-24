@@ -5,10 +5,15 @@ use crate::{tokens::Span, Token, Tokens};
 use std::fmt::Debug;
 use std::{error::Error, fmt::Display};
 
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Clone, Eq)]
 pub struct Ident {
     pub name: String,
     pub span: Span,
+}
+impl PartialEq for Ident {
+    fn eq(&self, other: &Self) -> bool {
+        self.name == other.name
+    }
 }
 impl std::hash::Hash for Ident {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {

@@ -1,8 +1,7 @@
+use crate::prelude::*;
+use something_frontend::{Binary, Expression, Operator};
 use std::rc::Rc;
 
-use something_frontend::{Binary, Expression, Operator};
-
-use crate::prelude::*;
 impl TypeCheck<&BlockCtx, Type> for Ident {
     fn type_check(&self, with: &BlockCtx) -> Type {
         with.get_var(self)
