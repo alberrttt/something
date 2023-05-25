@@ -3,8 +3,16 @@ use crate::Tokens;
 impl Tokens {
     pub fn to_source_string(&self) -> String {
         let mut s = String::new();
-        for token in self.0.iter() {
-            s.push_str(format!("{token}").as_str());
+        let iter = self.0.iter().peekable();
+        let mut tokens = self.0.iter().peekable();
+        for token in iter {
+            tokens.next();
+            let offset = match tokens.peek() {
+                Some(next) => next.span().start - token.span().end,
+                None => 0,
+            };
+            let whitespace = " ".repeat(offset);
+            s.push_str(format!("{token}{whitespace}").as_str());
         }
         s
     }

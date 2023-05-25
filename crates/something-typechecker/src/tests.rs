@@ -15,7 +15,7 @@ macro_rules! handle_result {
 
 #[test]
 fn vars() {
-    let vars: List<VariableDeclaration> = something_ast::ast!(
+    let (vars, _): (List<VariableDeclaration>, _) = something_ast::ast!(
         "
         let a: number = 0;
         let b: bool = a;
@@ -27,4 +27,3 @@ fn vars() {
         handle_result!(var.type_check(&mut ctx));
     }
 }
-

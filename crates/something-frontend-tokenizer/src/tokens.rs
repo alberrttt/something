@@ -40,9 +40,14 @@ macro_rules! create_token {
 }
 use super::delimiter::*;
 use super::ident::*;
+use something_dev_tools::Span;
+#[derive(Debug, Clone, PartialEq, Eq, Span)]
+pub struct SpanShell {
+    pub span: Span,
+}
 macro_rules! DefineTokens {
     ([$($keyword:ident),+],[$([$t:tt] => $token:ident),+],[$($misc:ident),+]) => {
-        #[derive( Clone, PartialEq, Eq)]
+        #[derive( Clone, PartialEq, Eq, Span)]
         pub enum Token{
             Ident(Ident),
             Lit(crate::Literal),
@@ -52,9 +57,9 @@ macro_rules! DefineTokens {
             Parentheses(Delimiter<'(',')'>),
             Braces(Delimiter<'{','}'>),
             Brackets(Delimiter<'[',']'>),
-            ClosingParen {span: Span},
-            ClosingBrace {span: Span},
-            ClosingBracket {span: Span},
+            ClosingParen(SpanShell),
+            ClosingBrace(SpanShell),
+            ClosingBracket(SpanShell),
 
         }
         impl std::fmt::Display for Token {

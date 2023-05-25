@@ -1,3 +1,4 @@
+use crate::tokens::SpanShell;
 use crate::Parse;
 use crate::{tokens::Span, Token, Tokenizer, Tokens};
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -15,9 +16,9 @@ impl Tokenizer<'_> {
         };
         while let Ok(token) = self.next_token() {
             match token {
-                Token::ClosingBrace { span } => todo!(),
-                Token::ClosingBracket { span } => todo!(),
-                Token::ClosingParen { span: tmp } => {
+                Token::ClosingBrace(SpanShell { span: tmp }) => todo!(),
+                Token::ClosingBracket(SpanShell { span: tmp }) => todo!(),
+                Token::ClosingParen(SpanShell { span: tmp }) => {
                     span.end = tmp.end;
                     break;
                 }
@@ -41,12 +42,12 @@ impl Tokenizer<'_> {
         };
         while let Ok(token) = self.next_token() {
             match token {
-                Token::ClosingBrace { span } => todo!(),
-                Token::ClosingBracket { span: tmp } => {
+                Token::ClosingBrace(SpanShell { span: tmp }) => todo!(),
+                Token::ClosingBracket(SpanShell { span: tmp }) => {
                     span.end = tmp.end;
                     break;
                 }
-                Token::ClosingParen { span: tmp } => todo!(),
+                Token::ClosingParen(SpanShell { span: tmp }) => todo!(),
                 Token::Whitespace(_) => {}
                 _ => {
                     inside.push(token);
@@ -67,13 +68,13 @@ impl Tokenizer<'_> {
         };
         while let Ok(token) = self.next_token() {
             match token {
-                Token::ClosingBrace { span: tmp } => {
+                Token::ClosingBrace(SpanShell { span: tmp }) => {
                     span.end = tmp.end;
                     break;
                 }
-                Token::ClosingBracket { span: tmp } => todo!(),
+                Token::ClosingBracket(SpanShell { span: tmp }) => todo!(),
 
-                Token::ClosingParen { span: tmp } => todo!(),
+                Token::ClosingParen(SpanShell { span: tmp }) => todo!(),
                 Token::Whitespace(_) => {}
                 _ => {
                     inside.push(token);

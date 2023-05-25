@@ -1,4 +1,4 @@
-use std::{error::Error, fmt::Display};
+use std::{error::Error, fmt::Display, ops::Index};
 #[derive(Debug)]
 pub struct Tokenizer<'a> {
     input: &'a str,
@@ -18,6 +18,13 @@ use tokens::*;
 pub use traits::{Parse, ParsingDisplay};
 #[derive(Debug, Clone)]
 pub struct Tokens(pub Vec<Token>, pub usize);
+impl Index<usize> for Tokens {
+    type Output = Token;
+
+    fn index(&self, index: usize) -> &Self::Output {
+        &self.0[index]
+    }
+}
 impl From<Vec<Token>> for Tokens {
     fn from(tokens: Vec<Token>) -> Self {
         Self(tokens, 0)
@@ -208,24 +215,24 @@ impl<'a> Tokenizer<'a> {
             '(' => Ok(Token::Parentheses(self.paren_delimiter())),
             '[' => Ok(Token::Brackets(self.bracket_delimiter())),
             '{' => Ok(Token::Braces(self.brace_delimiter())),
-            ')' => Ok(Token::ClosingParen {
+            ')' => Ok(Token::ClosingParen(SpanShell {
                 span: Span {
                     start: self.starting,
                     end: self.current,
                 },
-            }),
-            ']' => Ok(Token::ClosingBracket {
+            })),
+            ']' => Ok(Token::ClosingBracket(SpanShell {
                 span: Span {
                     start: self.starting,
                     end: self.current,
                 },
-            }),
-            '}' => Ok(Token::ClosingBrace {
+            })),
+            '}' => Ok(Token::ClosingBrace(SpanShell {
                 span: Span {
                     start: self.starting,
                     end: self.current,
                 },
-            }),
+            })),
             '$' => Ok(Token!(self, Dollar)),
 
             // '(' => Ok(Token!(self, LeftParen)),

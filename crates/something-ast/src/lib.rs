@@ -60,11 +60,20 @@ macro_rules! ast {
         use something_frontend_tokenizer::Parse;
         let mut tokens = something_frontend_tokenizer::Tokens::from($str);
         match (&mut tokens).parse() {
-            Ok(value) => value,
+            Ok(value) => (value, tokens),
             Err(err) => {
                 println!("{}", err);
                 panic!();
             }
         }
     }};
+}
+#[macro_export]
+macro_rules! ident {
+    ($str:tt, $span:expr) => {
+        $crate::prelude::Ident {
+            span: $span,
+            name: $str.into(),
+        }
+    };
 }

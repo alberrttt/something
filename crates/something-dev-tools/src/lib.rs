@@ -32,3 +32,8 @@ mod item_name;
 pub fn item_name(input: TokenStream) -> TokenStream {
     item_name::item_name(input)
 }
+mod span_derive;
+#[proc_macro_derive(Span)]
+pub fn span_derive(input: TokenStream) -> TokenStream {
+    span_derive::span_derive(input)
+}
