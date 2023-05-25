@@ -27,3 +27,4 @@ fn vars() {
         handle_result!(var.type_check(&mut ctx));
     }
 }
+

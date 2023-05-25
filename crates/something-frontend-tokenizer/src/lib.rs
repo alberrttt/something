@@ -5,11 +5,11 @@ pub struct Tokenizer<'a> {
     starting: usize,
     current: usize,
 }
-
 pub mod delimiter;
 pub mod ident;
 pub mod list;
 pub mod lit;
+pub mod to_string;
 pub mod tokens;
 pub mod traits;
 use ident::*;
