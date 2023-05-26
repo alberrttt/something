@@ -1,6 +1,6 @@
 use crate::tokens::SpanShell;
-use crate::Parse;
-use crate::{tokens::Span, Token, Tokenizer, Tokens};
+
+use crate::{tokens::Span, Token, Tokenizer};
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Delimiter<const Open: char, const Close: char> {
     pub tokens: Vec<Token>,
@@ -16,8 +16,8 @@ impl Tokenizer<'_> {
         };
         while let Ok(token) = self.next_token() {
             match token {
-                Token::ClosingBrace(SpanShell { span: tmp }) => todo!(),
-                Token::ClosingBracket(SpanShell { span: tmp }) => todo!(),
+                Token::ClosingBrace(SpanShell { span: _tmp }) => todo!(),
+                Token::ClosingBracket(SpanShell { span: _tmp }) => todo!(),
                 Token::ClosingParen(SpanShell { span: tmp }) => {
                     span.end = tmp.end;
                     break;
@@ -42,12 +42,12 @@ impl Tokenizer<'_> {
         };
         while let Ok(token) = self.next_token() {
             match token {
-                Token::ClosingBrace(SpanShell { span: tmp }) => todo!(),
+                Token::ClosingBrace(SpanShell { span: _tmp }) => todo!(),
                 Token::ClosingBracket(SpanShell { span: tmp }) => {
                     span.end = tmp.end;
                     break;
                 }
-                Token::ClosingParen(SpanShell { span: tmp }) => todo!(),
+                Token::ClosingParen(SpanShell { span: _tmp }) => todo!(),
                 Token::Whitespace(_) => {}
                 _ => {
                     inside.push(token);
@@ -72,9 +72,9 @@ impl Tokenizer<'_> {
                     span.end = tmp.end;
                     break;
                 }
-                Token::ClosingBracket(SpanShell { span: tmp }) => todo!(),
+                Token::ClosingBracket(SpanShell { span: _tmp }) => todo!(),
 
-                Token::ClosingParen(SpanShell { span: tmp }) => todo!(),
+                Token::ClosingParen(SpanShell { span: _tmp }) => todo!(),
                 Token::Whitespace(_) => {}
                 _ => {
                     inside.push(token);

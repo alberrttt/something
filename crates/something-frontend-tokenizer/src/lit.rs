@@ -6,7 +6,7 @@ use crate::{
 };
 use std::{
     error::Error,
-    fmt::{Debug, Display, Formatter},
+    fmt::{Display, Formatter},
 };
 #[derive(Clone, PartialEq, PartialOrd, Eq)]
 pub struct Literal {

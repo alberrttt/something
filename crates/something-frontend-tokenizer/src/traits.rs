@@ -1,7 +1,4 @@
-use std::{
-    error::Error,
-    fmt::{Debug, Display},
-};
+use std::{error::Error, fmt::Debug};
 
 use something_dev_tools::tuple_parse_impl;
 
@@ -38,7 +35,7 @@ where
     }
 }
 impl Parse for () {
-    fn parse(input: &mut Tokens) -> Result<Self, Box<dyn Error>> {
+    fn parse(_input: &mut Tokens) -> Result<Self, Box<dyn Error>> {
         Ok(())
     }
 }

@@ -1,4 +1,3 @@
-use crate::tokens::Hash;
 use crate::traits::ParsingDisplay;
 use crate::Parse;
 use crate::{tokens::Span, Token, Tokens};
@@ -53,5 +52,13 @@ impl Parse for Ident {
 impl Display for Ident {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", &self.name)
+    }
+}
+impl From<&str> for Ident {
+    fn from(value: &str) -> Self {
+        Self {
+            name: value.into(),
+            span: Span::default(),
+        }
     }
 }

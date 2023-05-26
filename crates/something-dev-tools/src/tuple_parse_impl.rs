@@ -1,5 +1,5 @@
-use proc_macro::{Ident, TokenStream};
-use quote::ToTokens;
+use proc_macro::{TokenStream};
+
 use syn::{parse::Parse, parse_macro_input, punctuated::Punctuated, Token};
 
 // impl<$($ty),*> Parse for ($($ty),*)

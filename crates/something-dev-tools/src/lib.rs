@@ -1,5 +1,5 @@
 use proc_macro::TokenStream;
-use syn::token::Token;
+
 
 mod tokens;
 #[proc_macro]

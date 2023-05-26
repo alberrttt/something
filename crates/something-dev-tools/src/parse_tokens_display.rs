@@ -1,6 +1,6 @@
 use proc_macro::TokenStream;
-use proc_macro2::Ident;
-use quote::{format_ident, quote, TokenStreamExt};
+
+use quote::{format_ident, TokenStreamExt};
 use syn::DeriveInput;
 pub fn parse_tokens_display(input: TokenStream) -> TokenStream {
     let derive = syn::parse_macro_input!(input as syn::DeriveInput);
@@ -57,7 +57,7 @@ pub fn calculate_display(derive: &DeriveInput) -> proc_macro2::TokenStream {
             stream
         }
         syn::Data::Enum(e) => {
-            let mut e_variants_display = e
+            let e_variants_display = e
                 .variants
                 .iter()
                 .map(|f| {
@@ -66,7 +66,7 @@ pub fn calculate_display(derive: &DeriveInput) -> proc_macro2::TokenStream {
                         .fields
                         .iter()
                         .enumerate()
-                        .map(|(i, f)| {
+                        .map(|(i, _f)| {
                             let ident = format_ident!("__{}", i);
                             quote::quote! {
                                 write!(s, "{} ", #ident.display()).unwrap();

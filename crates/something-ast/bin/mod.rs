@@ -1,7 +1,7 @@
 use std::{fs, path::PathBuf};
 
 use clap::{Parser, Subcommand};
-use something_ast::{declaration::FunctionDeclaration, expression::Expression, Ast};
+use something_ast::{Ast};
 use something_frontend_tokenizer::{Parse, ParsingDisplay, Tokens};
 mod repl;
 #[derive(Parser)]

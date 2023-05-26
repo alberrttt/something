@@ -1,6 +1,6 @@
 use quote::format_ident;
 use syn::parse::Parse;
-use syn::token::Token;
+
 use syn::Token;
 pub struct IdentName(pub syn::Ident, pub Token![,], pub syn::LitStr);
 impl Parse for IdentName {

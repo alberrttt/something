@@ -1,8 +1,8 @@
 use std::fmt::Display;
 
-use proc_macro::{token_stream, TokenStream};
+use proc_macro::{TokenStream};
 use quote::quote;
-use syn::{parse::Parse, parse_macro_input, punctuated::Punctuated, Arm, Ident, Token};
+use syn::{parse::Parse, parse_macro_input, punctuated::Punctuated, Ident, Token};
 struct Idents(pub Punctuated<Ident, Token![,]>);
 impl Parse for Idents {
     fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {

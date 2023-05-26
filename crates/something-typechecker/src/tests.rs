@@ -1,6 +1,3 @@
-use crate::prelude::*;
-use something_frontend::VariableDeclaration;
-use something_frontend_tokenizer::list::List;
 macro_rules! handle_result {
     ($expr:expr) => {
         match $expr {
@@ -15,14 +12,16 @@ macro_rules! handle_result {
 
 #[test]
 fn vars() {
+    use crate::prelude::*;
+    use something_frontend_tokenizer::prelude::*;
     let (vars, _): (List<VariableDeclaration>, _) = something_ast::ast!(
         "
         let a: number = 0;
         let b: bool = a;
     "
     );
-    let mut ctx = BlockCtx::default();
-    let mut typechecker = TypeChecker::default();
+    let mut ctx = BlockScope::default();
+    let _typechecker = TypeChecker::default();
     for var in vars.iter() {
         handle_result!(var.type_check(&mut ctx));
     }

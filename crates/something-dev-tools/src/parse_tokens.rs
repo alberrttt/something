@@ -1,8 +1,8 @@
 use proc_macro::TokenStream;
 use proc_macro2::Ident;
-use quote::{format_ident, quote, ToTokens};
+use quote::{format_ident, quote};
 
-use syn::{parse_macro_input, token::Token, Data, DataStruct, DeriveInput, Type};
+use syn::{parse_macro_input, Data, DataStruct, DeriveInput, Type};
 pub fn parse_tokens(input: TokenStream) -> TokenStream {
     let derive = parse_macro_input!(input as DeriveInput);
 
@@ -104,7 +104,7 @@ pub fn parse_tokens(input: TokenStream) -> TokenStream {
             }
             .into();
         }
-        Data::Union(enum_data) => panic!("unions unsupported"),
+        Data::Union(_enum_data) => panic!("unions unsupported"),
     }
     panic!()
 }
@@ -148,7 +148,7 @@ fn for_struct_w_named_fields(struct_data: DataStruct, name: &Ident) -> proc_macr
     }
 }
 fn for_struct_w_unamed_fields(struct_data: DataStruct, name: &Ident) -> proc_macro2::TokenStream {
-    let mut fields = struct_data.fields.iter().skip(1).map(|field| {
+    let fields = struct_data.fields.iter().skip(1).map(|_field| {
         quote! {
             Parse::parse(input).unwrap()
         }

@@ -1,4 +1,4 @@
-use std::{mem::Discriminant, rc::Rc};
+
 
 use colored::Colorize;
 
@@ -48,7 +48,7 @@ impl std::fmt::Display for ParseError {
 #[test]
 fn test() {
     let mut tokens = Tokens::from("fn main() { let a = 1; }");
-    let error = ParseError::ExpectedToken(
+    let _error = ParseError::ExpectedToken(
         tokens.0[tokens.1].clone(),
         Token::Fn(Fn {
             span: Span::new(0, 2),

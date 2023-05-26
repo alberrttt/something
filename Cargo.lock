@@ -329,6 +329,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "something-slib"
+version = "0.1.0"
+dependencies = [
+ "something-frontend-tokenizer",
+ "something-typechecker",
+]
+
+[[package]]
 name = "something-typechecker"
 version = "0.1.0"
 dependencies = [

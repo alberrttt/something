@@ -1,0 +1,11 @@
+[package]
+name = "something-slib"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+
+something-frontend-tokenizer = { path = "../something-frontend-tokenizer" }
+something-typechecker = { path = "../something-typechecker" }
