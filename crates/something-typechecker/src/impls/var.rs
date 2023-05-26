@@ -15,7 +15,7 @@ impl<'a> TypeCheck<&'a mut BlockCtx> for VariableDeclaration {
 fn annotated(ctx: &mut BlockCtx, var_decl: &VariableDeclaration) -> Result<(), TypeError> {
     let type_annotation = {
         let (_, type_annotation) = var_decl.type_annotation.as_ref().unwrap();
-        type_annotation.type_check(())
+        type_annotation.type_check(()).unwrap()
     };
 
     let ty = var_decl.value.type_check(&*ctx);
@@ -24,7 +24,6 @@ fn annotated(ctx: &mut BlockCtx, var_decl: &VariableDeclaration) -> Result<(), T
     }
     let name = var_decl.name.clone();
     ctx.vars.insert(name, ty);
-    dbg!(&ctx.vars);
     Ok(())
 }
 
@@ -34,7 +33,6 @@ fn unannotated(ctx: &mut BlockCtx, var_decl: &VariableDeclaration) -> Result<(),
     let ty = var_decl.value.type_check(&*ctx);
     let name = var_decl.name.clone();
     ctx.vars.insert(name, ty);
-    dbg!(&ctx.vars);
     Ok(())
 }
 

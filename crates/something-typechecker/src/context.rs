@@ -8,6 +8,9 @@ pub struct BlockCtx {
     pub parent: Option<Rc<BlockCtx>>,
 }
 impl BlockCtx {
+    pub fn set(&mut self, name: Ident, ty: Type) {
+        self.vars.insert(name, ty);
+    }
     pub fn get_var(&self, name: &Ident) -> Option<&Type> {
         self.vars.get(name)
     }

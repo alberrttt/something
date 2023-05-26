@@ -39,6 +39,14 @@ impl TypeCheck<&BlockCtx, Type> for Expression {
         }
     }
 }
+impl TypeCheck<&BlockCtx, ()> for Expression {
+    fn type_check(&self, with: &BlockCtx) {
+        match self {
+            Expression::Ident(ident) => ident.type_check(with),
+            _ => Expression::type_check(self, ()),
+        };
+    }
+}
 impl TypeCheck<(), Type> for Literal {
     fn type_check(&self, with: ()) -> Type {
         use lit_impl::Inner::*;
@@ -73,14 +81,17 @@ impl TypeCheck<(), Type> for Binary {
     }
 }
 
-impl TypeCheck<(), Type> for Ident {
-    fn type_check(&self, with: ()) -> Type {
+impl TypeCheck<(), Result<Type, TypeError>> for Ident {
+    fn type_check(&self, with: ()) -> Result<Type, TypeError> {
         match self.name.as_str() {
-            "number" => Type::number(),
-            "string" => Type::string(),
-            "bool" => Type::boolean(),
-            "function" => Type::function(),
-            str => panic!("unexpected `{str}`"),
+            "number" => Ok(Type::number()),
+            "string" => Ok(Type::string()),
+            "bool" => Ok(Type::boolean()),
+            "function" => Ok(Type::function()),
+            str => Err(TypeError::IncorrectTypeName {
+                expected: "number, string, bool, function",
+                found: str.to_string(),
+            }),
         }
     }
 }

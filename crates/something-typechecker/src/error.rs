@@ -3,7 +3,14 @@ use std::fmt::Display;
 use crate::prelude::Type;
 #[derive(Debug, Clone)]
 pub enum TypeError {
-    MismatchedTypes { expected: Type, found: Type },
+    MismatchedTypes {
+        expected: Type,
+        found: Type,
+    },
+    IncorrectTypeName {
+        expected: &'static str,
+        found: String,
+    },
 }
 impl TypeError {
     pub fn mismatched(expected: Type, found: Type) -> Self {
@@ -24,6 +31,16 @@ impl Display for TypeError {
                     expected.to_string().yellow(),
                     "but found".red().bold(),
                     found.to_string().yellow()
+                )
+            }
+            IncorrectTypeName { expected, found } => {
+                write!(
+                    f,
+                    "{} {} {} {}",
+                    "Expected".red().bold(),
+                    expected.yellow(),
+                    "but found".red().bold(),
+                    found.yellow()
                 )
             }
         }

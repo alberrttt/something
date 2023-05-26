@@ -1,10 +1,12 @@
 use crate::Tokens;
-
+pub trait ToSourceString {
+    fn to_source_string(&self) -> String;
+}
 impl Tokens {
     pub fn to_source_string(&self) -> String {
-        let mut s = String::new();
-        let iter = self.0.iter().peekable();
-        let mut tokens = self.0.iter().peekable();
+        let mut result = String::new();
+        let iter = self.iter().peekable();
+        let mut tokens = self.iter().peekable();
         for token in iter {
             tokens.next();
             let offset = match tokens.peek() {
@@ -12,9 +14,9 @@ impl Tokens {
                 None => 0,
             };
             let whitespace = " ".repeat(offset);
-            s.push_str(format!("{token}{whitespace}").as_str());
+            result.push_str(format!("{token}{whitespace}").as_str());
         }
-        s
+        result
     }
 }
 #[test]

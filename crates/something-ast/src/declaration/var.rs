@@ -72,6 +72,6 @@ item_name!(VariableDeclaration, "variable declaration");
 
 #[test]
 pub fn type_annotation() {
-    let var_decl: VariableDeclaration = crate::ast!("let a: i32 = 1;");
+    let (var_decl, _): (VariableDeclaration, _) = crate::ast!("let a: i32 = 1;");
     dbg!(var_decl);
 }

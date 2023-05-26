@@ -1,11 +1,17 @@
-use std::fmt::Display;
+use std::{fmt::Display, ops::Deref};
 
 use something_frontend_tokenizer::{Parse, ParsingDisplay, Tokens};
 
 // prolly need better error handling soon
 #[derive(Debug, Clone)]
 pub struct Punctuated<T, P>(pub Vec<(T, Option<P>)>);
+impl<T, P> Deref for Punctuated<T, P> {
+    type Target = Vec<(T, Option<P>)>;
 
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
 impl<T, P> ParsingDisplay for Punctuated<T, P>
 where
     T: ParsingDisplay,

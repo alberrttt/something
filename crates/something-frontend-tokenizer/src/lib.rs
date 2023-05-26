@@ -1,4 +1,8 @@
-use std::{error::Error, fmt::Display, ops::Index};
+use std::{
+    error::Error,
+    fmt::Display,
+    ops::{Deref, Index},
+};
 #[derive(Debug)]
 pub struct Tokenizer<'a> {
     input: &'a str,
@@ -18,6 +22,13 @@ use tokens::*;
 pub use traits::{Parse, ParsingDisplay};
 #[derive(Debug, Clone)]
 pub struct Tokens(pub Vec<Token>, pub usize);
+impl Deref for Tokens {
+    type Target = Vec<Token>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
 impl Index<usize> for Tokens {
     type Output = Token;
 
