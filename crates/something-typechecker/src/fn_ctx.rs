@@ -1,27 +1,40 @@
-use crate::{prelude::*, traits::InferType};
+use crate::{
+    prelude::*,
+    traits::{ResolveType, Scope},
+};
 use something_frontend::prelude::*;
 
 use something_ast::Node;
 #[derive(Debug, Clone)]
-pub struct FnCtx {
+pub struct FnScope {
     pub ast: FunctionDeclaration,
     pub scope: BlockScope,
 }
 
-impl FnCtx {
+impl Scope for FnScope {
+    fn get(&self, name: &Ident) -> Option<Type> {
+        self.scope.get(name)
+    }
+
+    fn set(&mut self, name: &Ident, ty: Type) {
+        self.scope.set(name, ty)
+    }
+}
+
+impl FnScope {
     fn new(ast: FunctionDeclaration) -> Self {
         let scope = BlockScope::new();
-        let mut fn_ctx = Self {
+        let mut fn_scope = Self {
             ast: ast.clone(),
             scope,
         };
         for ((ty, name), _) in ast.params.iter() {
-            fn_ctx.scope.set(name, ty.try_into().unwrap())
+            fn_scope.scope.set(name, ty.try_into().unwrap())
         }
         for node in ast.body.iter() {
-            fn_ctx.fn_decl_node(node)
+            fn_scope.fn_decl_node(node)
         }
-        fn_ctx
+        fn_scope
     }
     fn fn_decl_node(&mut self, node: &Node) {
         match node {
@@ -33,7 +46,7 @@ impl FnCtx {
         }
     }
     fn var_decl(&mut self, var_decl: &VariableDeclaration) {
-        let (annotation, ty) = var_decl.infer_type();
+        let (annotation, ty) = var_decl.resolve_type();
         if annotation != ty {
             panic!("type mismatch")
         }
@@ -51,6 +64,6 @@ fn main(number num) {
     test_call(a);
 } -> void"#
     );
-    let fn_ctx = FnCtx::new(fn_decl);
+    let fn_ctx = FnScope::new(fn_decl);
     dbg!(fn_ctx);
 }

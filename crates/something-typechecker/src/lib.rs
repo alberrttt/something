@@ -6,7 +6,7 @@ mod scope;
 mod traits;
 pub mod prelude {
     pub use crate::error::TypeError;
-    pub use crate::fn_ctx::FnCtx;
+    pub use crate::fn_ctx::FnScope;
     pub use crate::primitives::Type;
     pub use crate::scope::block::BlockScope;
 }

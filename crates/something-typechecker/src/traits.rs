@@ -2,23 +2,28 @@ use crate::prelude::*;
 use something_frontend::{Binary, Expression, Operator, VariableDeclaration};
 use something_frontend_tokenizer::prelude::*;
 
-pub trait InferType<T = Type> {
-    fn infer_type(&self) -> T;
+pub trait ResolveType<T = Type> {
+    fn resolve_type(&self) -> T;
 }
+pub trait Scope<K = Ident, V = Type> {
+    fn get(&self, key: &K) -> Option<V>;
+    fn set(&mut self, key: &K, value: V);
+}
+
 /// returns the annotation and the inferred type of the expr
-impl InferType<(Type, Type)> for VariableDeclaration {
-    fn infer_type(&self) -> (Type, Type) {
+impl ResolveType<(Type, Type)> for VariableDeclaration {
+    fn resolve_type(&self) -> (Type, Type) {
         let (_, ty) = self.type_annotation.clone().unwrap();
-        let value_ty = self.value.infer_type();
+        let value_ty = self.value.resolve_type();
         (ty.try_into().unwrap(), value_ty)
     }
 }
 
-impl InferType for Expression {
-    fn infer_type(&self) -> Type {
+impl ResolveType for Expression {
+    fn resolve_type(&self) -> Type {
         match self {
-            Expression::Lit(lit) => lit.infer_type(),
-            Expression::Binary(binary) => binary.infer_type(),
+            Expression::Lit(lit) => lit.resolve_type(),
+            Expression::Binary(binary) => binary.resolve_type(),
             Expression::Call(_) => todo!(),
             Expression::Ident(ident) => panic!(),
             Expression::Grouping(_) => todo!(),
@@ -27,8 +32,8 @@ impl InferType for Expression {
         }
     }
 }
-impl InferType for Literal {
-    fn infer_type(&self) -> Type {
+impl ResolveType for Literal {
+    fn resolve_type(&self) -> Type {
         use something_frontend_tokenizer::lit::lit_impl::Inner;
         match self.inner {
             Inner::Boolean(_) => Type::Boolean,
@@ -37,8 +42,8 @@ impl InferType for Literal {
         }
     }
 }
-impl InferType for Binary {
-    fn infer_type(&self) -> Type {
+impl ResolveType for Binary {
+    fn resolve_type(&self) -> Type {
         match self.operator {
             Operator::Plus | Operator::Minus | Operator::Multiply | Operator::Divide => {
                 Type::Number

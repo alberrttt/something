@@ -1,4 +1,4 @@
 use crate::prelude::*;
 pub struct FileCtx {
-    pub fns: Vec<FnCtx>,
+    pub fns: Vec<FnScope>,
 }
