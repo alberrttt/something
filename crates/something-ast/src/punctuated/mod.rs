@@ -1,5 +1,8 @@
-use std::{fmt::Display, ops::Deref};
+mod omited_trailing;
+use std::ops::Deref;
 
+use crate::prelude::*;
+pub use omited_trailing::*;
 use something_frontend_tokenizer::{Parse, ParsingDisplay, Tokens};
 
 // prolly need better error handling soon
@@ -51,14 +54,20 @@ where
         self.0.last().unwrap().1.is_some()
     }
     pub fn parse_without_trailing(input: &mut Tokens) -> Result<Self, Box<dyn std::error::Error>> {
-        todo!();
         let mut vec = Vec::new();
         loop {
+            let item = T::parse(input)?;
             if input.at_end() || input.is_empty() {
+                vec.push((item, None));
                 break;
             }
-            let item = T::parse(input)?;
-            vec.push((item, None));
+            let punct = P::parse(input)?;
+            if input.at_end() || input.is_empty() {
+                return Err(Box::new(ParseError::ExpectedEnd(
+                    (*input.previous().unwrap()).clone(),
+                )));
+            }
+            vec.push((item, Some(punct)));
         }
         Ok(Self(vec))
     }

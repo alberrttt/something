@@ -77,6 +77,18 @@ impl Tokens {
     {
         T::parse(self)
     }
+    pub fn previous(&self) -> Option<&Token> {
+        self.0.get(self.1 - 1)
+    }
+    pub fn previous1(&self) -> Option<&Token> {
+        self.0.get(self.1 - 2)
+    }
+    pub fn previous2(&self) -> Option<&Token> {
+        self.0.get(self.1 - 3)
+    }
+    pub fn previous3(&self) -> Option<&Token> {
+        self.0.get(self.1 - 4)
+    }
     pub fn at_end(&self) -> bool {
         self.1 >= self.0.len()
     }

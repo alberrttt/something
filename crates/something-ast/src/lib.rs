@@ -37,6 +37,7 @@ pub mod declaration;
 pub mod delimiter;
 pub mod error;
 pub mod expression;
+pub mod path;
 pub mod prelude;
 pub mod punctuated;
 pub mod statement;
