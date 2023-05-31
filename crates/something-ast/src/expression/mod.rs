@@ -202,7 +202,7 @@ pub enum Operator {
     GreaterEqual,
     LessEqual,
     EqualEqual,
-    BangEqual,
+    NotEqual,
     PlusEqual,
     MinusEqual,
     MultiplyEqual,
@@ -228,7 +228,7 @@ impl ParsingDisplay for Operator {
             Self::MinusEqual => "-=".into(),
             Self::MultiplyEqual => "*=".into(),
             Self::DivideEqual => "/=".into(),
-            Self::BangEqual => "!=".into(),
+            Self::NotEqual => "!=".into(),
         }
     }
     fn placeholder() -> String
@@ -256,7 +256,7 @@ impl Parse for Operator {
                 Token::MinusEqual(_) => Self::MinusEqual,
                 Token::StarEqual(_) => Self::MultiplyEqual,
                 Token::SlashEqual(_) => Self::DivideEqual,
-                Token::BangEqual(_) => Self::BangEqual,
+                Token::BangEqual(_) => Self::NotEqual,
                 _ => {
                     return Err(format!("Expected Operator, got {:?}", token.clone()).into());
                 }

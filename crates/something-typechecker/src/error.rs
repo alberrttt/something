@@ -1,11 +1,10 @@
 use std::fmt::Display;
 
-use crate::prelude::Type;
 #[derive(Debug, Clone)]
 pub enum TypeError {
     MismatchedTypes {
-        expected: Type,
-        found: Type,
+        expected: TypeSig,
+        found: TypeSig,
     },
     IncorrectTypeName {
         expected: &'static str,
@@ -13,11 +12,13 @@ pub enum TypeError {
     },
 }
 impl TypeError {
-    pub fn mismatched(expected: Type, found: Type) -> Self {
+    pub fn mismatched(expected: TypeSig, found: TypeSig) -> Self {
         Self::MismatchedTypes { expected, found }
     }
 }
 use colored::*;
+
+use crate::types::sig::TypeSig;
 impl std::error::Error for TypeError {}
 impl Display for TypeError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
