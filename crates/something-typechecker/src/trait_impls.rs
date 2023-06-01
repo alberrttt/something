@@ -2,24 +2,24 @@ mod var_decl {
     use something_frontend::VariableDeclaration;
 
     use crate::{
-        context::block::BlockContext,
+        context::block::Context,
         traits::ResolveType,
         types::{primitives::Primitive, sig::TypeSig},
     };
     impl ResolveType for VariableDeclaration {
-        type Context = BlockContext;
+        type Context = Context;
 
         fn resolve(&self, ctx: &mut Self::Context) -> TypeSig {
             let sig = match self.type_annotation {
                 Some(_) => resolve_type_annotated(self, ctx),
                 None => resolve_type_inferred(self, ctx),
             };
-            ctx.set(self.name.clone(), sig.clone());
+            ctx.set(&self.name, sig.clone());
 
             sig
         }
     }
-    fn resolve_type_annotated(var_decl: &VariableDeclaration, ctx: &mut BlockContext) -> TypeSig {
+    fn resolve_type_annotated(var_decl: &VariableDeclaration, ctx: &mut Context) -> TypeSig {
         let expr_type = var_decl.value.resolve(ctx);
         let annotation_type = {
             let tmp: Primitive = {
@@ -35,7 +35,7 @@ mod var_decl {
         }
     }
 
-    fn resolve_type_inferred(var_decl: &VariableDeclaration, ctx: &mut BlockContext) -> TypeSig {
+    fn resolve_type_inferred(var_decl: &VariableDeclaration, ctx: &mut Context) -> TypeSig {
         var_decl.value.resolve(ctx)
     }
 }
@@ -43,13 +43,13 @@ mod expression {
     use something_frontend::{Binary, Expression, Ident, Literal, Operator};
 
     use crate::{
-        context::block::BlockContext,
+        context::{block::BlockContext, Context},
         traits::ResolveType,
         types::{primitives::Primitive, sig::TypeSig},
     };
 
     impl ResolveType for Expression {
-        type Context = BlockContext;
+        type Context = Context;
 
         fn resolve(&self, ctx: &mut Self::Context) -> TypeSig {
             match self {
@@ -80,7 +80,7 @@ mod expression {
         }
     }
     impl ResolveType for Ident {
-        type Context = BlockContext;
+        type Context = Context;
 
         fn resolve(&self, ctx: &mut Self::Context) -> TypeSig {
             ctx.get(self).unwrap()
@@ -99,7 +99,7 @@ mod expression {
         }
     }
     impl ResolveType for Binary {
-        type Context = BlockContext;
+        type Context = Context;
 
         fn resolve(&self, ctx: &mut Self::Context) -> TypeSig {
             match self.operator {

@@ -16,8 +16,8 @@ impl FileContext {
     pub fn get(&self, key: &Ident) -> Option<TypeSig> {
         self.variables.get(key).cloned()
     }
-    pub fn set(&mut self, key: Ident, value: TypeSig) {
-        self.variables.insert(key, value);
+    pub fn set(&mut self, key: Ident, value: TypeSig) -> Option<TypeSig> {
+        self.variables.insert(key, value)
     }
 }
 impl From<Ast> for FileContext {
@@ -39,7 +39,6 @@ impl From<Ast> for FileContext {
                     ctx.fns.push(fn_ctx);
                 }
             }
-            dbg!(&ctx);
         }
         ctx
     }

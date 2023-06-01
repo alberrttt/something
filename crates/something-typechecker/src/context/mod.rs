@@ -12,13 +12,19 @@ pub enum Context {
     Block(BlockContext),
 }
 impl Context {
-    fn get(&self, key: &Ident) -> Option<TypeSig> {
+    pub fn set(&mut self, key: &Ident, value: TypeSig) {
+        match self {
+            Context::Function(fn_ctx) => fn_ctx.variables.insert(key.clone(), value),
+            Context::File(file_ctx) => file_ctx.set(key.clone(), value),
+            Context::Block(block_ctx) => block_ctx.set(key.clone(), value),
+        };
+    }
+    pub fn get(&self, key: &Ident) -> Option<TypeSig> {
         match self {
             Context::Function(fn_ctx) => {
                 //TODO: FOR SOME REASON, FN_CTX'S BLOCK IS EMPTY
-                dbg!(fn_ctx);
-                match fn_ctx.block.get(key) {
-                    Some(tmp) => Some(tmp),
+                match fn_ctx.variables.get(key) {
+                    Some(tmp) => Some(tmp.clone()),
                     None => match fn_ctx.parameters.get(key).cloned() {
                         None => fn_ctx.parent.as_ref()?.get(key),
                         Some(tmp) => Some(tmp),
