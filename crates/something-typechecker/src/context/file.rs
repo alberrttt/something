@@ -3,7 +3,10 @@ use std::{collections::HashMap, fs::File, rc::Rc};
 use something_ast::Ast;
 use something_frontend::Ident;
 
-use crate::types::sig::{FnSig, TypeSig};
+use crate::{
+    error::TypeError,
+    types::sig::{FnSig, TypeSig},
+};
 
 use super::{Context, FnContext};
 
@@ -20,26 +23,29 @@ impl FileContext {
         self.variables.insert(key, value)
     }
 }
-impl From<Ast> for FileContext {
-    fn from(value: Ast) -> Self {
+
+impl TryFrom<Ast> for FileContext {
+    type Error = TypeError;
+
+    fn try_from(value: Ast) -> Result<Self, Self::Error> {
         let mut ctx = Self::default();
         for node in value.nodes.iter() {
             match node {
                 something_ast::TopLevelNode::FunctionDeclaration(fn_decl) => {
-                    let mut fn_ctx = FnContext::from_fn_decl(
+                    let mut fn_ctx = FnContext::typecheck(
                         FnContext {
                             parent: Some(Rc::new(Context::File(ctx.clone()))),
                             ..Default::default()
                         },
                         fn_decl,
-                    );
-                    let fn_sig: FnSig = FnSig::from(&fn_ctx);
+                    )?;
+                    let fn_sig = FnSig::try_from(&fn_ctx)?;
                     ctx.variables
                         .insert(fn_decl.name.clone(), TypeSig::Fn(fn_sig));
                     ctx.fns.push(fn_ctx);
                 }
             }
         }
-        ctx
+        Ok(ctx)
     }
 }

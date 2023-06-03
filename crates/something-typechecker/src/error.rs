@@ -10,6 +10,11 @@ pub enum TypeError {
         expected: &'static str,
         found: String,
     },
+    ExpectedType {
+        expected: TypeSig,
+        found: TypeSig,
+    },
+    IdentOutOfScope(Ident),
 }
 impl TypeError {
     pub fn mismatched(expected: TypeSig, found: TypeSig) -> Self {
@@ -17,6 +22,7 @@ impl TypeError {
     }
 }
 use colored::*;
+use something_frontend::Ident;
 
 use crate::types::sig::TypeSig;
 impl std::error::Error for TypeError {}
@@ -43,6 +49,19 @@ impl Display for TypeError {
                     "but found".red().bold(),
                     found.yellow()
                 )
+            }
+            ExpectedType { expected, found } => {
+                write!(
+                    f,
+                    "{} {} {} {}",
+                    "Expected".red().bold(),
+                    expected.to_string().yellow(),
+                    "but found".red().bold(),
+                    found.to_string().yellow()
+                )
+            }
+            IdentOutOfScope(ident) => {
+                write!(f, "{} {} is not in scope", "Identifier".red().bold(), ident)
             }
         }
     }

@@ -3,6 +3,7 @@ use std::{collections::HashMap, rc::Rc};
 use something_frontend::{FunctionDeclaration, Ident};
 
 use crate::{
+    error::TypeError,
     traits::ResolveType,
     types::{
         primitives::Primitive,
@@ -19,18 +20,24 @@ pub struct FnContext {
     pub(crate) variables: HashMap<Ident, TypeSig>,
 }
 
-impl From<&FnContext> for FnSig {
-    fn from(value: &FnContext) -> Self {
-        let mut params = Vec::new();
-        for (_, ty) in value.parameters.iter() {
-            params.push(ty.clone());
-        }
-        let ret = TypeSig::Primitive(Primitive::Void);
-        (params, Box::new(ret))
+impl TryFrom<&FnContext> for TypeSig {
+    type Error = TypeError;
+
+    fn try_from(value: &FnContext) -> Result<Self, Self::Error> {
+        Ok(TypeSig::Fn(FnSig::try_from(value)?))
     }
 }
+macro_rules! return_if_error {
+    ($result:expr) => {
+        // if the result is an error, return it early
+        if let Err(err) = $result {
+            return Err(err);
+        }
+    };
+}
+
 impl FnContext {
-    pub fn from_fn_decl(mut ctx: Self, value: &FunctionDeclaration) -> Self {
+    pub fn typecheck(mut ctx: Self, value: &FunctionDeclaration) -> Result<Self, TypeError> {
         let mut parameters: HashMap<Ident, TypeSig> = HashMap::new();
         for ((ty, name), _) in value.params.iter() {
             parameters.insert(name.clone(), Primitive::from(ty).into());
@@ -43,10 +50,10 @@ impl FnContext {
             match node {
                 something_ast::Node::Statement(stmt) => match stmt {
                     something_frontend::Statement::Expression(expr, _) => {
-                        expr.resolve(&mut ctx);
+                        return_if_error!(expr.resolve(&mut ctx))
                     }
                     something_frontend::Statement::Return(_, expr, _) => {
-                        let expr_type: TypeSig = expr.resolve(&mut ctx);
+                        let expr_type: TypeSig = expr.resolve(&mut ctx)?;
                         if expr_type == (&return_type).into() {
                         } else {
                             panic!("Type mismatch")
@@ -66,11 +73,6 @@ impl FnContext {
                 std::hint::unreachable_unchecked()
             }
         };
-        ctx
-    }
-}
-impl From<&FunctionDeclaration> for FnContext {
-    fn from(value: &FunctionDeclaration) -> Self {
-        Self::from(value)
+        Ok(ctx)
     }
 }

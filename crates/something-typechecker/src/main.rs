@@ -15,6 +15,9 @@ const SRC: &str = r#"
 
 pub fn main() {
     let (ast, tokens): (Ast, _) = ast!(SRC);
-    let file_ctx: FileContext = ast.into();
+    let file_ctx: FileContext = FileContext::try_from(ast).unwrap_or_else(|err| {
+        eprintln!("Error: {}", err);
+        std::process::exit(1);
+    });
     println!("{:#?}", file_ctx);
 }

@@ -1,6 +1,6 @@
-use crate::types::sig::TypeSig;
+use crate::{error::TypeError, types::sig::TypeSig};
 
-pub trait ResolveType<To = TypeSig> {
+pub trait ResolveType<To = TypeSig, Err = TypeError> {
     type Context;
-    fn resolve(&self, ctx: &mut Self::Context) -> To;
+    fn resolve(&self, ctx: &mut Self::Context) -> Result<To, Err>;
 }
