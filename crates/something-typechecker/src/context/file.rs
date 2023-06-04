@@ -13,6 +13,7 @@ use super::{Context, FnContext};
 #[derive(Debug, Clone, Default)]
 pub struct FileContext {
     variables: HashMap<Ident, TypeSig>,
+
     fns: Vec<FnContext>,
 }
 impl FileContext {
@@ -22,14 +23,9 @@ impl FileContext {
     pub fn set(&mut self, key: Ident, value: TypeSig) -> Option<TypeSig> {
         self.variables.insert(key, value)
     }
-}
-
-impl TryFrom<Ast> for FileContext {
-    type Error = TypeError;
-
-    fn try_from(value: Ast) -> Result<Self, Self::Error> {
-        let mut ctx = Self::default();
-        for node in value.nodes.iter() {
+    pub fn typecheck(mut self, ast: Ast) -> Result<Self, TypeError> {
+        let mut ctx = self;
+        for node in ast.nodes.iter() {
             match node {
                 TopLevelNode::FunctionDeclaration(fn_decl) => {
                     let fn_ctx = FnContext {
@@ -46,5 +42,14 @@ impl TryFrom<Ast> for FileContext {
             }
         }
         Ok(ctx)
+    }
+}
+
+impl TryFrom<Ast> for FileContext {
+    type Error = TypeError;
+
+    fn try_from(ast: Ast) -> Result<Self, Self::Error> {
+        let mut ctx = Self::default();
+        ctx.typecheck(ast)
     }
 }

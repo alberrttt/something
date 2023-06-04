@@ -2,11 +2,12 @@ use std::fmt::{Debug, Display};
 
 use something_frontend::Ident;
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Default)]
 pub enum Primitive {
     Number,
     String,
     Boolean,
+    #[default]
     Void,
 }
 impl Debug for Primitive {

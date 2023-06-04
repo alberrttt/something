@@ -1,0 +1,10 @@
+
+[package]
+
+name = "something-util"
+version = "0.1.0"
+edition = "2021"
+description = "A utility library. It should have no dependencies."
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]

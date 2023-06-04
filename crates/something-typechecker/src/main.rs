@@ -9,13 +9,15 @@ const SRC: &str = r#"
 
     fn main() {
         let abc = 1;
+        let dca: string = abc;
         x(abc);
     } -> void
 "#;
 
 pub fn main() {
     let (ast, tokens): (Ast, _) = ast!(SRC);
-    let file_ctx: FileContext = FileContext::try_from(ast).unwrap_or_else(|err| {
+    let ctx = FileContext::default();
+    let file_ctx: FileContext = ctx.typecheck(ast).unwrap_or_else(|err| {
         eprintln!("Error: {}", err);
         std::process::exit(1);
     });

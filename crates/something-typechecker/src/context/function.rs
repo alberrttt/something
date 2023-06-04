@@ -18,6 +18,7 @@ pub struct FnContext {
     pub(crate) parameters: HashMap<Ident, TypeSig>,
     pub(crate) parent: Option<Rc<Context>>,
     pub(crate) variables: HashMap<Ident, TypeSig>,
+    pub(crate) return_type: Primitive,
 }
 
 impl TryFrom<&FnContext> for TypeSig {
@@ -38,13 +39,15 @@ macro_rules! return_if_error {
 
 impl FnContext {
     pub fn typecheck(mut self, value: &FunctionDeclaration) -> Result<Self, TypeError> {
-        let mut parameters: HashMap<Ident, TypeSig> = HashMap::new();
-        for ((ty, name), _) in value.params.iter() {
-            parameters.insert(name.clone(), Primitive::from(ty).into());
-        }
+        self.parameters = {
+            let mut parameters: HashMap<Ident, TypeSig> = HashMap::new();
+            for ((ty, name), _) in value.params.iter() {
+                parameters.insert(name.clone(), Primitive::from(ty).into());
+            }
+            parameters
+        };
 
         let return_type: Primitive = (&value.return_type.ty).into();
-        self.parameters = parameters;
         let mut ctx = Context::Function(self);
         for node in value.body.iter() {
             match node {
@@ -63,7 +66,7 @@ impl FnContext {
                 something_ast::Node::Declaration(decl) => match decl {
                     something_frontend::Declaration::Function(_) => todo!(),
                     something_frontend::Declaration::Var(var_decl) => {
-                        var_decl.resolve(&mut ctx);
+                        var_decl.resolve(&mut ctx)?;
                     }
                 },
             };

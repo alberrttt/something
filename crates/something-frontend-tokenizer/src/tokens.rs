@@ -35,7 +35,7 @@ macro_rules! create_token {
                     use crate::error::*;
                     Err((ParseError::ExpectedToken(
                         Token::$name(Self::default()),
-                        token.cloned().unwrap(),
+                        token.cloned().unwrap_or_else(|| Token::Eof(Eof::default())),
                     )))
                 }
             }
@@ -118,7 +118,7 @@ macro_rules! DefineTokens {
             }
         )+
         $(
-            #[derive(Clone, PartialEq, Eq)]
+            #[derive(Clone, PartialEq, Eq, Default)]
             pub struct $misc {
                 pub(crate)span: Span
             }
