@@ -2,7 +2,8 @@ use std::{backtrace, fmt::Display};
 
 use something_dev_tools::{item_name, ParseTokens, ParseTokensDisplay};
 use something_frontend_tokenizer::{
-    delimiter::Delimiter, ident::Ident, lit::Literal, tokens::Token, Parse, ParsingDisplay, Tokens,
+    delimiter::Delimiter, ident::Ident, lit::Literal, prelude::ParseError, tokens::Token, Parse,
+    ParsingDisplay, Tokens,
 };
 pub mod block;
 pub mod call;
@@ -36,11 +37,11 @@ use crate::delimiter::Parentheses;
 
 pub use self::call::*;
 impl Parse for Expression {
-    fn parse(input: &mut Tokens) -> Result<Self, Box<dyn std::error::Error>> {
+    fn parse(input: &mut Tokens) -> Result<Self, ParseError> {
         let tmp = match input.peek() {
             Some(token) => token.clone(),
             None => {
-                return Err(format!("end of file").into());
+                return Err(ParseError::Generic(format!("end of file")));
             }
         };
         parse_expr(
@@ -68,23 +69,23 @@ impl Parse for Expression {
                         Ok(Expression::Ident(ident))
                     }
                 }
-                x => {
-                    Err(format!("Expected a token to start an expression, but got {:?}", x).into())
-                }
+                x => Err(ParseError::Generic(
+                    format!("Expected a token to start an expression, but got {:?}", x).into(),
+                )),
             },
             input,
         )
     }
 }
 impl Parse for Box<Expression> {
-    fn parse(input: &mut Tokens) -> Result<Self, Box<dyn std::error::Error>> {
+    fn parse(input: &mut Tokens) -> Result<Self, ParseError> {
         Ok(Box::new(Expression::parse(input)?))
     }
 }
 fn parse_expr(
-    left: Result<Expression, Box<dyn std::error::Error>>,
+    left: Result<Expression, ParseError>,
     input: &mut Tokens,
-) -> Result<Expression, Box<dyn std::error::Error>> {
+) -> Result<Expression, ParseError> {
     let left = left?;
     let token = match input.peek() {
         Some(token) => token.clone(),
@@ -185,7 +186,7 @@ impl From<Binary> for Expression {
 }
 
 impl Parse for Binary {
-    fn parse(input: &mut Tokens) -> Result<Self, Box<dyn std::error::Error>> {
+    fn parse(input: &mut Tokens) -> Result<Self, ParseError> {
         let expr = Expression::parse(input)?;
         todo!();
     }
@@ -239,7 +240,7 @@ impl ParsingDisplay for Operator {
     }
 }
 impl Parse for Operator {
-    fn parse(input: &mut Tokens) -> Result<Self, Box<dyn std::error::Error>> {
+    fn parse(input: &mut Tokens) -> Result<Self, ParseError> {
         match input.advance() {
             Some(token) => Ok(match token {
                 Token::Plus(_) => Self::Plus,
@@ -258,10 +259,16 @@ impl Parse for Operator {
                 Token::SlashEqual(_) => Self::DivideEqual,
                 Token::BangEqual(_) => Self::NotEqual,
                 _ => {
-                    return Err(format!("Expected Operator, got {:?}", token.clone()).into());
+                    return Err(ParseError::Generic(format!(
+                        "Expected Operator, got {:?}",
+                        token.clone()
+                    )));
                 }
             }),
-            _ => Err(format!("Expected Operator, got {:?}", input.advance().clone()).into()),
+            _ => Err(ParseError::Generic(format!(
+                "Expected Operator, got {:?}",
+                input.advance().clone()
+            ))),
         }
     }
 }

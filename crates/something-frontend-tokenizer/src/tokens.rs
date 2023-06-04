@@ -6,7 +6,7 @@ use casey::lower;
 use std::{error::Error, fmt::Formatter};
 macro_rules! create_token {
     ($name:ident) => {
-        #[derive(Clone, Debug, PartialEq, Eq)]
+        #[derive(Clone, Debug, PartialEq, Eq, Default)]
         pub struct $name {
             pub span: Span,
         }
@@ -25,14 +25,18 @@ macro_rules! create_token {
                 stringify!($name).into()
             }
         }
-
+        use crate::error::*;
         impl Parse for $name {
-            fn parse(input: &mut Tokens) -> Result<Self, Box<dyn Error>> {
+            fn parse(input: &mut Tokens) -> Result<Self, ParseError> {
                 let token = input.advance().clone();
                 if let Some(Token::$name(token)) = token {
                     Ok(token.clone())
                 } else {
-                    Err(format!("Expected {}, got {:?}", stringify!($name), token).into())
+                    use crate::error::*;
+                    Err((ParseError::ExpectedToken(
+                        Token::$name(Self::default()),
+                        token.cloned().unwrap(),
+                    )))
                 }
             }
         }

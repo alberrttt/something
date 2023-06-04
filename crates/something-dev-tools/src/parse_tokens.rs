@@ -52,21 +52,21 @@ pub fn parse_tokens(input: TokenStream) -> TokenStream {
             return quote! {
                 mod #ident {
                     use colored::Colorize;
-                    use something_frontend_tokenizer::Parse;
-                    use something_frontend_tokenizer::Tokens;
+                    use something_frontend_tokenizer::prelude::*;
+             
                     use std::fmt::{Display, Formatter};
                     use super::#name;
                     impl Parse for #name {
-                        fn parse(input: &mut Tokens) -> Result<Self, Box<dyn std::error::Error>> {
+                        fn parse(input: &mut Tokens) -> Result<Self, ParseError> {
                             let mut err = String::from("Expected ").yellow().to_string();
                             #(#variants)*
                             err.push_str(format!("\n{} {}","But got:".red(), input.peek().unwrap()).as_str());
-                            Err(err.into())
+                            Err(ParseError::Generic(err))
                         }
                     }
 
                     impl Parse for Box<#name> {
-                        fn parse(input: &mut Tokens) -> Result<Self, Box<dyn std::error::Error>> {
+                        fn parse(input: &mut Tokens) -> Result<Self,ParseError> {
                             Ok(Box::new(#name::parse(input)?))
                         }
                     }
@@ -88,13 +88,12 @@ pub fn parse_tokens(input: TokenStream) -> TokenStream {
             return quote! {
                 mod #ident {
                     use colored::Colorize;
-                    use something_frontend_tokenizer::Parse;
-                    use something_frontend_tokenizer::Tokens;
+                    use something_frontend_tokenizer::prelude::*;
                     use std::fmt::{Display, Formatter};
                     use super::#name;
                     #parse_impl
                     impl Parse for Box<#name> {
-                        fn parse(input: &mut Tokens) -> Result<Self, Box<dyn std::error::Error>> {
+                        fn parse(input: &mut Tokens) -> Result<Self, ParseError> {
                             Ok(Box::new(#name::parse(input)?))
                         }
                     }
@@ -121,17 +120,14 @@ fn for_struct_w_named_fields(struct_data: DataStruct, name: &Ident) -> proc_macr
                 panic!("only empty types r supported")
             }
         } else {
-            quote! {#ident: match Parse::parse(input) {Ok(ok) => ok, Err(err)  => {
-                println!("{}", err);
-                panic!()
-            }},}
+            quote! {#ident: Parse::parse(input)?,}
         }
     });
     let variant_identifier = &variant.ident;
     quote! {
 
             impl Parse for #name {
-                fn parse(input: &mut Tokens) -> Result<Self, Box<dyn std::error::Error>> {
+                fn parse(input: &mut Tokens) -> Result<Self, ParseError> {
                     let tmp = input.step(|input| Parse::parse(input));
                     match tmp {
                         Ok(tmp) => {
@@ -157,7 +153,7 @@ fn for_struct_w_unamed_fields(struct_data: DataStruct, name: &Ident) -> proc_mac
 
 
             impl Parse for #name {
-                fn parse(input: &mut Tokens) -> Result<Self, Box<dyn std::error::Error>> {
+                fn parse(input: &mut Tokens) -> Result<Self, ParseError> {
                     let tmp = input.step(|input| Parse::parse(input));
                     match tmp {
                         Ok(tmp) => {

@@ -1,6 +1,6 @@
 use std::{collections::HashMap, fs::File, rc::Rc};
 
-use something_ast::Ast;
+use something_ast::{Ast, TopLevelNode};
 use something_frontend::Ident;
 
 use crate::{
@@ -31,17 +31,16 @@ impl TryFrom<Ast> for FileContext {
         let mut ctx = Self::default();
         for node in value.nodes.iter() {
             match node {
-                something_ast::TopLevelNode::FunctionDeclaration(fn_decl) => {
-                    let mut fn_ctx = FnContext::typecheck(
-                        FnContext {
-                            parent: Some(Rc::new(Context::File(ctx.clone()))),
-                            ..Default::default()
-                        },
-                        fn_decl,
-                    )?;
+                TopLevelNode::FunctionDeclaration(fn_decl) => {
+                    let fn_ctx = FnContext {
+                        parent: Some(Rc::new(Context::File(ctx.clone()))),
+                        ..Default::default()
+                    }
+                    .typecheck(fn_decl)?;
                     let fn_sig = FnSig::try_from(&fn_ctx)?;
                     ctx.variables
                         .insert(fn_decl.name.clone(), TypeSig::Fn(fn_sig));
+
                     ctx.fns.push(fn_ctx);
                 }
             }

@@ -11,11 +11,12 @@ pub struct VariableDeclaration {
 mod __variabledeclaration {
     use super::VariableDeclaration;
     use colored::Colorize;
+    use something_frontend_tokenizer::prelude::ParseError;
     use something_frontend_tokenizer::Parse;
     use something_frontend_tokenizer::Tokens;
     use std::fmt::{Display, Formatter};
     impl Parse for VariableDeclaration {
-        fn parse(input: &mut Tokens) -> Result<Self, Box<dyn std::error::Error>> {
+        fn parse(input: &mut Tokens) -> Result<Self, ParseError> {
             let tmp = input.step(|input| Parse::parse(input));
             match tmp {
                 Ok(tmp) => Ok(Self {
@@ -61,7 +62,7 @@ mod __variabledeclaration {
         }
     }
     impl Parse for Box<VariableDeclaration> {
-        fn parse(input: &mut Tokens) -> Result<Self, Box<dyn std::error::Error>> {
+        fn parse(input: &mut Tokens) -> Result<Self, ParseError> {
             Ok(Box::new(VariableDeclaration::parse(input)?))
         }
     }

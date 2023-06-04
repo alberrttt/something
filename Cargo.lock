@@ -325,6 +325,7 @@ name = "something-frontend-tokenizer"
 version = "0.1.0"
 dependencies = [
  "casey",
+ "colored",
  "something-dev-tools",
 ]
 

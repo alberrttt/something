@@ -1,7 +1,7 @@
 use std::{backtrace::Backtrace, slice::Iter};
 
 use something_dev_tools::{ParseTokens, ParseTokensDisplay};
-use something_frontend_tokenizer::{list::List, Parse, Tokens};
+use something_frontend_tokenizer::{list::List, prelude::ParseError, Parse, Tokens};
 
 use crate::{
     prelude::{Braces, Statement},
@@ -18,7 +18,7 @@ impl Block {
     }
 }
 impl Parse for Block {
-    fn parse(input: &mut Tokens) -> Result<Self, Box<dyn std::error::Error>> {
+    fn parse(input: &mut Tokens) -> Result<Self, ParseError> {
         let tmp = input.step(|input| Parse::parse(input));
         match tmp {
             Ok(tmp) => Ok(Self(tmp)),

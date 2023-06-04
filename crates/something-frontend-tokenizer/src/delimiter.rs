@@ -1,7 +1,7 @@
 use crate::tokens::SpanShell;
 
 use crate::{tokens::Span, Token, Tokenizer};
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct Delimiter<const Open: char, const Close: char> {
     pub tokens: Vec<Token>,
     pub span: Span,

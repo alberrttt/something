@@ -41,7 +41,7 @@ where
     T: Parse,
     P: Parse,
 {
-    fn parse(input: &mut Tokens) -> Result<Self, Box<dyn std::error::Error>> {
+    fn parse(input: &mut Tokens) -> Result<Self, ParseError> {
         Self::parse_terminated(input)
     }
 }
@@ -53,7 +53,7 @@ where
     pub fn has_trailing(&self) -> bool {
         self.0.last().unwrap().1.is_some()
     }
-    pub fn parse_without_trailing(input: &mut Tokens) -> Result<Self, Box<dyn std::error::Error>> {
+    pub fn parse_without_trailing(input: &mut Tokens) -> Result<Self, ParseError> {
         let mut vec = Vec::new();
         loop {
             let item = T::parse(input)?;
@@ -63,15 +63,15 @@ where
             }
             let punct = P::parse(input)?;
             if input.at_end() || input.is_empty() {
-                return Err(Box::new(ParseError::ExpectedEnd(
+                return Err(ParseError::ExpectedEnd(
                     (*input.previous().unwrap()).clone(),
-                )));
+                ));
             }
             vec.push((item, Some(punct)));
         }
         Ok(Self(vec))
     }
-    pub fn parse_trailing(input: &mut Tokens) -> Result<Self, Box<dyn std::error::Error>> {
+    pub fn parse_trailing(input: &mut Tokens) -> Result<Self, ParseError> {
         let mut vec = Vec::new();
         loop {
             if input.at_end() || input.is_empty() {
@@ -85,7 +85,7 @@ where
     }
     pub fn parse_terminated(
         input: &mut something_frontend_tokenizer::Tokens,
-    ) -> Result<Self, Box<dyn std::error::Error>> {
+    ) -> Result<Self, ParseError> {
         let mut vec = Vec::new();
         loop {
             if input.at_end() || input.is_empty() {

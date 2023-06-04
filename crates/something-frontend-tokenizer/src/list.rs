@@ -1,6 +1,4 @@
-
-
-use crate::{traits::ParsingDisplay, Parse};
+use crate::{error::ParseError, traits::ParsingDisplay, Parse};
 
 #[derive(Clone, PartialEq)]
 pub struct List<T>
@@ -36,7 +34,7 @@ impl<T> Parse for List<T>
 where
     T: Parse + Clone + std::fmt::Debug,
 {
-    fn parse(input: &mut crate::Tokens) -> Result<Self, Box<dyn std::error::Error>>
+    fn parse(input: &mut crate::Tokens) -> Result<Self, ParseError>
     where
         Self: Clone + std::fmt::Debug + Clone,
     {

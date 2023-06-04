@@ -1,3 +1,4 @@
+use crate::error::ParseError;
 use crate::traits::ParsingDisplay;
 use crate::Parse;
 use crate::{
@@ -8,7 +9,7 @@ use std::{
     error::Error,
     fmt::{Display, Formatter},
 };
-#[derive(Clone, PartialEq, PartialOrd, Eq)]
+#[derive(Clone, PartialEq, PartialOrd, Eq, Default)]
 pub struct Literal {
     /// discriminant
     pub span: Span,
@@ -42,12 +43,15 @@ impl ParsingDisplay for Literal {
     }
 }
 impl Parse for Literal {
-    fn parse(input: &mut Tokens) -> Result<Self, Box<dyn Error>> {
+    fn parse(input: &mut Tokens) -> Result<Self, ParseError> {
         let token = input.advance();
         if let Some(Token::Lit(token)) = token {
             Ok(token.clone())
         } else {
-            Err(format!("Expected {}, got {:?}", stringify!(Literal), token).into())
+            Err(ParseError::ExpectedToken(
+                Token::Lit(Literal::default()),
+                token.cloned().unwrap(),
+            ))
         }
     }
 }
@@ -97,6 +101,11 @@ pub mod lit_impl {
         String(String),
         Number(f64),
         Boolean(bool),
+    }
+    impl Default for Inner {
+        fn default() -> Self {
+            Self::String(String::new())
+        }
     }
 }
 impl Eq for lit_impl::Inner {

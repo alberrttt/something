@@ -35,7 +35,9 @@ pub enum Node {
 pub mod attribute;
 pub mod declaration;
 pub mod delimiter;
-pub mod error;
+pub mod error {
+    pub use something_frontend_tokenizer::error::*;
+}
 pub mod expression;
 pub mod path;
 pub mod prelude;

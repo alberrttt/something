@@ -2,10 +2,16 @@ use std::{error::Error, fmt::Debug};
 
 use something_dev_tools::tuple_parse_impl;
 
-use crate::{ident::Ident, Tokens};
+use crate::{error::ParseError, ident::Ident, Tokens};
+pub trait Name: std::fmt::Debug {
+    fn name() -> &'static str
+    where
+        Self: Sized;
+    fn named(&self) -> &'static str;
+}
 
 pub trait Parse: ParsingDisplay + std::fmt::Debug {
-    fn parse(input: &mut Tokens) -> Result<Self, Box<dyn Error>>
+    fn parse(input: &mut Tokens) -> Result<Self, ParseError>
     where
         Self: Sized;
 }
@@ -35,7 +41,7 @@ where
     }
 }
 impl Parse for () {
-    fn parse(_input: &mut Tokens) -> Result<Self, Box<dyn Error>> {
+    fn parse(_input: &mut Tokens) -> Result<Self, ParseError> {
         Ok(())
     }
 }
@@ -50,7 +56,7 @@ impl<T> Parse for Option<T>
 where
     T: Debug + Parse + Clone,
 {
-    fn parse(input: &mut Tokens) -> Result<Self, Box<dyn Error>>
+    fn parse(input: &mut Tokens) -> Result<Self, ParseError>
     where
         Self: Sized,
     {

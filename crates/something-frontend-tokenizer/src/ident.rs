@@ -1,10 +1,11 @@
+use crate::error::ParseError;
 use crate::traits::ParsingDisplay;
 use crate::Parse;
 use crate::{tokens::Span, Token, Tokens};
 use std::fmt::Debug;
 use std::{error::Error, fmt::Display};
 
-#[derive(Clone, Eq)]
+#[derive(Clone, Eq, Default)]
 pub struct Ident {
     pub name: String,
     pub span: Span,
@@ -40,12 +41,15 @@ impl ParsingDisplay for Ident {
     }
 }
 impl Parse for Ident {
-    fn parse(input: &mut Tokens) -> Result<Self, Box<dyn Error>> {
+    fn parse(input: &mut Tokens) -> Result<Self, ParseError> {
         let token = input.advance();
         if let Some(Token::Ident(token)) = token {
             Ok(token.clone())
         } else {
-            Err(format!("Expected Ident, got {:?}", token).into())
+            Err(ParseError::ExpectedToken(
+                Token::Ident(Ident::default()),
+                token.cloned().unwrap(),
+            ))
         }
     }
 }

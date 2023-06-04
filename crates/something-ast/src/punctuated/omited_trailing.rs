@@ -23,7 +23,7 @@ where
     T: Debug + Parse,
     P: Debug + Parse,
 {
-    fn parse(input: &mut Tokens) -> Result<Self, Box<dyn std::error::Error>> {
+    fn parse(input: &mut Tokens) -> Result<Self, ParseError> {
         Ok(Self(Punctuated::<T, P>::parse_without_trailing(input)?))
     }
 }

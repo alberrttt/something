@@ -5,13 +5,22 @@ use colored::*;
 #[derive(Debug)]
 pub enum ParseError {
     ExpectedToken(Token, Token),
-
+    Generic(String),
+    Boxed(Box<dyn Error>),
     ExpectedEnd(Token),
     ExpectedAst(Vec<Box<dyn Name>>, Box<dyn Name>),
 }
 impl std::fmt::Display for ParseError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
+            ParseError::Generic(s) => {
+                writeln!(f, "{}", "Error".bold().red())?;
+                write!(f, "{}", s)
+            }
+            ParseError::Boxed(e) => {
+                writeln!(f, "{}", "Error".bold().red())?;
+                write!(f, "{}", e)
+            }
             ParseError::ExpectedToken(expected, got) => {
                 writeln!(f, "{}", "Error".bold().red())?;
                 write!(f, "Expected token {:?}, got {:?}", expected, got)

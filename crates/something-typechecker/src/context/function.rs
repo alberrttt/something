@@ -37,15 +37,15 @@ macro_rules! return_if_error {
 }
 
 impl FnContext {
-    pub fn typecheck(mut ctx: Self, value: &FunctionDeclaration) -> Result<Self, TypeError> {
+    pub fn typecheck(mut self, value: &FunctionDeclaration) -> Result<Self, TypeError> {
         let mut parameters: HashMap<Ident, TypeSig> = HashMap::new();
         for ((ty, name), _) in value.params.iter() {
             parameters.insert(name.clone(), Primitive::from(ty).into());
         }
 
         let return_type: Primitive = (&value.return_type.ty).into();
-        ctx.parameters = parameters;
-        let mut ctx = Context::Function(ctx);
+        self.parameters = parameters;
+        let mut ctx = Context::Function(self);
         for node in value.body.iter() {
             match node {
                 something_ast::Node::Statement(stmt) => match stmt {

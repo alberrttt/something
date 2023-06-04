@@ -1,7 +1,7 @@
 use std::{fs, path::PathBuf};
 
 use clap::{Parser, Subcommand};
-use something_ast::{Ast};
+use something_ast::Ast;
 use something_frontend_tokenizer::{Parse, ParsingDisplay, Tokens};
 mod repl;
 #[derive(Parser)]
@@ -23,7 +23,13 @@ fn main() {
         Commands::Run { file } => {
             let file = fs::read_to_string(file).unwrap();
             let mut tokens = Tokens::from(file.as_str());
-            let ast = Ast::parse(&mut tokens).unwrap();
+            let ast = match Ast::parse(&mut tokens) {
+                Ok(ok) => ok,
+                Err(err) => {
+                    println!("{err}");
+                    panic!()
+                }
+            };
             println!("{:?}", &ast);
             println!("{:?}", ast.display())
         }

@@ -1,9 +1,15 @@
 use super::prelude::*;
+use something_frontend_tokenizer::error::ParseError;
 macro_rules! delimiter_impl {
     [$($delimiter:ident),*] => {
         $(
             #[derive(Debug, Clone)]
             pub struct $delimiter<T>(pub Span, pub T);
+            impl<T> Default for $delimiter<T> where T: Default {
+                fn default() -> Self {
+                    Self(Span::default(), T::default())
+                }
+            }
             impl<T> Deref for $delimiter<T> {
                 type Target = T;
                 fn deref(&self) -> &Self::Target {
@@ -17,14 +23,19 @@ macro_rules! delimiter_impl {
             {
                 fn parse(
                     input: &mut something_frontend_tokenizer::Tokens,
-                ) -> Result<Self, Box<dyn std::error::Error>> {
+                ) -> Result<Self, ParseError> {
                     let Some(Token::$delimiter(delimiter)) = input.advance() else {
-                        return Err(format!("expected {} but got: {:?}", stringify!($delimiter), input.peek()).into());
+                        return Err(
+                            ParseError::ExpectedToken(
+                                Token::$delimiter(Default::default()),
+                                input.advance().cloned().unwrap(),
+                            )
+                        );
                     };
                     let tokens = &mut delimiter.tokens.clone().into();
                     let tmp = Parse::parse(tokens)?;
                     if !tokens.at_end() {
-                        return Err(format!("Did not expect these tokens: {:?}", &tokens.0[tokens.1..]).into());
+                        return Err(ParseError::Generic(format!("Did not expect these tokens: {:?}", &tokens.0[tokens.1..]).into()));
                     }
                     Ok(Self(delimiter.span, tmp))
                 }

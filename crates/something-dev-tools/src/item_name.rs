@@ -16,6 +16,7 @@ pub fn item_name(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     quote::quote! {
 
         mod #fmtident {
+            use something_frontend_tokenizer::prelude::Name;
             use super::#ident;
             use crate::prelude::*;
             impl Name for #ident {

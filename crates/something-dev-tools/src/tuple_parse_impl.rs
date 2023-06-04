@@ -1,4 +1,4 @@
-use proc_macro::{TokenStream};
+use proc_macro::TokenStream;
 
 use syn::{parse::Parse, parse_macro_input, punctuated::Punctuated, Token};
 
@@ -6,7 +6,7 @@ use syn::{parse::Parse, parse_macro_input, punctuated::Punctuated, Token};
 // where
 //     $($ty: Parse),*
 // {
-//     fn parse(input: &mut Tokens) -> Result<Self, Box<dyn Error>> where Self: Sized {
+//     fn parse(input: &mut Tokens) -> Result<Self, ParseError> where Self: Sized {
 //         Ok(($($ty::parse(input)?),*))
 //     }
 // }
@@ -62,7 +62,7 @@ pub fn tuple_parse_impl(input: TokenStream) -> TokenStream {
         where
         #(#tokens: Parse),*
         {
-            fn parse(input: &mut Tokens) -> Result<Self, Box<dyn Error>> where Self: Sized {
+            fn parse(input: &mut Tokens) -> Result<Self, ParseError> where Self: Sized {
                 Ok((A::parse(input)?, #(#tokens_parsing::parse(input).unwrap()),*))
             }
         }

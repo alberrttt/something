@@ -10,18 +10,23 @@ pub struct Tokenizer<'a> {
     current: usize,
 }
 pub mod delimiter;
+pub mod error;
 pub mod ident;
 pub mod list;
 pub mod lit;
 pub mod to_string;
 pub mod tokens;
 pub mod traits;
+use error::ParseError;
 use ident::*;
 use lit::*;
 use tokens::*;
 pub use traits::{Parse, ParsingDisplay};
 pub mod prelude {
-    pub use super::{delimiter::*, ident::*, list::*, lit::*, to_string::*, tokens::*, traits::*};
+    pub use super::Tokens;
+    pub use super::{
+        delimiter::*, error::*, ident::*, list::*, lit::*, to_string::*, tokens::*, traits::*,
+    };
 }
 #[derive(Debug, Clone)]
 pub struct Tokens(pub Vec<Token>, pub usize);
@@ -70,7 +75,7 @@ impl Display for Tokens {
 }
 
 impl Tokens {
-    pub fn parse<T>(&mut self) -> Result<T, Box<dyn Error>>
+    pub fn parse<T>(&mut self) -> Result<T, ParseError>
     where
         T: Parse,
         T: Clone + std::fmt::Debug + Clone,
@@ -144,8 +149,8 @@ impl Tokens {
 
     pub fn step<R>(
         &mut self,
-        F: impl FnOnce(&mut Self) -> Result<R, Box<dyn Error>>,
-    ) -> Result<R, Box<dyn Error>> {
+        F: impl FnOnce(&mut Self) -> Result<R, ParseError>,
+    ) -> Result<R, ParseError> {
         let starting = self.1;
         let stepped = F(self);
         match stepped {
@@ -158,7 +163,7 @@ impl Tokens {
     }
 }
 impl Tokenizer<'_> {
-    pub fn tokens(&mut self) -> Result<Tokens, Box<dyn Error>> {
+    pub fn tokens(&mut self) -> Result<Tokens, ParseError> {
         let mut tokens = Vec::new();
         loop {
             let token = self.next_token();
@@ -176,7 +181,7 @@ impl Tokenizer<'_> {
     }
 }
 impl<'a> Tokenizer<'a> {
-    fn identifier(&mut self) -> Result<Ident, Box<dyn Error>> {
+    fn identifier(&mut self) -> Result<Ident, ParseError> {
         while let Some(c) = self.peek() {
             match c {
                 'a'..='z' | 'A'..='Z' | '0'..='9' | '-' | '_' => {
@@ -200,7 +205,7 @@ impl<'a> Tokenizer<'a> {
         }
     }
 
-    fn next_token(&mut self) -> Result<Token, Box<dyn Error>> {
+    fn next_token(&mut self) -> Result<Token, ParseError> {
         if self.current >= self.input.len() {
             return Ok(Token!(self, Eof));
         }
@@ -302,19 +307,21 @@ impl<'a> Tokenizer<'a> {
             }
 
             x if x.is_whitespace() => Ok(Token!(self, Whitespace)),
-            x => Err(format!("Error with `{}`", x.to_string()).into()),
+            x => Err(ParseError::Generic(format!("Error with `{}`", x.to_string())).into()),
         }
     }
     /// if it matches, it will consume, if not it will return Err
-    fn try_consume(&mut self, expected: char) -> Result<char, Box<dyn Error>> {
+    fn try_consume(&mut self, expected: char) -> Result<char, ParseError> {
         if self.peek() == Some(expected) {
             let got = self.advance().unwrap();
             Ok(got)
         } else {
-            Err(format!("Expected {}, got {:?}", expected, self.peek()).into())
+            Err(ParseError::Generic(
+                format!("Expected {}, got {:?}", expected, self.peek()).into(),
+            ))
         }
     }
-    fn string(&mut self) -> Result<Literal, Box<dyn Error>> {
+    fn string(&mut self) -> Result<Literal, ParseError> {
         while let Some(c) = self.peek() {
             if c == '"' {
                 self.advance();
@@ -326,7 +333,7 @@ impl<'a> Tokenizer<'a> {
         let lexeme = self.input[self.starting + 1..self.current - 1].to_owned();
         Ok(Literal::new_str(span, lexeme))
     }
-    fn number(&mut self) -> Result<Literal, Box<dyn Error>> {
+    fn number(&mut self) -> Result<Literal, ParseError> {
         while let Some(c) = self.peek() {
             if c.is_numeric() {
                 self.advance();
@@ -335,7 +342,10 @@ impl<'a> Tokenizer<'a> {
             }
         }
         let span = span![self.starting, self.current];
-        let lexeme = self.input[self.starting..self.current].parse::<f64>()?;
+        let lexeme = match self.input[self.starting..self.current].parse::<f64>() {
+            Ok(ok) => ok,
+            Err(err) => return Err(ParseError::Boxed(Box::new(err))),
+        };
 
         Ok(Literal::new_num(span, lexeme))
     }
