@@ -2,7 +2,7 @@ use std::fmt::Display;
 
 use prelude::{Children, Declaration, FunctionDeclaration};
 use something_dev_tools::{ParseTokens, ParseTokensDisplay};
-use something_frontend_tokenizer::{list::List, Parse};
+use something_frontend_tokenizer::{list::List, traits::AppendTokens, Parse};
 #[derive(Debug, Clone, ParseTokens, ParseTokensDisplay, Default)]
 pub struct Ast {
     pub nodes: List<TopLevelNode>,
@@ -11,6 +11,18 @@ pub struct Ast {
 #[derive(Debug, Clone, ParseTokens, ParseTokensDisplay)]
 pub enum TopLevelNode {
     FunctionDeclaration(FunctionDeclaration),
+}
+impl AppendTokens for TopLevelNode {
+    fn append_tokens(&self, tokens: &mut something_frontend_tokenizer::Tokens)
+    where
+        Self: Sized,
+    {
+        match self {
+            TopLevelNode::FunctionDeclaration(function_declaration) => {
+                function_declaration.append_tokens(tokens)
+            }
+        }
+    }
 }
 impl Display for TopLevelNode {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -31,7 +43,14 @@ pub enum Node {
     Statement(statement::Statement),
     Declaration(Declaration),
 }
-
+impl AppendTokens for Node {
+    fn append_tokens(&self, tokens: &mut something_frontend_tokenizer::Tokens)
+    where
+        Self: Sized,
+    {
+        todo!();
+    }
+}
 pub mod attribute;
 pub mod declaration;
 pub mod delimiter;

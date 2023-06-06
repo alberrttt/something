@@ -1,14 +1,23 @@
+use crate::prelude::*;
 use crate::traits::ParsingDisplay;
 use crate::Parse;
 use crate::Tokens;
 use casey::lower;
-
 use std::{error::Error, fmt::Formatter};
 macro_rules! create_token {
     ($name:ident) => {
         #[derive(Clone, Debug, PartialEq, Eq, Default)]
         pub struct $name {
             pub span: Span,
+        }
+        impl AppendTokens for $name {
+            fn append_tokens(&self, tokens: &mut Tokens)
+            where
+                Self: Sized,
+            {
+                let tmp = Token::$name(self.clone());
+                tokens.push(tmp);
+            }
         }
         impl ParsingDisplay for $name {
             fn display(&self) -> String
@@ -65,6 +74,36 @@ macro_rules! DefineTokens {
             ClosingBrace(SpanShell),
             ClosingBracket(SpanShell),
 
+        }
+        impl ParsingDisplay for Token {
+            fn display(&self) -> String
+            where
+                Self: Sized,
+            {
+
+                match self {
+                    Token::Ident(i) => i.display(),
+                    Token::Lit(l) => l.display(),
+                    $(Token::$keyword(k) => k.display()),+,
+                    $(Token::$token(t) => t.display()),+,
+                    $(Token::$misc(m) => ParsingDisplay::display(m)),+,
+                    Token::Parentheses(_) => "()".to_string(),
+                    Token::Braces(_) => "{}".to_string(),
+                    Token::Brackets(_) => "[]".to_string(),
+                    Token::ClosingParen {..} => ")".to_string(),
+                    Token::ClosingBrace {..} => "}".to_string(),
+                    Token::ClosingBracket {..} => "]".to_string(),
+                }
+
+
+            }
+
+            fn placeholder() -> String
+            where
+                Self: Sized,
+            {
+                stringify!($name).into()
+            }
         }
         impl std::fmt::Display for Token {
             fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -134,6 +173,21 @@ macro_rules! DefineTokens {
                     write!(f, "{}", lower!(stringify!($misc)))
                 }
             }
+            impl ParsingDisplay for $misc {
+                fn display(&self) -> String
+                where
+                    Self: Sized,
+                {
+                    lower!(stringify!($misc)).into()
+                }
+
+                fn placeholder() -> String
+                where
+                    Self: Sized,
+                {
+                    stringify!($misc).into()
+                }
+            }
         )+
 
     };
@@ -148,6 +202,7 @@ macro_rules! Token {
     }
 
 }
+
 DefineTokens!(
     [If, Fn, Let, Return, While, For],
     [

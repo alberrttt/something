@@ -1,7 +1,9 @@
 use std::{backtrace::Backtrace, slice::Iter};
 
 use something_dev_tools::{ParseTokens, ParseTokensDisplay};
-use something_frontend_tokenizer::{list::List, prelude::ParseError, Parse, Tokens};
+use something_frontend_tokenizer::{
+    list::List, prelude::ParseError, traits::AppendTokens, Parse, Tokens,
+};
 
 use crate::{
     prelude::{Braces, Statement},
@@ -11,7 +13,14 @@ use crate::{
 
 #[derive(Debug, Clone, ParseTokensDisplay)]
 pub struct Block(pub Braces<List<Node>>);
-
+impl AppendTokens for Block {
+    fn append_tokens(&self, tokens: &mut Tokens)
+    where
+        Self: Sized,
+    {
+        self.0.append_tokens(tokens);
+    }
+}
 impl Block {
     pub fn iter(&self) -> Iter<Node> {
         self.0 .1.iter()

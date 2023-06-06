@@ -1,4 +1,4 @@
-use std::error::Error;
+use std::{error::Error, ops::Range};
 
 use crate::prelude::*;
 use colored::*;
@@ -9,6 +9,11 @@ pub enum ParseError {
     Boxed(Box<dyn Error>),
     ExpectedEnd(Token),
     ExpectedAst(Vec<Box<dyn Name>>, Box<dyn Name>),
+}
+#[derive(Debug, Clone)]
+pub struct TokenErrorInfo {
+    tokens: Vec<Token>,
+    idxs: Vec<(Range<usize>, String)>,
 }
 impl std::fmt::Display for ParseError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {

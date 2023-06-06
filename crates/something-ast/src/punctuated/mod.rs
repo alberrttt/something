@@ -3,11 +3,26 @@ use std::ops::Deref;
 
 use crate::prelude::*;
 pub use omited_trailing::*;
-use something_frontend_tokenizer::{Parse, ParsingDisplay, Tokens};
+use something_frontend_tokenizer::{traits::AppendTokens, Parse, ParsingDisplay, Tokens};
 
 // prolly need better error handling soon
 #[derive(Debug, Clone)]
 pub struct Punctuated<T, P>(pub Vec<(T, Option<P>)>);
+impl<T, P> AppendTokens for Punctuated<T, P>
+where
+    Self: Sized,
+    T: AppendTokens,
+    P: AppendTokens,
+{
+    fn append_tokens(&self, tokens: &mut Tokens) {
+        for (t, p) in &self.0 {
+            t.append_tokens(tokens);
+            if let Some(p) = p {
+                p.append_tokens(tokens);
+            }
+        }
+    }
+}
 impl<T, P> Deref for Punctuated<T, P> {
     type Target = Vec<(T, Option<P>)>;
 

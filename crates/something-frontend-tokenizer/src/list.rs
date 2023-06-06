@@ -1,4 +1,8 @@
-use crate::{error::ParseError, traits::ParsingDisplay, Parse};
+use crate::{
+    error::ParseError,
+    traits::{AppendTokens, ParsingDisplay},
+    Parse,
+};
 
 #[derive(Clone, PartialEq)]
 pub struct List<T>
@@ -7,7 +11,19 @@ where
 {
     pub(super) items: Vec<T>,
 }
-
+impl<T> AppendTokens for List<T>
+where
+    T: Parse + AppendTokens,
+{
+    fn append_tokens(&self, tokens: &mut crate::Tokens)
+    where
+        Self: Sized,
+    {
+        for item in &self.items {
+            item.append_tokens(tokens);
+        }
+    }
+}
 impl<T> ParsingDisplay for List<T>
 where
     T: Parse,

@@ -58,6 +58,15 @@ pub fn tuple_parse_impl(input: TokenStream) -> TokenStream {
     };
     let tokens_parsing = tokens.iter().skip(1).collect::<Vec<_>>();
     quote::quote! {
+        impl<#(#tokens),*> AppendTokens for (#(#tokens),*)  where
+        #(#tokens: AppendTokens),*
+        {
+            fn append_tokens(&self, tokens: &mut Tokens) where Self: Sized {
+                let (#(#tokens),*) = self;
+                #(#tokens.append_tokens(tokens);)*
+            }
+        }
+
         impl<#(#tokens),*> Parse for (#(#tokens),*)
         where
         #(#tokens: Parse),*

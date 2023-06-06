@@ -8,6 +8,24 @@ pub struct VariableDeclaration {
     pub value: Expression,
     pub semicolon: tokens::Semicolon,
 }
+impl AppendTokens for VariableDeclaration {
+    fn append_tokens(&self, tokens: &mut Tokens)
+    where
+        Self: Sized,
+    {
+        self.let_token.clone().append_tokens(tokens);
+        self.name.clone().append_tokens(tokens);
+        if let Some((colon, ident)) = &self.type_annotation {
+            colon.clone().append_tokens(tokens);
+            ident.clone().append_tokens(tokens);
+        }
+        self.equal.clone().append_tokens(tokens);
+
+        todo!();
+
+        self.semicolon.clone().append_tokens(tokens);
+    }
+}
 mod __variabledeclaration {
     use super::VariableDeclaration;
     use colored::Colorize;
@@ -69,6 +87,7 @@ mod __variabledeclaration {
 }
 pub use __variabledeclaration::*;
 use something_dev_tools::item_name;
+use something_frontend_tokenizer::traits::AppendTokens;
 item_name!(VariableDeclaration, "variable declaration");
 
 #[test]

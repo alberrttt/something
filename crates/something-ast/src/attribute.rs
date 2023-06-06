@@ -1,4 +1,4 @@
-use something_frontend_tokenizer::list::List;
+use something_frontend_tokenizer::{list::List, traits::AppendTokens};
 
 use super::prelude::*;
 

@@ -9,7 +9,11 @@ pub trait Name: std::fmt::Debug {
         Self: Sized;
     fn named(&self) -> &'static str;
 }
-
+pub trait AppendTokens {
+    fn append_tokens(&self, tokens: &mut Tokens)
+    where
+        Self: Sized;
+}
 pub trait Parse: ParsingDisplay + std::fmt::Debug {
     fn parse(input: &mut Tokens) -> Result<Self, ParseError>
     where

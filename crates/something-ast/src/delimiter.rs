@@ -1,5 +1,6 @@
 use super::prelude::*;
 use something_frontend_tokenizer::error::ParseError;
+use something_frontend_tokenizer::prelude::AppendTokens;
 macro_rules! delimiter_impl {
     [$($delimiter:ident),*] => {
         $(
@@ -8,6 +9,24 @@ macro_rules! delimiter_impl {
             impl<T> Default for $delimiter<T> where T: Default {
                 fn default() -> Self {
                     Self(Span::default(), T::default())
+                }
+            }
+            impl<T> AppendTokens for $delimiter<T>
+            where
+                T: AppendTokens,
+            {
+                fn append_tokens(&self, tokens: &mut Tokens)
+                where
+                    Self: Sized,
+                {
+                    let mut tmp = Tokens::new();
+                    self.1.append_tokens(&mut tmp);
+                    // its so late and im lazy to implement a more idiomatic way to get the span
+                    let tmp = Token::$delimiter(Delimiter {
+                        tokens: tmp.0.clone(),
+                        span: tmp.0.first().unwrap().span(),
+                    });
+                    tokens.push(tmp);
                 }
             }
             impl<T> Deref for $delimiter<T> {
@@ -49,6 +68,7 @@ macro_rules! delimiter_impl {
 use something_dev_tools::item_name;
 use std::ops::Deref;
 delimiter_impl![Braces, Brackets, Parentheses];
+
 impl<T> ParsingDisplay for Brackets<T>
 where
     T: std::fmt::Debug + Clone + something_frontend_tokenizer::ParsingDisplay,

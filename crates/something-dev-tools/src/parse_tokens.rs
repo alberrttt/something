@@ -79,12 +79,17 @@ pub fn parse_tokens(input: TokenStream) -> TokenStream {
         Data::Struct(struct_data) => {
             let name = derive.ident;
             let parse_impl = if struct_data.fields.iter().any(|f| f.ident.is_some()) {
-                for_struct_w_named_fields(struct_data, &name)
+                for_struct_w_named_fields(&struct_data, &name)
             } else {
-                for_struct_w_unamed_fields(struct_data, &name)
+                for_struct_w_unamed_fields(&struct_data, &name)
             };
             let ident = format_ident!("__{}", name.to_string().to_lowercase());
-
+            let to_vec: Vec<proc_macro2::TokenStream >= {
+                struct_data.fields.iter().map(|f| {
+                    let ident = f.ident.as_ref().expect("unnamed fields unsupported");
+                    quote! {self.#ident.clone().append_tokens(tokens);}
+                })
+            }.collect();
             return quote! {
                 mod #ident {
                     use colored::Colorize;
@@ -92,6 +97,11 @@ pub fn parse_tokens(input: TokenStream) -> TokenStream {
                     use std::fmt::{Display, Formatter};
                     use super::#name;
                     #parse_impl
+                    impl AppendTokens for #name {
+                        fn append_tokens(&self, tokens: &mut Tokens) {
+                            #(#to_vec)*
+                        }
+                    }
                     impl Parse for Box<#name> {
                         fn parse(input: &mut Tokens) -> Result<Self, ParseError> {
                             Ok(Box::new(#name::parse(input)?))
@@ -107,7 +117,7 @@ pub fn parse_tokens(input: TokenStream) -> TokenStream {
     }
     panic!()
 }
-fn for_struct_w_named_fields(struct_data: DataStruct, name: &Ident) -> proc_macro2::TokenStream {
+fn for_struct_w_named_fields(struct_data: &DataStruct, name: &Ident) -> proc_macro2::TokenStream {
     let mut iter = struct_data.fields.iter();
     let variant = iter.next().unwrap();
     let variants = iter.map(|f| {
@@ -143,7 +153,7 @@ fn for_struct_w_named_fields(struct_data: DataStruct, name: &Ident) -> proc_macr
 
     }
 }
-fn for_struct_w_unamed_fields(struct_data: DataStruct, name: &Ident) -> proc_macro2::TokenStream {
+fn for_struct_w_unamed_fields(struct_data: &DataStruct, name: &Ident) -> proc_macro2::TokenStream {
     let fields = struct_data.fields.iter().skip(1).map(|_field| {
         quote! {
             Parse::parse(input).unwrap()

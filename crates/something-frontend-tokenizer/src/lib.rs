@@ -1,7 +1,7 @@
 use std::{
     error::Error,
     fmt::Display,
-    ops::{Deref, Index},
+    ops::{Deref, DerefMut, Index},
 };
 #[derive(Debug)]
 pub struct Tokenizer<'a> {
@@ -30,11 +30,17 @@ pub mod prelude {
 }
 #[derive(Debug, Clone)]
 pub struct Tokens(pub Vec<Token>, pub usize);
+
 impl Deref for Tokens {
     type Target = Vec<Token>;
 
     fn deref(&self) -> &Self::Target {
         &self.0
+    }
+}
+impl DerefMut for Tokens {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
     }
 }
 impl Index<usize> for Tokens {
@@ -75,6 +81,9 @@ impl Display for Tokens {
 }
 
 impl Tokens {
+    pub fn new() -> Self {
+        Self(Vec::new(), 0)
+    }
     pub fn parse<T>(&mut self) -> Result<T, ParseError>
     where
         T: Parse,

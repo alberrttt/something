@@ -1,5 +1,5 @@
 use crate::error::ParseError;
-use crate::traits::ParsingDisplay;
+use crate::traits::{AppendTokens, ParsingDisplay};
 use crate::Parse;
 use crate::{tokens::Span, Token, Tokens};
 use std::fmt::Debug;
@@ -9,6 +9,14 @@ use std::{error::Error, fmt::Display};
 pub struct Ident {
     pub name: String,
     pub span: Span,
+}
+impl AppendTokens for Ident {
+    fn append_tokens(&self, tokens: &mut Tokens)
+    where
+        Self: Sized,
+    {
+        tokens.push(Token::Ident(self.clone()));
+    }
 }
 impl PartialEq for Ident {
     fn eq(&self, other: &Self) -> bool {

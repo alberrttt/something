@@ -75,17 +75,7 @@ impl Literal {
         }
     }
 }
-impl Token__ for Literal {
-    fn span(&self) -> Span {
-        self.span
-    }
-    fn display(&self) -> String
-    where
-        Self: Sized,
-    {
-        format!("{}", self)
-    }
-}
+
 impl Display for Literal {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match &self.inner {

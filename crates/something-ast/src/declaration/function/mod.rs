@@ -1,14 +1,14 @@
 use std::fmt::Display;
 
 use something_dev_tools::ParseTokensDisplay;
-use something_frontend_tokenizer::{list::List, Parse};
+use something_frontend_tokenizer::{list::List, traits::AppendTokens, Parse};
 
 use crate::{attribute::Attribute, expression::block::Block, punctuated::Punctuated};
 
 use self::return_type::ReturnType;
 use super::super::prelude::*;
 
-#[derive(Debug, Clone, ParseTokens, ParseTokensDisplay)]
+#[derive(Debug, Clone, ParseTokensDisplay)]
 pub struct FunctionDeclaration {
     // pub modifiers: Option<Attribute>,
     pub fn_token: tokens::Fn,
@@ -17,7 +17,42 @@ pub struct FunctionDeclaration {
     pub body: Block,
     pub return_type: ReturnType,
 }
-
+mod __functiondeclaration {
+    use super::FunctionDeclaration;
+    use colored::Colorize;
+    use something_frontend_tokenizer::prelude::*;
+    use std::fmt::{Display, Formatter};
+    impl Parse for FunctionDeclaration {
+        fn parse(input: &mut Tokens) -> Result<Self, ParseError> {
+            let tmp = input.step(|input| Parse::parse(input));
+            match tmp {
+                Ok(tmp) => Ok(Self {
+                    fn_token: tmp,
+                    name: Parse::parse(input)?,
+                    params: Parse::parse(input)?,
+                    body: Parse::parse(input)?,
+                    return_type: Parse::parse(input)?,
+                }),
+                Err(err) => Err(err),
+            }
+        }
+    }
+    impl AppendTokens for FunctionDeclaration {
+        fn append_tokens(&self, tokens: &mut Tokens) {
+            self.fn_token.clone().append_tokens(tokens);
+            self.name.clone().append_tokens(tokens);
+            self.params.clone().append_tokens(tokens);
+            self.body.clone().append_tokens(tokens);
+            self.return_type.clone().append_tokens(tokens);
+        }
+    }
+    impl Parse for Box<FunctionDeclaration> {
+        fn parse(input: &mut Tokens) -> Result<Self, ParseError> {
+            Ok(Box::new(FunctionDeclaration::parse(input)?))
+        }
+    }
+}
+pub use __functiondeclaration::*;
 impl Display for FunctionDeclaration {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         // if let Some(modifiers) = &self.modifiers {

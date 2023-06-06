@@ -3,11 +3,27 @@ use std::fmt::Debug;
 use super::Punctuated;
 use crate::prelude::*;
 use something_dev_tools::ParseTokensDisplay;
-use something_frontend_tokenizer::{Parse, ParsingDisplay};
+use something_frontend_tokenizer::{traits::AppendTokens, Parse, ParsingDisplay};
 
 #[derive(Debug, Clone)]
 pub struct OmitTrailing<T, P>(pub Punctuated<T, P>);
-
+impl<T, P> AppendTokens for OmitTrailing<T, P>
+where
+    T: AppendTokens,
+    P: AppendTokens,
+{
+    fn append_tokens(&self, tokens: &mut Tokens)
+    where
+        Self: Sized,
+    {
+        for (item, punctuation) in self.0.iter() {
+            item.append_tokens(tokens);
+            if let Some(punctuation) = punctuation {
+                punctuation.append_tokens(tokens);
+            }
+        }
+    }
+}
 impl<T, P> From<OmitTrailing<T, P>> for Punctuated<T, P> {
     fn from(value: OmitTrailing<T, P>) -> Self {
         value.0

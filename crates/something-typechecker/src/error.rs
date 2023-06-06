@@ -5,6 +5,7 @@ pub enum TypeError {
     MismatchedTypes {
         expected: TypeSig,
         found: TypeSig,
+        
     },
     IncorrectTypeName {
         expected: &'static str,
