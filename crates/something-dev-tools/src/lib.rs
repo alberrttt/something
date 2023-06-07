@@ -1,9 +1,8 @@
 use proc_macro::TokenStream;
 
-
 mod tokens;
 #[proc_macro]
-pub fn tokens(input: TokenStream) -> TokenStream {
+pub fn tokens_ident(input: TokenStream) -> TokenStream {
     tokens::tokens(input)
 }
 mod parse_tokens;

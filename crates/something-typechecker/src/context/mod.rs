@@ -45,8 +45,8 @@ impl BlockContext {
         let mut ctx = Self::default();
         for node in block.iter() {
             match node {
-                something_ast::Node::Statement(stmt) => todo!(),
-                something_ast::Node::Declaration(decl) => match decl {
+                something_ast::ast::Node::Statement(stmt) => todo!(),
+                something_ast::ast::Node::Declaration(decl) => match decl {
                     something_frontend::Declaration::Function(_) => todo!(),
                     something_frontend::Declaration::Var(var_decl) => todo!(),
                 },

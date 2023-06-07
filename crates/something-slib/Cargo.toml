@@ -7,5 +7,4 @@ edition = "2021"
 
 [dependencies]
 
-something-frontend-tokenizer = { path = "../something-frontend-tokenizer" }
 something-typechecker = { path = "../something-typechecker" }

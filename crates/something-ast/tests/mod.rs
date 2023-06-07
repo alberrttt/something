@@ -1,9 +1,8 @@
+use something_ast::ast::expression::Expression;
 
-use something_ast::expression::Expression;
+use something_ast::ast::Node;
 
-use something_ast::Node;
-
-use something_frontend_tokenizer::{Parse, *};
+use something_ast::tokenizer::{Parse, *};
 macro_rules! gen_tests {
     [$($file:literal = $name:ident),*] => {
         $(
@@ -61,9 +60,9 @@ fn if_expr_test() {
     dbg!(Expression::parse(&mut tokens));
 }
 mod punctuated {
-    use something_ast::punctuated::Punctuated;
-    
-    use something_frontend_tokenizer::{lit::Literal, tokens, ParsingDisplay, Tokenizer};
+    use something_ast::ast::punctuated::Punctuated;
+
+    use something_ast::tokenizer::{prelude::*, Tokenizer};
 
     #[test]
     fn punctuated_terminating_test() -> Result<(), Box<dyn std::error::Error>> {
@@ -71,7 +70,7 @@ mod punctuated {
             .tokens()
             .unwrap();
         dbg!(tokens.peek());
-        let tmp = Punctuated::<Literal, tokens::Comma>::parse_terminated(&mut tokens)?;
+        let tmp = Punctuated::<Literal, token::Comma>::parse_terminated(&mut tokens)?;
         dbg!(&tmp);
         println!("{}", tmp.display());
         Ok(())
@@ -83,9 +82,7 @@ mod punctuated {
             .unwrap();
         dbg!(tokens.peek());
 
-        dbg!(Punctuated::<Literal, tokens::Comma>::parse_trailing(
-            &mut tokens
-        )?);
+        dbg!(Punctuated::<Literal, Comma>::parse_trailing(&mut tokens)?);
         Ok(())
     }
     #[test]
@@ -95,7 +92,9 @@ mod punctuated {
             .unwrap();
         dbg!(tokens.peek());
 
-        dbg!(Punctuated::<Literal, tokens::Comma>::parse_without_trailing(&mut tokens)?);
+        dbg!(Punctuated::<Literal, Comma>::parse_without_trailing(
+            &mut tokens
+        )?);
         Ok(())
     }
 }

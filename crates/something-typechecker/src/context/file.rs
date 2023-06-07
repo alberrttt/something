@@ -1,6 +1,6 @@
 use std::{collections::HashMap, fs::File, rc::Rc};
 
-use something_ast::{Ast, TopLevelNode};
+use something_ast::ast::{Ast, TopLevelNode};
 use something_frontend::Ident;
 
 use crate::{

@@ -52,7 +52,7 @@ pub fn parse_tokens(input: TokenStream) -> TokenStream {
             return quote! {
                 mod #ident {
                     use colored::Colorize;
-                    use something_frontend_tokenizer::prelude::*;
+                    use crate::tokenizer::prelude::*;
              
                     use std::fmt::{Display, Formatter};
                     use super::#name;
@@ -93,7 +93,7 @@ pub fn parse_tokens(input: TokenStream) -> TokenStream {
             return quote! {
                 mod #ident {
                     use colored::Colorize;
-                    use something_frontend_tokenizer::prelude::*;
+                    use crate::tokenizer::prelude::*;
                     use std::fmt::{Display, Formatter};
                     use super::#name;
                     #parse_impl

@@ -9,8 +9,8 @@ description = "AST for Something"
 path = "./bin/mod.rs"
 name = "bin"
 [dependencies]
-something-frontend-tokenizer = { path = "../something-frontend-tokenizer" }
 something-dev-tools = { path = "../something-dev-tools" }
 clap = { version = "4.2.7", features = ["derive"] }
 ctrlc = "3.2.5"
 colored = "2.0.0"
+casey = "0.4.0"

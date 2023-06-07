@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use proc_macro::{TokenStream};
+use proc_macro::TokenStream;
 use quote::quote;
 use syn::{parse::Parse, parse_macro_input, punctuated::Punctuated, Ident, Token};
 struct Idents(pub Punctuated<Ident, Token![,]>);
@@ -26,7 +26,7 @@ pub fn tokens(input: TokenStream) -> TokenStream {
         .map(|ident| {
             let str_str = ident.to_string().to_lowercase();
             quote! {
-                #str_str => Token!(self, #ident),
+                #str_str => create_token!(self, #ident),
             }
         })
         .collect::<Vec<_>>();

@@ -12,7 +12,7 @@ pub fn parse_tokens_display(input: TokenStream) -> TokenStream {
     let expanded = quote::quote! {
         mod #ident {
             use super::#name;
-            use something_frontend_tokenizer::traits::ParsingDisplay;
+            use crate::tokenizer::traits::ParsingDisplay;
             impl ParsingDisplay for #name {
                fn display(&self) -> String
                where

@@ -295,11 +295,11 @@ dependencies = [
 name = "something-ast"
 version = "0.1.0"
 dependencies = [
+ "casey",
  "clap",
  "colored",
  "ctrlc",
  "something-dev-tools",
- "something-frontend-tokenizer",
 ]
 
 [[package]]
@@ -317,23 +317,12 @@ version = "0.1.0"
 dependencies = [
  "colored",
  "something-ast",
- "something-frontend-tokenizer",
-]
-
-[[package]]
-name = "something-frontend-tokenizer"
-version = "0.1.0"
-dependencies = [
- "casey",
- "colored",
- "something-dev-tools",
 ]
 
 [[package]]
 name = "something-slib"
 version = "0.1.0"
 dependencies = [
- "something-frontend-tokenizer",
  "something-typechecker",
 ]
 
@@ -344,7 +333,6 @@ dependencies = [
  "colored",
  "something-ast",
  "something-frontend",
- "something-frontend-tokenizer",
 ]
 
 [[package]]

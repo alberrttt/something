@@ -51,11 +51,11 @@ impl FnContext {
         let mut ctx = Context::Function(self);
         for node in value.body.iter() {
             match node {
-                something_ast::Node::Statement(stmt) => match stmt {
-                    something_frontend::Statement::Expression(expr, _) => {
+                something_ast::ast::Node::Statement(stmt) => match stmt {
+                    something_ast::ast::statement::Statement::Expression(expr, _) => {
                         return_if_error!(expr.resolve(&mut ctx))
                     }
-                    something_frontend::Statement::Return(_, expr, _) => {
+                    something_ast::ast::statement::Statement::Return(_, expr, _) => {
                         let expr_type: TypeSig = expr.resolve(&mut ctx)?;
                         if expr_type == (&return_type).into() {
                         } else {
@@ -63,7 +63,7 @@ impl FnContext {
                         }
                     }
                 },
-                something_ast::Node::Declaration(decl) => match decl {
+                something_ast::ast::Node::Declaration(decl) => match decl {
                     something_frontend::Declaration::Function(_) => todo!(),
                     something_frontend::Declaration::Var(var_decl) => {
                         var_decl.resolve(&mut ctx)?;

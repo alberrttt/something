@@ -6,6 +6,5 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-something-frontend-tokenizer = { path = "../something-frontend-tokenizer" }
 something-ast = { path = "../something-ast" }
 colored = "2.0.0"

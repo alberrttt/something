@@ -24,7 +24,7 @@ mod var_decl {
         var_decl: &VariableDeclaration,
         ctx: &mut Context,
     ) -> Result<TypeSig, TypeError> {
-        let expr_type = var_decl.value.resolve(ctx)?;
+        let expr_type = var_decl.expression.resolve(ctx)?;
         let annotation_type = {
             let tmp: Primitive = {
                 let (_, ty) = var_decl.type_annotation.as_ref().unwrap();
@@ -46,11 +46,11 @@ mod var_decl {
         var_decl: &VariableDeclaration,
         ctx: &mut Context,
     ) -> Result<TypeSig, TypeError> {
-        var_decl.value.resolve(ctx)
+        var_decl.expression.resolve(ctx)
     }
 }
 mod expression {
-    use something_frontend::{Binary, Expression, Ident, Literal, Operator};
+    use something_frontend::{Binary, Expression, Ident, Literal, OperatorKind};
 
     use crate::{
         context::{block::BlockContext, Context},
@@ -119,7 +119,7 @@ mod expression {
         type Context = ();
 
         fn resolve(&self, ctx: &mut Self::Context) -> Result<TypeSig, TypeError> {
-            use something_frontend_tokenizer::lit::lit_impl;
+            use something_ast::tokenizer::lit::lit_impl;
             Ok(match self.inner {
                 lit_impl::Inner::String(_) => Primitive::String.into(),
                 lit_impl::Inner::Number(_) => Primitive::Number.into(),
@@ -131,8 +131,11 @@ mod expression {
         type Context = Context;
 
         fn resolve(&self, ctx: &mut Self::Context) -> Result<TypeSig, TypeError> {
-            match self.operator {
-                Operator::Plus | Operator::Minus | Operator::Multiply | Operator::Divide => {
+            match self.operator.kind {
+                OperatorKind::Plus
+                | OperatorKind::Minus
+                | OperatorKind::Multiply
+                | OperatorKind::Divide => {
                     //  let's give lhs the precedence
                     // todo: make it so boolean and void types cannot be added
                     let lhs_type = self.left.resolve(ctx)?;
@@ -146,7 +149,7 @@ mod expression {
                         })
                     }
                 }
-                Operator::EqualEqual | Operator::NotEqual => {
+                OperatorKind::EqualEqual | OperatorKind::NotEqual => {
                     let lhs_type = self.left.resolve(ctx)?;
                     let rhs_type = self.right.resolve(ctx)?;
                     if lhs_type == rhs_type {

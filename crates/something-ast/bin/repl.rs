@@ -1,13 +1,66 @@
-use something_ast::prelude::*;
+use something_ast::{
+    ast::prelude::*,
+    tokenizer::{Parse, ParsingDisplay},
+};
+use something_dev_tools::*;
 use std::{
     fmt::{Debug, Display},
     io::{self, Write},
 };
-#[derive(ParseTokensDisplay, ParseTokens)]
 pub enum Repl {
     Expr(Expression),
     Fn(FunctionDeclaration),
     Node(Node),
+}
+use colored::Colorize;
+use something_ast::tokenizer::prelude::*;
+impl Parse for Repl {
+    fn parse(input: &mut Tokens) -> Result<Self, ParseError> {
+        let mut err = String::from("Expected ").yellow().to_string();
+        match input.step(|input| Parse::parse(input)) {
+            Ok(variant) => return Ok(Repl::Expr(variant)),
+            Err(x) => {
+                err.push_str(concat!(stringify!(Expr), ", "));
+            }
+        }
+        match input.step(|input| Parse::parse(input)) {
+            Ok(variant) => return Ok(Repl::Fn(variant)),
+            Err(x) => {
+                err.push_str(concat!(stringify!(Fn), ", "));
+            }
+        }
+        match input.step(|input| Parse::parse(input)) {
+            Ok(variant) => return Ok(Repl::Node(variant)),
+            Err(x) => {
+                err.push_str(concat!("or ", stringify!(Node)));
+            }
+        }
+        err.push_str(format!("\n{} {}", "But got:".red(), input.peek().unwrap()).as_str());
+        Err(ParseError::Generic(err))
+    }
+}
+impl Parse for Box<Repl> {
+    fn parse(input: &mut Tokens) -> Result<Self, ParseError> {
+        Ok(Box::new(Repl::parse(input)?))
+    }
+}
+impl ParsingDisplay for Repl {
+    fn display(&self) -> String
+    where
+        Self: Sized,
+    {
+        match self {
+            Repl::Expr(expr) => expr.display(),
+            Repl::Fn(func) => func.display(),
+            Repl::Node(node) => node.display(),
+        }
+    }
+    fn placeholder() -> String
+    where
+        Self: Sized,
+    {
+        format!("<{}>", "Repl")
+    }
 }
 
 impl Debug for Repl {
@@ -19,7 +72,6 @@ impl Debug for Repl {
         }
     }
 }
-use colored::Colorize;
 pub fn repl() {
     println!(
         "{}\nRunning REPL.\nType `quit` to quit\n",

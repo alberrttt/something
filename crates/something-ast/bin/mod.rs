@@ -1,8 +1,8 @@
 use std::{fs, path::PathBuf};
 
 use clap::{Parser, Subcommand};
-use something_ast::Ast;
-use something_frontend_tokenizer::{Parse, ParsingDisplay, Tokens};
+use something_ast::ast::Ast;
+use something_ast::tokenizer::{Parse, ParsingDisplay, Tokens};
 mod repl;
 #[derive(Parser)]
 #[command(author, about, version)]
