@@ -8,9 +8,12 @@ pub struct Tokenizer<'a> {
     input: &'a str,
     starting: usize,
     current: usize,
+    line: usize,
+    // this is relative to the start of the line
+    line_current: usize,
 }
 pub mod delimiter;
-pub mod error;
+use super::error;
 pub mod ident;
 pub mod list;
 pub mod lit;
@@ -29,8 +32,8 @@ use crate::span;
 pub mod prelude {
     pub use super::Tokens;
     pub use super::{
+        super::error::{self, *},
         delimiter::{self, *},
-        error::{self, *},
         ident::{self, *},
         list::{self, *},
         lit::{self, *},
@@ -215,7 +218,7 @@ impl<'a> Tokenizer<'a> {
 
         Ok(Ident {
             name: lexeme,
-            span: span![self.starting, self.current],
+            span: span![self.starting, self.current, self.line, self.line_current],
         })
     }
     pub fn new(input: &'a str) -> Self {
@@ -223,6 +226,8 @@ impl<'a> Tokenizer<'a> {
             input,
             starting: 0,
             current: 0,
+            line: 1,
+            line_current: 0,
         }
     }
 
@@ -231,6 +236,7 @@ impl<'a> Tokenizer<'a> {
             return Ok(create_token!(self, Eof));
         }
         self.starting = self.current;
+
         let c = self.advance().unwrap();
         match c {
             'a'..='z' | 'A'..='Z' => {
@@ -268,22 +274,13 @@ impl<'a> Tokenizer<'a> {
             '[' => Ok(Token::Brackets(self.bracket_delimiter())),
             '{' => Ok(Token::Braces(self.brace_delimiter())),
             ')' => Ok(Token::ClosingParen(SpanShell {
-                span: Span {
-                    start: self.starting,
-                    end: self.current,
-                },
+                span: span![self.starting, self.current, self.line, self.line_current],
             })),
             ']' => Ok(Token::ClosingBracket(SpanShell {
-                span: Span {
-                    start: self.starting,
-                    end: self.current,
-                },
+                span: span![self.starting, self.current, self.line, self.line_current],
             })),
             '}' => Ok(Token::ClosingBrace(SpanShell {
-                span: Span {
-                    start: self.starting,
-                    end: self.current,
-                },
+                span: span![self.starting, self.current, self.line, self.line_current],
             })),
             '$' => Ok(create_token!(self, Dollar)),
 
@@ -326,7 +323,11 @@ impl<'a> Tokenizer<'a> {
                     Ok(create_token!(self, Slash))
                 }
             }
-
+            '\n' => {
+                self.line += 1;
+                self.line_current = 0;
+                Ok(create_token!(self, Whitespace))
+            }
             x if x.is_whitespace() => Ok(create_token!(self, Whitespace)),
             x => Err(ParseError::Generic(format!("Error with `{}`", x.to_string())).into()),
         }
@@ -350,7 +351,7 @@ impl<'a> Tokenizer<'a> {
             }
             self.advance();
         }
-        let span = span![self.starting, self.current];
+        let span = span![self.starting, self.current, self.line, self.line_current];
         let lexeme = self.input[self.starting + 1..self.current - 1].to_owned();
         Ok(Literal::new_str(span, lexeme))
     }
@@ -362,7 +363,7 @@ impl<'a> Tokenizer<'a> {
                 break;
             }
         }
-        let span = span![self.starting, self.current];
+        let span = span![self.starting, self.current, self.line, self.line_current];
         let lexeme = match self.input[self.starting..self.current].parse::<f64>() {
             Ok(ok) => ok,
             Err(err) => return Err(ParseError::Boxed(Box::new(err))),
@@ -376,6 +377,7 @@ impl<'a> Tokenizer<'a> {
     }
     fn advance(&mut self) -> Option<char> {
         self.current += 1;
+        self.line_current += 1;
         self.input.chars().nth(self.current - 1)
     }
 }

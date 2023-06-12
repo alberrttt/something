@@ -86,7 +86,7 @@ pub fn repl() {
         io::stdin().read_line(&mut input).unwrap(); // Read user input
 
         let input = input.trim(); // Remove trailing newline
-
+        println!("{input}");
         if input == "quit" {
             break; // Exit the loop if the user enters "quit"
         }

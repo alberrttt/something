@@ -9,7 +9,7 @@ const SRC: &str = r#"
 
     fn main() {
         let abc = 1;
-        let dca: string = abc;
+        let dca = ;
         x(abc);
     } -> void
 "#;

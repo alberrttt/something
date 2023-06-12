@@ -3,12 +3,7 @@ use std::{error::Error, fmt::Debug};
 use something_dev_tools::tuple_parse_impl;
 
 use super::{error::ParseError, ident::Ident, Tokens};
-pub trait Name: std::fmt::Debug {
-    fn name() -> &'static str
-    where
-        Self: Sized;
-    fn named(&self) -> &'static str;
-}
+
 pub trait AppendTokens {
     fn append_tokens(&self, tokens: &mut Tokens)
     where

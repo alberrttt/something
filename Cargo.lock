@@ -299,8 +299,13 @@ dependencies = [
  "clap",
  "colored",
  "ctrlc",
+ "something-common",
  "something-dev-tools",
 ]
+
+[[package]]
+name = "something-common"
+version = "0.1.0"
 
 [[package]]
 name = "something-dev-tools"
@@ -334,10 +339,6 @@ dependencies = [
  "something-ast",
  "something-frontend",
 ]
-
-[[package]]
-name = "something-util"
-version = "0.1.0"
 
 [[package]]
 name = "static_assertions"

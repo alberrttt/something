@@ -82,9 +82,7 @@ impl Parse for Expression {
                         Ok(Expression::Ident(ident))
                     }
                 }
-                x => Err(ParseError::Generic(
-                    format!("Expected a token to start an expression, but got {:?}", x).into(),
-                )),
+                x => Err(ParseError::ExpectedAst("Expression".into(), x.to_string())),
             },
             input,
         )
@@ -115,7 +113,13 @@ fn parse_expr(
         | Token::LessEqual(_)
         | Token::EqualEqual(_) => match Operator::parse(input) {
             Ok(operator) => {
-                let right = Expression::parse(input).expect("Expected Expression");
+                let right = match Expression::parse(input) {
+                    Ok(right) => right,
+                    Err(err) => {
+                        println!    ("{}", err);
+                        panic!()
+                    }
+                };
                 Ok(Expression::Binary(Binary {
                     left: Box::new(left),
                     operator,

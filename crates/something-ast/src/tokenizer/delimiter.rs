@@ -1,5 +1,5 @@
-use super::Tokenizer;
 use super::prelude::*;
+use super::Tokenizer;
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct Delimiter<const Open: char, const Close: char> {
     pub tokens: Vec<Token>,
@@ -12,6 +12,8 @@ impl Tokenizer<'_> {
         let mut span: Span = Span {
             start: self.starting,
             end: usize::MAX,
+            line: self.line,
+            line_start: self.line_current,
         };
         while let Ok(token) = self.next_token() {
             match token {
@@ -38,6 +40,8 @@ impl Tokenizer<'_> {
         let mut span: Span = Span {
             start: self.starting,
             end: usize::MAX,
+            line: self.line,
+            line_start: self.line_current,
         };
         while let Ok(token) = self.next_token() {
             match token {
@@ -64,6 +68,8 @@ impl Tokenizer<'_> {
         let mut span: Span = Span {
             start: self.starting,
             end: usize::MAX,
+            line: self.line,
+            line_start: self.line_current,
         };
         while let Ok(token) = self.next_token() {
             match token {

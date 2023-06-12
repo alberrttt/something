@@ -29,7 +29,9 @@ pub fn tuple_parse_impl(input: TokenStream) -> TokenStream {
 mod item_name;
 #[proc_macro]
 pub fn item_name(input: TokenStream) -> TokenStream {
-    item_name::item_name(input)
+    use quote::quote;
+
+    quote! {}.into()
 }
 mod span_derive;
 #[proc_macro_derive(Span)]

@@ -82,17 +82,5 @@ impl Display for FunctionDeclaration {
     }
 }
 use something_dev_tools::item_name;
-mod __FunctionDeclaration {
-    use super::FunctionDeclaration;
-    use crate::tokenizer::prelude::Name;
-    impl Name for FunctionDeclaration {
-        fn name() -> &'static str {
-            "function declaration"
-        }
-        fn named(&self) -> &'static str {
-            "function declaration"
-        }
-    }
-}
-pub use __FunctionDeclaration::*;
+
 pub mod return_type;

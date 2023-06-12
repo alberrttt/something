@@ -3,15 +3,7 @@ use std::fmt::Display;
 use crate::tokenizer::{self, list::List, traits::AppendTokens, Parse};
 use prelude::{Children, Declaration, FunctionDeclaration};
 use something_dev_tools::{ParseTokens, ParseTokensDisplay};
-#[derive(Debug, Clone, ParseTokens, ParseTokensDisplay, Default)]
-pub struct Ast {
-    pub nodes: List<TopLevelNode>,
-}
 
-#[derive(Debug, Clone, ParseTokens, ParseTokensDisplay)]
-pub enum TopLevelNode {
-    FunctionDeclaration(FunctionDeclaration),
-}
 impl AppendTokens for TopLevelNode {
     fn append_tokens(&self, tokens: &mut tokenizer::Tokens)
     where
@@ -38,6 +30,8 @@ impl Children<TopLevelNode> for Ast {
         self.nodes.iter()
     }
 }
+
+
 #[derive(Debug, ParseTokens, Clone, ParseTokensDisplay)]
 pub enum Node {
     Statement(statement::Statement),
@@ -55,7 +49,15 @@ pub mod attribute;
 pub mod declaration;
 pub mod delimiter;
 pub mod error {
-    pub use crate::tokenizer::error::*;
+    pub use crate::error::*;
+}
+#[derive(Debug, Clone, ParseTokens, ParseTokensDisplay)]
+pub enum TopLevelNode {
+    FunctionDeclaration(FunctionDeclaration),
+}
+#[derive(Debug, Clone, ParseTokens, ParseTokensDisplay, Default)]
+pub struct Ast {
+    pub nodes: List<TopLevelNode>,
 }
 pub mod expression;
 pub mod path;

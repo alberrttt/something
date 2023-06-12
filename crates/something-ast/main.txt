@@ -1,7 +1,4 @@
-fn main(int x string y bool z ) { 
-    if x > 8 {
-        let tmp = x * 2 + 5;
-        tmp += 1;
-        print("number is {}", x);
-    };
-} -> ptr_size
+fn x() { 
+    2+
+    ;
+} -> x

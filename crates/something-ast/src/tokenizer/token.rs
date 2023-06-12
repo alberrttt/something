@@ -193,7 +193,7 @@ macro_rules! DefineTokens {
 macro_rules! create_token {
     [$self:ident, $name:ident] => {
         Token::$name($name {
-            span: span![$self.starting, $self.current],
+            span: span![$self.starting, $self.current, $self.line, $self.line_current],
         })
     }
 
@@ -236,18 +236,28 @@ pub struct Span {
     pub start: usize,
 
     pub end: usize,
+
+    pub line: usize,
+    pub line_start: usize,
 }
 impl Span {
-    pub fn new(start: usize, end: usize) -> Self {
-        Self { start, end }
+    pub fn new(start: usize, end: usize, line: usize, line_start: usize) -> Self {
+        Self {
+            start,
+            end,
+            line,
+            line_start,
+        }
     }
 }
 #[macro_export]
 macro_rules! span {
-    [$x:expr, $y:expr] => {
+    [$x:expr, $y:expr, $line: expr, $line_start: expr] => {
         Span {
             start: $x,
             end: $y,
+            line: $line,
+            line_start: $line_start,
         }
     };
 }

@@ -5,5 +5,5 @@ members = [
     "crates/something-ast",
     "crates/something-typechecker",
     "crates/something-slib",
-    "crates/something-util",
+    "crates/something-common",
 ]
