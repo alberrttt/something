@@ -56,7 +56,7 @@ where
     T: Parse,
     P: Parse,
 {
-    fn parse(input: &mut Tokens) -> Result<Self, ParseError> {
+    fn parse(input: &mut Tokens) -> ParseResult<Self> {
         Self::parse_terminated(input)
     }
 }
@@ -68,7 +68,7 @@ where
     pub fn has_trailing(&self) -> bool {
         self.0.last().unwrap().1.is_some()
     }
-    pub fn parse_without_trailing(input: &mut Tokens) -> Result<Self, ParseError> {
+    pub fn parse_without_trailing(input: &mut Tokens) -> ParseResult<Self> {
         let mut vec = Vec::new();
         loop {
             let item = T::parse(input)?;
@@ -86,7 +86,7 @@ where
         }
         Ok(Self(vec))
     }
-    pub fn parse_trailing(input: &mut Tokens) -> Result<Self, ParseError> {
+    pub fn parse_trailing(input: &mut Tokens) -> ParseResult<Self> {
         let mut vec = Vec::new();
         loop {
             if input.at_end() || input.is_empty() {
@@ -98,7 +98,7 @@ where
         }
         Ok(Self(vec))
     }
-    pub fn parse_terminated(input: &mut Tokens) -> Result<Self, ParseError> {
+    pub fn parse_terminated(input: &mut Tokens) -> ParseResult<Self> {
         let mut vec = Vec::new();
         loop {
             if input.at_end() || input.is_empty() {
@@ -119,6 +119,7 @@ where
                             return Err(err);
                         }
                     }
+                    Recoverable => todo!(),
                 }
             };
             vec.push((item, punct));

@@ -1,4 +1,6 @@
 use super::super::prelude::*;
+use crate::prelude::*;
+use crate::tokenizer::prelude::*;
 #[derive(Debug, ParseTokensDisplay, Clone)]
 pub struct VariableDeclaration {
     pub let_token: Let,
@@ -7,6 +9,22 @@ pub struct VariableDeclaration {
     pub equal: Equal,
     pub expression: Expression,
     pub semicolon: Semicolon,
+}
+impl Parse for VariableDeclaration {
+    fn parse(input: &mut Tokens) -> ParseResult<Self> {
+        let tmp = input.step(|input| Parse::parse(input));
+        match tmp {
+            Ok(tmp) => Ok(Self {
+                let_token: tmp,
+                name: Parse::parse(input)?,
+                type_annotation: Parse::parse(input)?,
+                equal: Parse::parse(input)?,
+                expression: Parse::parse(input)?,
+                semicolon: Parse::parse(input)?,
+            }),
+            Err(_) | Recoverable => Recoverable,
+        }
+    }
 }
 impl AppendTokens for VariableDeclaration {
     fn append_tokens(&self, tokens: &mut Tokens)
@@ -25,67 +43,11 @@ impl AppendTokens for VariableDeclaration {
         self.semicolon.clone().append_tokens(tokens);
     }
 }
-mod __variabledeclaration {
-    use super::VariableDeclaration;
-    use crate::tokenizer::prelude::ParseError;
-    use crate::tokenizer::Parse;
-    use crate::tokenizer::Tokens;
-    use colored::Colorize;
-    use std::fmt::{Display, Formatter};
-    impl Parse for VariableDeclaration {
-        fn parse(input: &mut Tokens) -> Result<Self, ParseError> {
-            let tmp = input.step(|input| Parse::parse(input));
-            match tmp {
-                Ok(tmp) => Ok(Self {
-                    let_token: tmp,
-                    name: match Parse::parse(input) {
-                        Ok(ok) => ok,
-                        Err(err) => {
-                            println!("{}", err);
-                            panic!()
-                        }
-                    },
-                    type_annotation: match Parse::parse(input) {
-                        Ok(ok) => ok,
-                        Err(err) => {
-                            println!("{}", err);
-                            panic!()
-                        }
-                    },
-                    equal: match Parse::parse(input) {
-                        Ok(ok) => ok,
-                        Err(err) => {
-                            println!("{}", err);
-                            panic!()
-                        }
-                    },
-                    expression: match Parse::parse(input) {
-                        Ok(ok) => ok,
-                        Err(err) => {
-                            println!("{}", err);
-                            panic!()
-                        }
-                    },
-                    semicolon: match Parse::parse(input) {
-                        Ok(ok) => ok,
-                        Err(err) => {
-                            println!("{}", err);
-                            panic!()
-                        }
-                    },
-                }),
-                Err(err) => Err(err),
-            }
-        }
-    }
-    impl Parse for Box<VariableDeclaration> {
-        fn parse(input: &mut Tokens) -> Result<Self, ParseError> {
-            Ok(Box::new(VariableDeclaration::parse(input)?))
-        }
-    }
-}
-use crate::tokenizer::traits::AppendTokens;
-pub use __variabledeclaration::*;
+
+use crate::{
+    prelude::ParseResult,
+    tokenizer::{traits::AppendTokens, Parse},
+};
 use something_dev_tools::item_name;
 item_name!(VariableDeclaration, "variable declaration");
 

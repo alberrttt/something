@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use crate::tokenizer::{self, list::List, traits::AppendTokens, Parse};
+use crate::tokenizer::{self, list::List, traits::AppendTokens, Parse, Tokens};
 use prelude::{Children, Declaration, FunctionDeclaration};
 use something_dev_tools::{ParseTokens, ParseTokensDisplay};
 
@@ -31,11 +31,34 @@ impl Children<TopLevelNode> for Ast {
     }
 }
 
-
-#[derive(Debug, ParseTokens, Clone, ParseTokensDisplay)]
+#[derive(Debug, Clone, ParseTokensDisplay)]
 pub enum Node {
     Statement(statement::Statement),
     Declaration(Declaration),
+}
+impl Parse for Node {
+    fn parse(input: &mut Tokens) -> ParseResult<Self> {
+        match input.step(|input| Parse::parse(input)) {
+            Ok(variant) => return Ok(Node::Statement(variant)),
+            Err(err) => {
+                return Err(err);
+            }
+            Recoverable => {}
+        }
+        match input.step(|input| Parse::parse(input)) {
+            Ok(variant) => return Ok(Node::Declaration(variant)),
+            Err(err) => {
+                return Err(err);
+            }
+            Recoverable => {}
+        }
+        Recoverable
+    }
+}
+impl Parse for Box<Node> {
+    fn parse(input: &mut Tokens) -> ParseResult<Self> {
+        Ok(Box::new(Node::parse(input)?))
+    }
 }
 impl AppendTokens for Node {
     fn append_tokens(&self, tokens: &mut tokenizer::Tokens)
@@ -65,6 +88,7 @@ pub mod prelude;
 pub mod punctuated;
 pub mod statement;
 pub mod traits;
+use crate::prelude::*;
 impl From<&str> for Ast {
     fn from(value: &str) -> Self {
         let mut tokens = tokenizer::Tokens::from(value);
@@ -74,6 +98,7 @@ impl From<&str> for Ast {
                 println!("{}", err);
                 panic!();
             }
+            something_common::Result::Recoverable => todo!(),
         }
     }
 }
@@ -81,7 +106,7 @@ impl From<&str> for Ast {
 #[macro_export]
 macro_rules! ast {
     ($str: expr) => {{
-        use $crate::tokenizer::Parse;
+        use $crate::prelude::*;
         let mut tokens = $crate::tokenizer::Tokens::from($str);
         match (&mut tokens).parse() {
             Ok(value) => (value, tokens),
@@ -89,6 +114,7 @@ macro_rules! ast {
                 println!("{}", err);
                 panic!();
             }
+            Recoverable => todo!(),
         }
     }};
 }

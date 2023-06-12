@@ -65,36 +65,31 @@ mod punctuated {
     use something_ast::tokenizer::{prelude::*, Tokenizer};
 
     #[test]
-    fn punctuated_terminating_test() -> Result<(), Box<dyn std::error::Error>> {
+    fn punctuated_terminating_test() {
         let mut tokens = Tokenizer::new(include_str!("../cases/punctuated_terminating.txt"))
             .tokens()
             .unwrap();
         dbg!(tokens.peek());
-        let tmp = Punctuated::<Literal, token::Comma>::parse_terminated(&mut tokens)?;
+        let tmp = Punctuated::<Literal, token::Comma>::parse_terminated(&mut tokens).unwrap();
         dbg!(&tmp);
         println!("{}", tmp.display());
-        Ok(())
     }
     #[test]
-    fn punctuated_trailing_test() -> Result<(), Box<dyn std::error::Error>> {
+    fn punctuated_trailing_test() {
         let mut tokens = Tokenizer::new(include_str!("../cases/punctuated_trailing.txt"))
             .tokens()
             .unwrap();
         dbg!(tokens.peek());
 
-        dbg!(Punctuated::<Literal, Comma>::parse_trailing(&mut tokens)?);
-        Ok(())
+        dbg!(Punctuated::<Literal, Comma>::parse_trailing(&mut tokens).unwrap());
     }
     #[test]
-    fn punctuated_no_trailing_test() -> Result<(), Box<dyn std::error::Error>> {
+    fn punctuated_no_trailing_test() {
         let mut tokens = Tokenizer::new(include_str!("../cases/punctuated_no_trailing.txt"))
             .tokens()
             .unwrap();
         dbg!(tokens.peek());
 
-        dbg!(Punctuated::<Literal, Comma>::parse_without_trailing(
-            &mut tokens
-        )?);
-        Ok(())
+        dbg!(Punctuated::<Literal, Comma>::parse_without_trailing(&mut tokens).unwrap());
     }
 }

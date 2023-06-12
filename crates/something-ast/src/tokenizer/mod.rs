@@ -1,3 +1,4 @@
+use crate::prelude::*;
 use std::{
     error::Error,
     fmt::Display,
@@ -30,6 +31,7 @@ pub use traits::{Parse, ParsingDisplay};
 use crate::create_token;
 use crate::span;
 pub mod prelude {
+    pub use super::super::prelude::*;
     pub use super::Tokens;
     pub use super::{
         super::error::{self, *},
@@ -91,7 +93,7 @@ impl Display for Tokens {
             write!(f, "{:?}, ", token)?;
         }
         write!(f, "]")?;
-        Ok(())
+        std::result::Result::Ok(())
     }
 }
 
@@ -99,7 +101,7 @@ impl Tokens {
     pub fn new() -> Self {
         Self(Vec::new(), 0)
     }
-    pub fn parse<T>(&mut self) -> Result<T, ParseError>
+    pub fn parse<T>(&mut self) -> ParseResult<T>
     where
         T: Parse,
         T: Clone + std::fmt::Debug + Clone,
@@ -171,10 +173,7 @@ impl Tokens {
         self.0.get(self.1 + 3)
     }
 
-    pub fn step<R>(
-        &mut self,
-        F: impl FnOnce(&mut Self) -> Result<R, ParseError>,
-    ) -> Result<R, ParseError> {
+    pub fn step<R>(&mut self, F: impl FnOnce(&mut Self) -> ParseResult<R>) -> ParseResult<R> {
         let starting = self.1;
         let stepped = F(self);
         match stepped {
@@ -183,11 +182,15 @@ impl Tokens {
                 self.1 = starting;
                 Err(e)
             }
+            Recoverable => {
+                self.1 = starting;
+                Recoverable
+            }
         }
     }
 }
 impl Tokenizer<'_> {
-    pub fn tokens(&mut self) -> Result<Tokens, ParseError> {
+    pub fn tokens(&mut self) -> ParseResult<Tokens> {
         let mut tokens = Vec::new();
         loop {
             let token = self.next_token();
@@ -205,7 +208,7 @@ impl Tokenizer<'_> {
     }
 }
 impl<'a> Tokenizer<'a> {
-    fn identifier(&mut self) -> Result<Ident, ParseError> {
+    fn identifier(&mut self) -> ParseResult<Ident> {
         while let Some(c) = self.peek() {
             match c {
                 'a'..='z' | 'A'..='Z' | '0'..='9' | '-' | '_' => {
@@ -231,7 +234,7 @@ impl<'a> Tokenizer<'a> {
         }
     }
 
-    fn next_token(&mut self) -> Result<Token, ParseError> {
+    fn next_token(&mut self) -> ParseResult<Token> {
         if self.current >= self.input.len() {
             return Ok(create_token!(self, Eof));
         }
@@ -333,7 +336,7 @@ impl<'a> Tokenizer<'a> {
         }
     }
     /// if it matches, it will consume, if not it will return Err
-    fn try_consume(&mut self, expected: char) -> Result<char, ParseError> {
+    fn try_consume(&mut self, expected: char) -> ParseResult<char> {
         if self.peek() == Some(expected) {
             let got = self.advance().unwrap();
             Ok(got)
@@ -343,7 +346,7 @@ impl<'a> Tokenizer<'a> {
             ))
         }
     }
-    fn string(&mut self) -> Result<Literal, ParseError> {
+    fn string(&mut self) -> ParseResult<Literal> {
         while let Some(c) = self.peek() {
             if c == '"' {
                 self.advance();
@@ -355,7 +358,7 @@ impl<'a> Tokenizer<'a> {
         let lexeme = self.input[self.starting + 1..self.current - 1].to_owned();
         Ok(Literal::new_str(span, lexeme))
     }
-    fn number(&mut self) -> Result<Literal, ParseError> {
+    fn number(&mut self) -> ParseResult<Literal> {
         while let Some(c) = self.peek() {
             if c.is_numeric() {
                 self.advance();
@@ -365,8 +368,8 @@ impl<'a> Tokenizer<'a> {
         }
         let span = span![self.starting, self.current, self.line, self.line_current];
         let lexeme = match self.input[self.starting..self.current].parse::<f64>() {
-            Ok(ok) => ok,
-            Err(err) => return Err(ParseError::Boxed(Box::new(err))),
+            std::result::Result::Ok(ok) => ok,
+            std::result::Result::Err(err) => return Err(ParseError::Boxed(Box::new(err))),
         };
 
         Ok(Literal::new_num(span, lexeme))

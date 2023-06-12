@@ -1,5 +1,5 @@
 use super::prelude::*;
-
+use crate::prelude::*;
 use casey::lower;
 use std::{error::Error, fmt::Formatter};
 macro_rules! define_token {
@@ -33,7 +33,7 @@ macro_rules! define_token {
             }
         }
         impl Parse for $name {
-            fn parse(input: &mut Tokens) -> Result<Self, ParseError> {
+            fn parse(input: &mut Tokens) -> ParseResult<Self> {
                 let token = input.advance().clone();
                 if let Some(Token::$name(token)) = token {
                     Ok(token.clone())

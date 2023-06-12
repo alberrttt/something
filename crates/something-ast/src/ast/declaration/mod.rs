@@ -7,8 +7,9 @@ pub use self::var::*;
 
 #[derive(ParseTokens, Clone, ParseTokensDisplay)]
 pub enum Declaration {
-    Function(FunctionDeclaration),
     Var(VariableDeclaration),
+
+    Function(FunctionDeclaration),
 }
 
 impl std::fmt::Debug for Declaration {

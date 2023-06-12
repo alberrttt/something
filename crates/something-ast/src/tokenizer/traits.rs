@@ -1,8 +1,8 @@
 use std::{error::Error, fmt::Debug};
 
-use something_dev_tools::tuple_parse_impl;
-
 use super::{error::ParseError, ident::Ident, Tokens};
+use crate::prelude::*;
+use something_dev_tools::tuple_parse_impl;
 
 pub trait AppendTokens {
     fn append_tokens(&self, tokens: &mut Tokens)
@@ -21,7 +21,7 @@ where
     }
 }
 pub trait Parse: ParsingDisplay + std::fmt::Debug {
-    fn parse(input: &mut Tokens) -> Result<Self, ParseError>
+    fn parse(input: &mut Tokens) -> ParseResult<Self>
     where
         Self: Sized;
 }
@@ -51,7 +51,7 @@ where
     }
 }
 impl Parse for () {
-    fn parse(_input: &mut Tokens) -> Result<Self, ParseError> {
+    fn parse(_input: &mut Tokens) -> ParseResult<Self> {
         Ok(())
     }
 }
@@ -61,37 +61,6 @@ tuple_parse_impl!(A, B, C, D, E);
 tuple_parse_impl!(A, B, C, D);
 tuple_parse_impl!(A, B, C);
 tuple_parse_impl!(A, B);
-
-impl<T> Parse for Option<T>
-where
-    T: Debug + Parse + Clone,
-{
-    fn parse(input: &mut Tokens) -> Result<Self, ParseError>
-    where
-        Self: Sized,
-    {
-        let tmp = match input.step(|f| T::parse(f)) {
-            Ok(value) => Ok(Some(value)),
-            Err(_) => Ok(None),
-        };
-        tmp
-    }
-}
-impl<T> ParsingDisplay for Option<T> {
-    fn display(&self) -> String
-    where
-        Self: Sized,
-    {
-        todo!()
-    }
-
-    fn placeholder() -> String
-    where
-        Self: Sized,
-    {
-        todo!()
-    }
-}
 
 #[test]
 fn test_tuple() {

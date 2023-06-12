@@ -52,10 +52,10 @@ impl FnContext {
         for node in value.body.iter() {
             match node {
                 something_ast::ast::Node::Statement(stmt) => match stmt {
-                    something_ast::ast::statement::Statement::Expression(expr, _) => {
+                    something_ast::ast::statement::Statement::Expression((expr, _)) => {
                         return_if_error!(expr.resolve(&mut ctx))
                     }
-                    something_ast::ast::statement::Statement::Return(_, expr, _) => {
+                    something_ast::ast::statement::Statement::Return((_, expr, _)) => {
                         let expr_type: TypeSig = expr.resolve(&mut ctx)?;
                         if expr_type == (&return_type).into() {
                         } else {

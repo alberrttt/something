@@ -2,7 +2,9 @@ use std::{fs, path::PathBuf};
 
 use clap::{Parser, Subcommand};
 use something_ast::ast::Ast;
+use something_ast::prelude::*;
 use something_ast::tokenizer::{Parse, ParsingDisplay, Tokens};
+use something_common::Result::Recoverable;
 mod repl;
 #[derive(Parser)]
 #[command(author, about, version)]
@@ -29,6 +31,7 @@ fn main() {
                     println!("{err}");
                     panic!()
                 }
+                Recoverable => todo!(),
             };
             println!("{:?}", &ast);
             println!("{:?}", ast.display())

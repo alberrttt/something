@@ -24,12 +24,14 @@ impl Block {
         self.0 .1.iter()
     }
 }
+use crate::prelude::*;
 impl Parse for Block {
-    fn parse(input: &mut Tokens) -> Result<Self, ParseError> {
+    fn parse(input: &mut Tokens) -> ParseResult<Self> {
         let tmp = input.step(|input| Parse::parse(input));
         match tmp {
             Ok(tmp) => Ok(Self(tmp)),
             Err(err) => Err(err),
+            Recoverable => Recoverable,
         }
     }
 }

@@ -15,32 +15,40 @@ pub enum Repl {
 use colored::Colorize;
 use something_ast::tokenizer::prelude::*;
 impl Parse for Repl {
-    fn parse(input: &mut Tokens) -> Result<Self, ParseError> {
-        let mut err = String::from("Expected ").yellow().to_string();
-        match input.step(|input| Parse::parse(input)) {
-            Ok(variant) => return Ok(Repl::Expr(variant)),
-            Err(x) => {
-                err.push_str(concat!(stringify!(Expr), ", "));
-            }
-        }
-        match input.step(|input| Parse::parse(input)) {
-            Ok(variant) => return Ok(Repl::Fn(variant)),
-            Err(x) => {
-                err.push_str(concat!(stringify!(Fn), ", "));
-            }
-        }
-        match input.step(|input| Parse::parse(input)) {
-            Ok(variant) => return Ok(Repl::Node(variant)),
-            Err(x) => {
-                err.push_str(concat!("or ", stringify!(Node)));
-            }
-        }
-        err.push_str(format!("\n{} {}", "But got:".red(), input.peek().unwrap()).as_str());
-        Err(ParseError::Generic(err))
+    fn parse(input: &mut Tokens) -> ParseResult<Self> {
+        match input.step(|input| match input.parse() {
+            Ok(ok) => Ok(Repl::Expr(ok)),
+            Recoverable => Recoverable,
+            Err(err) => Err(err),
+        }) {
+            Ok(ok) => return Ok(ok),
+            Recoverable => {}
+            Err(err) => return Err(err),
+        };
+
+        match input.step(|input| match input.parse() {
+            Ok(ok) => Ok(Repl::Fn(ok)),
+            Recoverable => Recoverable,
+            Err(err) => Err(err),
+        }) {
+            Ok(ok) => return Ok(ok),
+            Recoverable => {}
+            Err(err) => return Err(err),
+        };
+        match input.step(|input| match input.parse() {
+            Ok(ok) => Ok(Repl::Node(ok)),
+            Recoverable => Recoverable,
+            Err(err) => Err(err),
+        }) {
+            Ok(ok) => return Ok(ok),
+            Recoverable => {}
+            Err(err) => return Err(err),
+        };
+        panic!()
     }
 }
 impl Parse for Box<Repl> {
-    fn parse(input: &mut Tokens) -> Result<Self, ParseError> {
+    fn parse(input: &mut Tokens) -> ParseResult<Self> {
         Ok(Box::new(Repl::parse(input)?))
     }
 }

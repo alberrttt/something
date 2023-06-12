@@ -1,7 +1,9 @@
-use std::{backtrace, fmt::Display};
+use std::sync::mpsc::Receiver;
 
+use crate::prelude::*;
 use crate::tokenizer::prelude::*;
 use something_dev_tools::{item_name, ParseTokensDisplay};
+use ParseResult;
 pub mod block;
 pub mod call;
 pub mod if_expr;
@@ -50,7 +52,7 @@ use crate::ast::delimiter::Parentheses;
 
 pub use self::call::*;
 impl Parse for Expression {
-    fn parse(input: &mut Tokens) -> Result<Self, ParseError> {
+    fn parse(input: &mut Tokens) -> ParseResult<Self> {
         let tmp = match input.peek() {
             Some(token) => token.clone(),
             None => {
@@ -60,13 +62,16 @@ impl Parse for Expression {
         parse_expr(
             match tmp {
                 Token::If(if_token) => {
-                    let tmp = if_expr::If::parse(input).unwrap();
+                    let tmp = match if_expr::If::parse(input) {
+                        Ok(ok) => ok,
+                        Err(_) | Recoverable => return ParseResult::Recoverable,
+                    };
                     let tmp = Ok(Expression::If(tmp));
 
                     tmp
                 }
                 Token::Braces(_) => {
-                    let tmp = block::Block::parse(input).unwrap();
+                    let tmp = block::Block::parse(input)?;
 
                     Ok(Expression::Block(tmp))
                 }
@@ -82,21 +87,20 @@ impl Parse for Expression {
                         Ok(Expression::Ident(ident))
                     }
                 }
-                x => Err(ParseError::ExpectedAst("Expression".into(), x.to_string())),
+                x => Recoverable, 
+                // its considered recoverable, since other nodes might depend on
+                // the token that is being "peeked"
             },
             input,
         )
     }
 }
 impl Parse for Box<Expression> {
-    fn parse(input: &mut Tokens) -> Result<Self, ParseError> {
+    fn parse(input: &mut Tokens) -> ParseResult<Self> {
         Ok(Box::new(Expression::parse(input)?))
     }
 }
-fn parse_expr(
-    left: Result<Expression, ParseError>,
-    input: &mut Tokens,
-) -> Result<Expression, ParseError> {
+fn parse_expr(left: ParseResult<Expression>, input: &mut Tokens) -> ParseResult<Expression> {
     let left = left?;
     let token = match input.peek() {
         Some(token) => token.clone(),
@@ -113,13 +117,7 @@ fn parse_expr(
         | Token::LessEqual(_)
         | Token::EqualEqual(_) => match Operator::parse(input) {
             Ok(operator) => {
-                let right = match Expression::parse(input) {
-                    Ok(right) => right,
-                    Err(err) => {
-                        println!    ("{}", err);
-                        panic!()
-                    }
-                };
+                let right = Expression::parse(input)?;
                 Ok(Expression::Binary(Binary {
                     left: Box::new(left),
                     operator,
@@ -127,7 +125,8 @@ fn parse_expr(
                 }))
             }
 
-            Err(_) => Ok(left),
+            Err(err) => Err(err),
+            Recoverable => todo!(),
         },
         Token::Equal(_)
         | Token::PlusEqual(_)
@@ -135,7 +134,7 @@ fn parse_expr(
         | Token::StarEqual(_)
         | Token::SlashEqual(_) => match Operator::parse(input) {
             Ok(operator) => {
-                let right = Expression::parse(input).expect("Expected Expression");
+                let right = Expression::parse(input)?;
                 Ok(Expression::Binary(Binary {
                     left: Box::new(left),
                     operator,
@@ -143,11 +142,13 @@ fn parse_expr(
                 }))
             }
 
-            Err(_) => Ok(left),
+            Err(err) => Err(err),
+
+            Recoverable => todo!(),
         },
         Token::Star(_) | Token::Slash(_) => match Operator::parse(input) {
             Ok(operator) => {
-                let right = Expression::parse(input).expect("Expected Expression");
+                let right = Expression::parse(input)?;
                 parse_expr(
                     Ok(Expression::Binary(Binary {
                         left: Box::new(left),
@@ -158,7 +159,8 @@ fn parse_expr(
                 )
             }
 
-            Err(_) => Ok(left),
+            Err(err) => Err(err),
+            Recoverable => todo!(),
         },
 
         token => Ok(left),
@@ -186,7 +188,7 @@ impl ParsingDisplay for Binary {
         Self: Sized,
     {
         format!(
-            "{} {} {}",
+            "{}{}{}",
             self.left.display(),
             self.operator.display(),
             self.right.display()
@@ -212,7 +214,7 @@ impl From<Binary> for Expression {
 }
 
 impl Parse for Binary {
-    fn parse(input: &mut Tokens) -> Result<Self, ParseError> {
+    fn parse(input: &mut Tokens) -> ParseResult<Self> {
         let expr = Expression::parse(input)?;
         todo!();
     }
@@ -232,7 +234,7 @@ impl AppendTokens for Operator {
     }
 }
 impl Parse for Operator {
-    fn parse(input: &mut Tokens) -> Result<Self, ParseError>
+    fn parse(input: &mut Tokens) -> ParseResult<Self>
     where
         Self: Sized,
     {
@@ -293,7 +295,7 @@ impl ParsingDisplay for OperatorKind {
     }
 }
 impl Parse for OperatorKind {
-    fn parse(input: &mut Tokens) -> Result<Self, ParseError> {
+    fn parse(input: &mut Tokens) -> ParseResult<Self> {
         match input.advance() {
             Some(token) => Ok(match token {
                 Token::Plus(_) => Self::Plus,

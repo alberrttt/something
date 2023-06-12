@@ -11,7 +11,7 @@ pub struct Call {
     pub args: Parentheses<Punctuated<Expression, Comma>>,
 }
 impl Parse for Call {
-    fn parse(input: &mut Tokens) -> Result<Self, ParseError> {
+    fn parse(input: &mut Tokens) -> ParseResult<Self> {
         let ident = Ident::parse(input)?;
         let delimiter = match input.advance() {
             Some(Token::Parentheses(paren)) => paren,

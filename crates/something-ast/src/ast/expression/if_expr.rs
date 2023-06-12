@@ -12,7 +12,7 @@ pub enum ThenBlock {
     Block(Braces<List<Node>>),
 }
 impl Parse for If {
-    fn parse(input: &mut Tokens) -> Result<Self, ParseError> {
+    fn parse(input: &mut Tokens) -> ParseResult<Self> {
         let if_token = input.parse()?;
         let predicate = input.parse().unwrap();
         let then_branch = input.parse().unwrap();

@@ -10,36 +10,27 @@ pub fn parse_tokens(input: TokenStream) -> TokenStream {
         Data::Enum(enum_data) => {
             let name = derive.ident;
 
-            let variants = enum_data.variants.iter().enumerate().map(|(i,f)| {
+            let variants = enum_data.variants.iter().enumerate().map(|(i, f)| {
                 let variant_ident = &f.ident;
                 let fields = &f.fields;
                 match fields {
                     syn::Fields::Named(_) => todo!(),
-                    syn::Fields::Unnamed(fields) => {
-                        let fields = &fields.unnamed;
-                        let create = fields
-                            .iter()
-                            .skip(1)
-                            .map(|_| {
-                                quote! {input.step(|input| Parse::parse(input)).unwrap()}
-                            })
-                            .collect::<Vec<_>>();
-                        let err_str = if i == enum_data.variants.len() - 1 {
-                            quote! {
-                                concat!("or ", stringify!(#variant_ident))
-                            }
-                        } else {
-                            quote! {
-                                concat!(stringify!(#variant_ident), ", ")
-                            }
-                        };
+                    syn::Fields::Unnamed(_) => {
                         quote! {
                             match input.step(|input| Parse::parse(input)) {
-                                Ok(variant) => return Ok(#name::#variant_ident(variant, #(#create),*)),
-                                Err(x) => {
+                                Ok(variant) => return Ok(#name::#variant_ident(variant)),
 
-                                    err.push_str(#err_str);
-                                },
+                                Err(err) => {
+                                    return Err(err);
+                                }
+
+                                Recoverable => {
+                                }
+                                // since we are parsing the first field/node (or token)
+                                // we CAN recover from this error
+                                // because other nodes might be valid because of the first node
+                                // but if we are parsing the second node (or any constituent node)
+                                // we can't recover from this error
                             }
                         }
                     }
@@ -53,20 +44,18 @@ pub fn parse_tokens(input: TokenStream) -> TokenStream {
                 mod #ident {
                     use colored::Colorize;
                     use crate::tokenizer::prelude::*;
-             
+                    use crate::prelude::*;
                     use std::fmt::{Display, Formatter};
                     use super::#name;
                     impl Parse for #name {
-                        fn parse(input: &mut Tokens) -> Result<Self, ParseError> {
-                            let mut err = String::from("Expected ").yellow().to_string();
+                        fn parse(input: &mut Tokens) -> ParseResult<Self> {
                             #(#variants)*
-                            err.push_str(format!("\n{} {}","But got:".red(), input.peek().unwrap()).as_str());
-                            Err(ParseError::Generic(err))
+                            Recoverable
                         }
                     }
 
                     impl Parse for Box<#name> {
-                        fn parse(input: &mut Tokens) -> Result<Self,ParseError> {
+                        fn parse(input: &mut Tokens) -> ParseResult<Self> {
                             Ok(Box::new(#name::parse(input)?))
                         }
                     }
@@ -84,16 +73,18 @@ pub fn parse_tokens(input: TokenStream) -> TokenStream {
                 for_struct_w_unamed_fields(&struct_data, &name)
             };
             let ident = format_ident!("__{}", name.to_string().to_lowercase());
-            let to_vec: Vec<proc_macro2::TokenStream >= {
+            let to_vec: Vec<proc_macro2::TokenStream> = {
                 struct_data.fields.iter().map(|f| {
                     let ident = f.ident.as_ref().expect("unnamed fields unsupported");
                     quote! {self.#ident.clone().append_tokens(tokens);}
                 })
-            }.collect();
+            }
+            .collect();
             return quote! {
                 mod #ident {
                     use colored::Colorize;
                     use crate::tokenizer::prelude::*;
+                    use crate::prelude::*;
                     use std::fmt::{Display, Formatter};
                     use super::#name;
                     #parse_impl
@@ -103,7 +94,7 @@ pub fn parse_tokens(input: TokenStream) -> TokenStream {
                         }
                     }
                     impl Parse for Box<#name> {
-                        fn parse(input: &mut Tokens) -> Result<Self, ParseError> {
+                        fn parse(input: &mut Tokens) -> ParseResult<Self> {
                             Ok(Box::new(#name::parse(input)?))
                         }
                     }
@@ -122,7 +113,6 @@ fn for_struct_w_named_fields(struct_data: &DataStruct, name: &Ident) -> proc_mac
     let variant = iter.next().unwrap();
     let variants = iter.map(|f| {
         let ident = f.ident.as_ref().expect("unnamed fields unsupported");
-        dbg!(ident);
         if let Type::Tuple(typetuple) = &f.ty {
             if typetuple.elems.is_empty() {
                 quote! {#ident: (),}
@@ -137,7 +127,7 @@ fn for_struct_w_named_fields(struct_data: &DataStruct, name: &Ident) -> proc_mac
     quote! {
 
             impl Parse for #name {
-                fn parse(input: &mut Tokens) -> Result<Self, ParseError> {
+                fn parse(input: &mut Tokens) -> ParseResult<Self> {
                     let tmp = input.step(|input| Parse::parse(input));
                     match tmp {
                         Ok(tmp) => {
@@ -147,6 +137,9 @@ fn for_struct_w_named_fields(struct_data: &DataStruct, name: &Ident) -> proc_mac
                             })
                         }
                         Err(err) => Err(err),
+                        Recoverable => {
+                            Recoverable
+                        }
                     }
                 }
             }
@@ -160,16 +153,17 @@ fn for_struct_w_unamed_fields(struct_data: &DataStruct, name: &Ident) -> proc_ma
         }
     });
     quote! {
-
-
             impl Parse for #name {
-                fn parse(input: &mut Tokens) -> Result<Self, ParseError> {
+                fn parse(input: &mut Tokens) -> ParseResult<Self> {
                     let tmp = input.step(|input| Parse::parse(input));
                     match tmp {
                         Ok(tmp) => {
                             Ok(Self(tmp, #(#fields),*))
                         }
                         Err(err) => Err(err),
+                        Recoverable => {
+                            Recoverable
+                        }
                     }
                 }
             }

@@ -56,6 +56,29 @@ pub fn tuple_parse_impl(input: TokenStream) -> TokenStream {
         #(s.push_str(#format_string.as_str());)*
         s
     };
+    let display_option = {
+        let display = idents
+            .0
+            .iter()
+            .enumerate()
+            .map(|(i, f)| {
+                let ident = f.to_owned();
+                let idx = syn::Index::from(i);
+                quote::quote! {
+                    let #ident = match self.as_ref() {
+                        Some(s) => s.#idx.display(),
+                        None => String::new(),
+                    };
+                }
+            })
+            .collect::<Vec<_>>();
+        quote::quote! {
+            #(#display)*
+            let mut s = String::new();
+            #(s.push_str(#format_string.as_str());)*
+            s
+        }
+    };
     let tokens_parsing = tokens.iter().skip(1).collect::<Vec<_>>();
     quote::quote! {
         impl<#(#tokens),*> AppendTokens for (#(#tokens),*)  where
@@ -71,8 +94,29 @@ pub fn tuple_parse_impl(input: TokenStream) -> TokenStream {
         where
         #(#tokens: Parse),*
         {
-            fn parse(input: &mut Tokens) -> Result<Self, ParseError> where Self: Sized {
-                Ok((A::parse(input)?, #(#tokens_parsing::parse(input).unwrap()),*))
+            fn parse(input: &mut Tokens) -> ParseResult<Self> where Self: Sized {
+                let tmp =  match A::parse(input) {
+                    Ok(ok) => ok,
+                    Err(_) | Recoverable => return Recoverable,
+                };
+
+                Ok((tmp, #(#tokens_parsing::parse(input).unwrap()),*))
+            }
+        }
+        impl<#(#tokens),*> Parse for Option<(#(#tokens),*)>
+        where
+        #(#tokens: Parse),*
+        {
+            fn parse(input: &mut Tokens) -> ParseResult<Self> where Self: Sized {
+                let tmp = match input.step(|input| match A::parse(input) {
+                    Ok(ok) => Ok(ok),
+                    Err(_) | Recoverable => return Recoverable,
+                }) {
+                    Ok(ok) => ok,
+                    Err(_) | Recoverable => return Ok(None),
+                };
+
+                Ok(Some((tmp, #(#tokens_parsing::parse(input).unwrap()),*)))
             }
         }
         impl<#(#tokens),*> ParsingDisplay for (#(#tokens),*)
@@ -83,7 +127,18 @@ pub fn tuple_parse_impl(input: TokenStream) -> TokenStream {
                 #display
             }
             fn placeholder() -> String where Self: Sized {
-                format!("{}", concat!(#(concat!(stringify!(#tokens), " ")),*))
+                format!("{}", concat!(#(concat!(stringify!(#tokens), "")),*))
+            }
+        }
+        impl<#(#tokens),*> ParsingDisplay for Option< (#(#tokens),*)>
+        where
+        #(#tokens: ParsingDisplay),*
+        {
+            fn display(&self) -> String where Self: Sized {
+                #display_option
+            }
+            fn placeholder() -> String where Self: Sized {
+                format!("{}", concat!(#(concat!(stringify!(#tokens), "")),*))
             }
         }
     }

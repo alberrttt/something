@@ -10,7 +10,6 @@ pub enum ParseError {
     Generic(String),
     Boxed(Box<dyn Error>),
     ExpectedEnd(Token),
-    ExpectedAst(String, String),
 }
 mod n {
     use std::any::{self, Any};
@@ -27,7 +26,7 @@ mod n {
         ExpectedEnd(Token),
         ExpectedAst(ExpectedAst),
     }
-    
+
     #[derive(Debug, Clone)]
     pub struct ExpectedAst {
         ast: any::TypeId,
@@ -62,11 +61,6 @@ impl std::fmt::Display for ParseError {
             ParseError::ExpectedEnd(Token) => {
                 write!(f, "{}", "Error: ".bold().red())?;
                 write!(f, "Expected end of file, got {:?}", Token)
-            }
-            ParseError::ExpectedAst(possibilities, got) => {
-                write!(f, "{}", "Error: ".red().bold())?;
-                write!(f, "{} {}", "Expected".yellow(), possibilities)?;
-                write!(f, ", {} `{}`", "Got:".yellow(), got)
             }
         }
     }

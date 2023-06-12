@@ -24,7 +24,7 @@ mod __functiondeclaration {
 
     use super::FunctionDeclaration;
     impl Parse for FunctionDeclaration {
-        fn parse(input: &mut Tokens) -> Result<Self, ParseError> {
+        fn parse(input: &mut Tokens) -> ParseResult<Self> {
             let tmp = input.step(|input| Parse::parse(input));
             match tmp {
                 Ok(tmp) => Ok(Self {
@@ -34,7 +34,7 @@ mod __functiondeclaration {
                     body: Parse::parse(input)?,
                     return_type: Parse::parse(input)?,
                 }),
-                Err(err) => Err(err),
+                Err(_) | Recoverable => Recoverable,
             }
         }
     }
@@ -48,7 +48,7 @@ mod __functiondeclaration {
         }
     }
     impl Parse for Box<FunctionDeclaration> {
-        fn parse(input: &mut Tokens) -> Result<Self, ParseError> {
+        fn parse(input: &mut Tokens) -> ParseResult<Self> {
             Ok(Box::new(FunctionDeclaration::parse(input)?))
         }
     }

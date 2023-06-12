@@ -32,7 +32,7 @@ where
             .iter()
             .map(|item| item.display())
             .collect::<Vec<_>>()
-            .join(" ")
+            .join("")
     }
 
     fn placeholder() -> String
@@ -46,13 +46,22 @@ impl<T> Parse for List<T>
 where
     T: Parse + Clone + std::fmt::Debug,
 {
-    fn parse(input: &mut Tokens) -> Result<Self, ParseError>
+    fn parse(input: &mut Tokens) -> ParseResult<Self>
     where
         Self: Clone + std::fmt::Debug + Clone,
     {
         let mut list = Self::new();
         while !input.at_end() {
-            list.push(input.parse()?);
+            let next = input.peek().cloned();
+            list.push(match input.parse() {
+                Ok(item) => item,
+                Err(err) => {
+
+                    println!("{}", err);
+                    break;
+                }
+                Recoverable => todo!(),
+            });
         }
         Ok(list)
     }

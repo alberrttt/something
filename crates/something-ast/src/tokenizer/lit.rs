@@ -1,4 +1,5 @@
 use super::prelude::*;
+use crate::prelude::*;
 use std::{
     error::Error,
     fmt::{Display, Formatter},
@@ -45,7 +46,7 @@ impl ParsingDisplay for Literal {
     }
 }
 impl Parse for Literal {
-    fn parse(input: &mut Tokens) -> Result<Self, ParseError> {
+    fn parse(input: &mut Tokens) -> ParseResult<Self> {
         let token = input.advance();
         if let Some(Token::Lit(token)) = token {
             Ok(token.clone())
