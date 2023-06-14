@@ -87,14 +87,13 @@ pub fn repl() {
     );
 
     loop {
-        print!(">> ");
+        print!("\n>> ");
         io::stdout().flush().unwrap(); // Flush stdout to ensure prompt is displayed
 
         let mut input = String::new();
         io::stdin().read_line(&mut input).unwrap(); // Read user input
 
         let input = input.trim(); // Remove trailing newline
-        println!("{input}");
         if input == "quit" {
             break; // Exit the loop if the user enters "quit"
         }
@@ -102,14 +101,12 @@ pub fn repl() {
 
         let ast = Repl::parse(&mut tokens);
         if let Ok(ast) = ast {
-            println!("{}", ast.display());
             println!("{:?}", ast);
             if !tokens.at_end() {
                 print!("{}", "Error: ".bold().red());
                 println!("\nTokens left over: {:#?}\n", &tokens.0[tokens.1..]);
             }
         } else {
-            print!("{}", "Error: ".bold().red());
             println!("{}", ast.err().unwrap());
             continue;
         }

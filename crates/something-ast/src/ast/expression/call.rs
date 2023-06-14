@@ -1,4 +1,4 @@
-use crate::tokenizer::prelude::*;
+use crate::{tkn_recover, tokenizer::prelude::*};
 use something_dev_tools::{ParseTokens, ParseTokensDisplay};
 
 use crate::ast::{delimiter::Parentheses, punctuated::Punctuated, tokenizer::Tokens};
@@ -10,17 +10,20 @@ pub struct Call {
     pub ident: Ident,
     pub args: Parentheses<Punctuated<Expression, Comma>>,
 }
-impl Parse for Call {
-    fn parse(input: &mut Tokens) -> ParseResult<Self> {
-        let ident = Ident::parse(input)?;
-        let delimiter = match input.advance() {
-            Some(Token::Parentheses(paren)) => paren,
-            _ => {
-                return Err(ParseError::Generic(
-                    format!("Expected Parentheses, got {:?}", input.advance().clone()).into(),
-                ))
-            }
+
+impl Call {
+    pub fn parse_with_ident(ident: Ident, input: &mut Tokens) -> ParseResult<Self> {
+        let delimiter = match input.peek() {
+            Ok(ok) => ok,
+            Err(_) => return Recoverable,
+            Recoverable => return Recoverable,
+        }
+        .clone();
+        let delimiter = match delimiter {
+            Token::Parentheses(paren) => paren,
+            _ => return Recoverable,
         };
+        input.advance();
 
         Ok(Self {
             ident,
@@ -31,5 +34,13 @@ impl Parse for Call {
         })
     }
 }
+
+impl Parse for Call {
+    fn parse(input: &mut Tokens) -> ParseResult<Self> {
+        let ident = Ident::parse(input)?;
+        Self::parse_with_ident(ident, input)
+    }
+}
+
 use something_dev_tools::item_name;
 item_name!(Call, "call");

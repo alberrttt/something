@@ -1,6 +1,7 @@
 use super::prelude::*;
 use crate::prelude::*;
 use casey::lower;
+use std::convert::Infallible;
 use std::{error::Error, fmt::Formatter};
 macro_rules! define_token {
     ($name:ident) => {
@@ -34,14 +35,11 @@ macro_rules! define_token {
         }
         impl Parse for $name {
             fn parse(input: &mut Tokens) -> ParseResult<Self> {
-                let token = input.advance().clone();
-                if let Some(Token::$name(token)) = token {
+                let token = input.advance()?;
+                if let Token::$name(token) = token {
                     Ok(token.clone())
                 } else {
-                    Err((ParseError::ExpectedToken(
-                        Token::$name(Self::default()),
-                        token.cloned().unwrap_or_else(|| Token::Eof(Eof::default())),
-                    )))
+                    Err((ParseError::ExpectedToken(Token::$name(Self::default()), token.clone())))
                 }
             }
         }

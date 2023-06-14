@@ -52,7 +52,7 @@ where
     {
         let mut list = Self::new();
         while !input.at_end() {
-            let next = input.peek().cloned();
+            let next = input.peek()?.clone();
             list.push(match input.parse() {
                 Ok(item) => item,
                 Err(err) => {

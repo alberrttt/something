@@ -10,6 +10,7 @@ pub enum ParseError {
     Generic(String),
     Boxed(Box<dyn Error>),
     ExpectedEnd(Token),
+    EndOfTokens,
 }
 mod n {
     use std::any::{self, Any};
@@ -46,6 +47,10 @@ pub struct TokenErrorInfo {
 impl std::fmt::Display for ParseError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
+            Self::EndOfTokens => {
+                write!(f, "{}", "Error: ".bold().red())?;
+                write!(f, "Unexpected end of tokens")
+            }
             ParseError::Generic(s) => {
                 write!(f, "{}", "Error: ".bold().red())?;
                 write!(f, "{}", s)

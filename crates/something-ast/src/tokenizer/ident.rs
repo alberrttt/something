@@ -47,13 +47,13 @@ impl ParsingDisplay for Ident {
 }
 impl Parse for Ident {
     fn parse(input: &mut Tokens) -> ParseResult<Self> {
-        let token = input.advance();
-        if let Some(Token::Ident(token)) = token {
+        let token = input.advance()?;
+        if let Token::Ident(token) = token {
             Ok(token.clone())
         } else {
             Err(ParseError::ExpectedToken(
                 Token::Ident(Ident::default()),
-                token.cloned().unwrap(), 
+                token.clone(), 
                 // unwrap CAN panic, since it might be EOF, so there arent any more tokens
             ))
         }

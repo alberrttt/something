@@ -98,6 +98,22 @@ impl Display for Tokens {
 }
 
 impl Tokens {
+    pub fn try_advance(&mut self, target: Token) -> ParseResult<Token> {
+        match self.peek() {
+            Ok(token) => {
+                if *token == target {
+                    let token = token.clone();
+                    self.advance();
+                    return Ok(token);
+                } else {
+                    return Err(ParseError::ExpectedToken(target, token.clone()));
+                }
+            }
+            Recoverable | Err(_) => return Recoverable, // idk if recoverable is the right thing to do here
+                                                        // but, if the self.peek() errors, it usually means that we're at the end of the tokens
+        }
+        todo!()
+    }
     pub fn new() -> Self {
         Self(Vec::new(), 0)
     }
@@ -151,26 +167,35 @@ impl Tokens {
     pub fn iter(&self) -> std::slice::Iter<'_, Token> {
         self.0.iter()
     }
-    pub fn advance(&mut self) -> Option<&Token> {
+    pub fn advance(&mut self) -> ParseResult<&Token> {
         self.1 += 1;
-        self.0.get(self.1 - 1)
+        match self.0.get(self.1 - 1) {
+            Some(some) => Ok(some),
+            None => Err(ParseError::EndOfTokens),
+        }
     }
-    pub fn peek(&self) -> Option<&Token> {
-        self.0.get(self.1)
+    pub fn peek(&self) -> ParseResult<&Token> {
+        match self.0.get(self.1) {
+            Some(token) => Ok(token),
+            None => Err(ParseError::EndOfTokens),
+        }
     }
 
-    pub fn peek_n(&self, n: isize) -> Option<&Token> {
-        let i: usize = ((self.1 as isize) + n).try_into().unwrap();
-        self.0.get(i)
+    pub fn peek_n(&self, n: usize) -> ParseResult<&Token> {
+        match self.0.get(self.1 + n) {
+            Some(token) => Ok(token),
+            None => Err(ParseError::EndOfTokens),
+        }
     }
-    pub fn peek1(&self) -> Option<&Token> {
-        self.0.get(self.1 + 1)
+
+    pub fn peek1(&self) -> ParseResult<&Token> {
+        self.peek_n(1)
     }
-    pub fn peek2(&self) -> Option<&Token> {
-        self.0.get(self.1 + 2)
+    pub fn peek2(&self) -> ParseResult<&Token> {
+        self.peek_n(2)
     }
-    pub fn peek3(&self) -> Option<&Token> {
-        self.0.get(self.1 + 3)
+    pub fn peek3(&self) -> ParseResult<&Token> {
+        self.peek_n(3)
     }
 
     pub fn step<R>(&mut self, F: impl FnOnce(&mut Self) -> ParseResult<R>) -> ParseResult<R> {
@@ -187,6 +212,12 @@ impl Tokens {
                 Recoverable
             }
         }
+    }
+}
+
+impl Default for Tokens {
+    fn default() -> Self {
+        Self::new()
     }
 }
 impl Tokenizer<'_> {

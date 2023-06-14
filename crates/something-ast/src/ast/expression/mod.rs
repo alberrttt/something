@@ -1,7 +1,7 @@
 use std::sync::mpsc::Receiver;
 
-use crate::prelude::*;
 use crate::tokenizer::prelude::*;
+use crate::{peek_matches, prelude::*, tkn_recover};
 use something_dev_tools::{item_name, ParseTokensDisplay};
 use ParseResult;
 pub mod block;
@@ -53,46 +53,7 @@ use crate::ast::delimiter::Parentheses;
 pub use self::call::*;
 impl Parse for Expression {
     fn parse(input: &mut Tokens) -> ParseResult<Self> {
-        let tmp = match input.peek() {
-            Some(token) => token.clone(),
-            None => {
-                return Err(ParseError::Generic(format!("end of file")));
-            }
-        };
-        parse_expr(
-            match tmp {
-                Token::If(if_token) => {
-                    let tmp = match if_expr::If::parse(input) {
-                        Ok(ok) => ok,
-                        Err(_) | Recoverable => return ParseResult::Recoverable,
-                    };
-                    let tmp = Ok(Expression::If(tmp));
-
-                    tmp
-                }
-                Token::Braces(_) => {
-                    let tmp = block::Block::parse(input)?;
-
-                    Ok(Expression::Block(tmp))
-                }
-                Token::Lit(lit) => {
-                    input.advance();
-                    Ok(Self::Lit(lit))
-                }
-                Token::Ident(ident) => {
-                    if let Some(Token::Parentheses(_)) = input.peek1() {
-                        Ok(Expression::Call(Call::parse(input)?))
-                    } else {
-                        input.advance();
-                        Ok(Expression::Ident(ident))
-                    }
-                }
-                x => Recoverable, 
-                // its considered recoverable, since other nodes might depend on
-                // the token that is being "peeked"
-            },
-            input,
-        )
+        parse_expr(input)
     }
 }
 impl Parse for Box<Expression> {
@@ -100,77 +61,78 @@ impl Parse for Box<Expression> {
         Ok(Box::new(Expression::parse(input)?))
     }
 }
-fn parse_expr(left: ParseResult<Expression>, input: &mut Tokens) -> ParseResult<Expression> {
-    let left = left?;
-    let token = match input.peek() {
-        Some(token) => token.clone(),
-        _ => {
-            return Ok(left);
-        }
-    };
-    match token {
-        Token::Plus(_)
-        | Token::Minus(_)
-        | Token::Greater(_)
-        | Token::Less(_)
-        | Token::GreaterEqual(_)
-        | Token::LessEqual(_)
-        | Token::EqualEqual(_) => match Operator::parse(input) {
-            Ok(operator) => {
-                let right = Expression::parse(input)?;
-                Ok(Expression::Binary(Binary {
-                    left: Box::new(left),
-                    operator,
-                    right: Box::new(right),
-                }))
+
+impl Tokens {
+    pub(in crate::ast::expression) fn expr_unit(&mut self) -> ParseResult<Expression> {
+        match self.advance()?.clone() {
+            Token::Lit(literal) => Ok(Expression::Lit(literal)),
+            Token::Ident(ident) => {
+                match Call::parse_with_ident(ident.clone(), self) {
+                    Recoverable => {}
+                    Ok(ok) => return Ok(Expression::Call(ok)),
+                    Err(err) => return Err(err),
+                };
+                Ok(Expression::Ident(ident))
             }
 
-            Err(err) => Err(err),
-            Recoverable => todo!(),
-        },
-        Token::Equal(_)
-        | Token::PlusEqual(_)
-        | Token::MinusEqual(_)
-        | Token::StarEqual(_)
-        | Token::SlashEqual(_) => match Operator::parse(input) {
-            Ok(operator) => {
-                let right = Expression::parse(input)?;
-                Ok(Expression::Binary(Binary {
-                    left: Box::new(left),
-                    operator,
-                    right: Box::new(right),
-                }))
-            }
+            _ => Err(ParseError::Generic(
+                concat!(
+                    "
+    Expected literal, got something else
 
-            Err(err) => Err(err),
+    Error originated from: 
 
-            Recoverable => todo!(),
-        },
-        Token::Star(_) | Token::Slash(_) => match Operator::parse(input) {
-            Ok(operator) => {
-                let right = Expression::parse(input)?;
-                parse_expr(
-                    Ok(Expression::Binary(Binary {
-                        left: Box::new(left),
-                        operator,
-                        right: Box::new(right),
-                    })),
-                    input,
+",
+                    file!(),
+                    ":",
+                    line!(),
+                    "\nFix this later pls"
                 )
-            }
-
-            Err(err) => Err(err),
-            Recoverable => todo!(),
-        },
-
-        token => Ok(left),
+                .into(),
+            )),
+        }
     }
+    pub(in crate::ast::expression) fn term(&mut self) -> ParseResult<Expression> {
+        let mut result = self.expr_unit()?;
+        while peek_matches!(self, Token::Star(_) | Token::Slash(_)) {
+            let op = self.advance()?.clone();
+            let right = self.expr_unit()?;
+            result = Expression::Binary(Binary::from_token(result, op, right));
+        }
+        Ok(result)
+    }
+}
+fn parse_expr(input: &mut Tokens) -> ParseResult<Expression> {
+    let mut result = input.term()?;
+    while peek_matches!(input, Token::Plus(_) | Token::Minus(_)) {
+        let op = input.advance()?.clone();
+        let right = input.term()?;
+
+        result = Expression::Binary(Binary::from_token(result, op, right));
+    }
+    Ok(result)
 }
 #[derive(Debug, Clone)]
 pub struct Binary {
     pub left: Box<Expression>,
     pub operator: Operator,
     pub right: Box<Expression>,
+}
+impl Binary {
+    fn new(left: Expression, op: Operator, right: Expression) -> Self {
+        Self {
+            left: Box::new(left),
+            operator: op,
+            right: Box::new(right),
+        }
+    }
+    fn from_token(left: Expression, op: Token, right: Expression) -> Self {
+        Self {
+            left: Box::new(left),
+            operator: Operator::from(op),
+            right: Box::new(right),
+        }
+    }
 }
 impl AppendTokens for Binary {
     fn append_tokens(&self, tokens: &mut Tokens)
@@ -238,10 +200,10 @@ impl Parse for Operator {
     where
         Self: Sized,
     {
-        let token = input.peek().cloned();
+        let token = input.peek()?.clone();
         Ok(Self {
             kind: input.parse()?,
-            token: token.unwrap(),
+            token,
         })
     }
 }
@@ -294,36 +256,40 @@ impl ParsingDisplay for OperatorKind {
         "<operator>".into()
     }
 }
+impl From<Token> for Operator {
+    fn from(value: Token) -> Self {
+        Self {
+            kind: value.clone().into(),
+            token: value,
+        }
+    }
+}
+impl From<Token> for OperatorKind {
+    fn from(token: Token) -> Self {
+        match token {
+            Token::Plus(_) => Self::Plus,
+            Token::Minus(_) => Self::Minus,
+            Token::Star(_) => Self::Multiply,
+            Token::Slash(_) => Self::Divide,
+            Token::EqualEqual(_) => Self::EqualEqual,
+            Token::Equal(_) => Self::Equal,
+            Token::Greater(_) => Self::Greater,
+            Token::Less(_) => Self::Less,
+            Token::GreaterEqual(_) => Self::GreaterEqual,
+            Token::LessEqual(_) => Self::LessEqual,
+            Token::PlusEqual(_) => Self::PlusEqual,
+            Token::MinusEqual(_) => Self::MinusEqual,
+            Token::StarEqual(_) => Self::MultiplyEqual,
+            Token::SlashEqual(_) => Self::DivideEqual,
+            Token::BangEqual(_) => Self::NotEqual,
+            _ => panic!("Expected Operator, got {:?}", token),
+        }
+    }
+}
+
 impl Parse for OperatorKind {
     fn parse(input: &mut Tokens) -> ParseResult<Self> {
-        match input.advance() {
-            Some(token) => Ok(match token {
-                Token::Plus(_) => Self::Plus,
-                Token::Minus(_) => Self::Minus,
-                Token::Star(_) => Self::Multiply,
-                Token::Slash(_) => Self::Divide,
-                Token::EqualEqual(_) => Self::EqualEqual,
-                Token::Equal(_) => Self::Equal,
-                Token::Greater(_) => Self::Greater,
-                Token::Less(_) => Self::Less,
-                Token::GreaterEqual(_) => Self::GreaterEqual,
-                Token::LessEqual(_) => Self::LessEqual,
-                Token::PlusEqual(_) => Self::PlusEqual,
-                Token::MinusEqual(_) => Self::MinusEqual,
-                Token::StarEqual(_) => Self::MultiplyEqual,
-                Token::SlashEqual(_) => Self::DivideEqual,
-                Token::BangEqual(_) => Self::NotEqual,
-                _ => {
-                    return Err(ParseError::Generic(format!(
-                        "Expected Operator, got {:?}",
-                        token.clone()
-                    )));
-                }
-            }),
-            _ => Err(ParseError::Generic(format!(
-                "Expected Operator, got {:?}",
-                input.advance().clone()
-            ))),
-        }
+        let token = input.advance()?.clone();
+        Ok(Self::from(token))
     }
 }

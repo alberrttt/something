@@ -47,13 +47,13 @@ impl ParsingDisplay for Literal {
 }
 impl Parse for Literal {
     fn parse(input: &mut Tokens) -> ParseResult<Self> {
-        let token = input.advance();
-        if let Some(Token::Lit(token)) = token {
+        let token = input.advance()?;
+        if let Token::Lit(token) = token {
             Ok(token.clone())
         } else {
             Err(ParseError::ExpectedToken(
                 Token::Lit(Literal::default()),
-                token.cloned().unwrap(),
+                token.clone(),
             ))
         }
     }

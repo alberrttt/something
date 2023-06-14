@@ -42,11 +42,12 @@ macro_rules! delimiter_impl {
                 fn parse(
                     input: &mut Tokens,
                 ) -> ParseResult<Self> {
-                    let Some(Token::$delimiter(delimiter)) = input.advance() else {
+                    let tmp = input.advance()?;
+                    let Token::$delimiter(delimiter) = tmp else {
                         return Err(
                             ParseError::ExpectedToken(
                                 Token::$delimiter(Default::default()),
-                                input.advance().cloned().unwrap(),
+                                tmp.clone(),
                             )
                         );
                     };

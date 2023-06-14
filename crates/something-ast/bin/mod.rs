@@ -34,7 +34,6 @@ fn main() {
                 Recoverable => todo!(),
             };
             println!("{:?}", &ast);
-            println!("{:?}", ast.display())
         }
     }
 }

@@ -16,7 +16,6 @@ impl Parse for If {
         let if_token = input.parse()?;
         let predicate = input.parse().unwrap();
         let then_branch = input.parse().unwrap();
-
         Ok(Self {
             if_token,
             predicate,
