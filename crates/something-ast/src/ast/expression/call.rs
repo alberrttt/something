@@ -1,18 +1,19 @@
 use crate::{tkn_recover, tokenizer::prelude::*};
 use something_dev_tools::{ParseTokens, ParseTokensDisplay};
+use Macros::Tkn;
 
-use crate::ast::{delimiter::Parentheses, punctuated::Punctuated, tokenizer::Tokens};
+use crate::ast::{delimiter::Parentheses, punctuated::Punctuated, tokenizer::TokenStream};
 
 use super::Expression;
 
 #[derive(Debug, Clone, ParseTokensDisplay)]
 pub struct Call {
     pub ident: Ident,
-    pub args: Parentheses<Punctuated<Expression, Comma>>,
+    pub args: Parentheses<Punctuated<Expression, Tkn![,]>>,
 }
 
 impl Call {
-    pub fn parse_with_ident(ident: Ident, input: &mut Tokens) -> ParseResult<Self> {
+    pub fn parse_with_ident(ident: Ident, input: &mut TokenStream) -> ParseResult<Self> {
         let delimiter = match input.peek() {
             Ok(ok) => ok,
             Err(_) => return Recoverable,
@@ -36,7 +37,7 @@ impl Call {
 }
 
 impl Parse for Call {
-    fn parse(input: &mut Tokens) -> ParseResult<Self> {
+    fn parse(input: &mut TokenStream) -> ParseResult<Self> {
         let ident = Ident::parse(input)?;
         Self::parse_with_ident(ident, input)
     }

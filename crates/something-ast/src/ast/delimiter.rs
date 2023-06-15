@@ -14,11 +14,11 @@ macro_rules! delimiter_impl {
             where
                 T: AppendTokens,
             {
-                fn append_tokens(&self, tokens: &mut Tokens)
+                fn append_tokens(&self, tokens: &mut TokenStream)
                 where
                     Self: Sized,
                 {
-                    let mut tmp = Tokens::new();
+                    let mut tmp = TokenStream::new();
                     self.1.append_tokens(&mut tmp);
                     // its so late and im lazy to implement a more idiomatic way to get the span
                     let tmp = Token::$delimiter(Delimiter {
@@ -40,7 +40,7 @@ macro_rules! delimiter_impl {
                 T: std::fmt::Debug + Clone,
             {
                 fn parse(
-                    input: &mut Tokens,
+                    input: &mut TokenStream,
                 ) -> ParseResult<Self> {
                     let tmp = input.advance()?;
                     let Token::$delimiter(delimiter) = tmp else {

@@ -1,8 +1,187 @@
-use super::prelude::*;
+use super::{prelude::*, Tokenizer};
 use crate::prelude::*;
 use casey::lower;
 use std::convert::Infallible;
+use std::fmt::Display;
+use std::ops::{Deref, DerefMut, Index};
 use std::{error::Error, fmt::Formatter};
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct TokenStream(pub Vec<Token>, pub usize);
+
+impl Deref for TokenStream {
+    type Target = Vec<Token>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+impl DerefMut for TokenStream {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
+impl Index<usize> for TokenStream {
+    type Output = Token;
+
+    fn index(&self, index: usize) -> &Self::Output {
+        &self.0[index]
+    }
+}
+impl From<Vec<Token>> for TokenStream {
+    fn from(tokens: Vec<Token>) -> Self {
+        Self(tokens, 0)
+    }
+}
+impl IntoIterator for TokenStream {
+    type Item = Token;
+    type IntoIter = std::vec::IntoIter<Self::Item>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.into_iter()
+    }
+}
+impl From<&str> for TokenStream {
+    fn from(tokens: &str) -> Self {
+        let mut tokenizer = Tokenizer::new(tokens);
+        tokenizer.tokens().unwrap()
+    }
+}
+impl Display for TokenStream {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "[")?;
+        for token in &self.0 {
+            write!(f, "{:?}, ", token)?;
+        }
+        write!(f, "]")?;
+        std::result::Result::Ok(())
+    }
+}
+
+impl TokenStream {
+    pub fn try_advance(&mut self, target: Token) -> ParseResult<Token> {
+        match self.peek() {
+            Ok(token) => {
+                if *token == target {
+                    let token = token.clone();
+                    self.advance();
+                    return Ok(token);
+                } else {
+                    return Err(ParseError::ExpectedToken(target, token.clone()));
+                }
+            }
+            Recoverable | Err(_) => return Recoverable, // idk if recoverable is the right thing to do here
+                                                        // but, if the self.peek() errors, it usually means that we're at the end of the tokens
+        }
+        todo!()
+    }
+    pub fn new() -> Self {
+        Self(Vec::new(), 0)
+    }
+    pub fn parse<T>(&mut self) -> ParseResult<T>
+    where
+        T: Parse,
+        T: Clone + std::fmt::Debug + Clone,
+    {
+        T::parse(self)
+    }
+    pub fn previous(&self) -> Option<&Token> {
+        self.0.get(self.1 - 1)
+    }
+    pub fn previous1(&self) -> Option<&Token> {
+        self.0.get(self.1 - 2)
+    }
+    pub fn previous2(&self) -> Option<&Token> {
+        self.0.get(self.1 - 3)
+    }
+    pub fn previous3(&self) -> Option<&Token> {
+        self.0.get(self.1 - 4)
+    }
+    pub fn at_end(&self) -> bool {
+        self.1 >= self.0.len()
+    }
+    pub fn distance_from_end(&self) -> usize {
+        self.0.len() - self.1
+    }
+    pub fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
+    pub fn len(&self) -> usize {
+        self.0.len()
+    }
+    pub fn get(&self, i: usize) -> Option<&Token> {
+        self.0.get(i)
+    }
+    pub fn get_mut(&mut self, i: usize) -> Option<&mut Token> {
+        self.0.get_mut(i)
+    }
+    pub fn first(&self) -> Option<&Token> {
+        self.0.first()
+    }
+    pub fn last(&self) -> Option<&Token> {
+        self.0.last()
+    }
+    pub fn iter_mut(&mut self) -> std::slice::IterMut<'_, Token> {
+        self.0.iter_mut()
+    }
+
+    pub fn iter(&self) -> std::slice::Iter<'_, Token> {
+        self.0.iter()
+    }
+    pub fn advance(&mut self) -> ParseResult<&Token> {
+        self.1 += 1;
+        match self.0.get(self.1 - 1) {
+            Some(some) => Ok(some),
+            None => Err(ParseError::EndOfTokens),
+        }
+    }
+    pub fn peek(&self) -> ParseResult<&Token> {
+        match self.0.get(self.1) {
+            Some(token) => Ok(token),
+            None => Err(ParseError::EndOfTokens),
+        }
+    }
+
+    pub fn peek_n(&self, n: usize) -> ParseResult<&Token> {
+        match self.0.get(self.1 + n) {
+            Some(token) => Ok(token),
+            None => Err(ParseError::EndOfTokens),
+        }
+    }
+
+    pub fn peek1(&self) -> ParseResult<&Token> {
+        self.peek_n(1)
+    }
+    pub fn peek2(&self) -> ParseResult<&Token> {
+        self.peek_n(2)
+    }
+    pub fn peek3(&self) -> ParseResult<&Token> {
+        self.peek_n(3)
+    }
+
+    pub fn step<R>(&mut self, F: impl FnOnce(&mut Self) -> ParseResult<R>) -> ParseResult<R> {
+        let starting = self.1;
+        let stepped = F(self);
+        match stepped {
+            Ok(ok) => Ok(ok),
+            Err(e) => {
+                self.1 = starting;
+                Err(e)
+            }
+            Recoverable => {
+                self.1 = starting;
+                Recoverable
+            }
+        }
+    }
+}
+
+impl Default for TokenStream {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 macro_rules! define_token {
     ($name:ident) => {
         #[derive(Clone, Debug, PartialEq, Eq, Default)]
@@ -10,7 +189,7 @@ macro_rules! define_token {
             pub span: Span,
         }
         impl AppendTokens for $name {
-            fn append_tokens(&self, tokens: &mut Tokens)
+            fn append_tokens(&self, tokens: &mut TokenStream)
             where
                 Self: Sized,
             {
@@ -34,7 +213,7 @@ macro_rules! define_token {
             }
         }
         impl Parse for $name {
-            fn parse(input: &mut Tokens) -> ParseResult<Self> {
+            fn parse(input: &mut TokenStream) -> ParseResult<Self> {
                 let token = input.advance()?;
                 if let Token::$name(token) = token {
                     Ok(token.clone())
@@ -52,6 +231,7 @@ use something_dev_tools::Span;
 pub struct SpanShell {
     pub span: Span,
 }
+
 macro_rules! DefineTokens {
     ([$($keyword:ident),+],[$([$t:tt] => $token:ident),+],[$($misc:ident),+]) => {
         #[derive( Clone, PartialEq, Eq, Span)]
@@ -68,6 +248,21 @@ macro_rules! DefineTokens {
             ClosingBrace(SpanShell),
             ClosingBracket(SpanShell),
 
+        }
+        pub mod Macros {
+            /// Macro for constructing tokens from their actualy syntatic representation
+            macro_rules! Tkn {
+                $([$keyword] => {
+                    $crate::tokenizer::token::$keyword
+                };)+
+                $([$t] => {
+                    $crate::tokenizer::token::$token
+                };)+
+                $([$misc] => {
+                    $crate::tokenizer::token::$misc
+                };)+
+            }
+            pub(crate) use Tkn;
         }
         impl ParsingDisplay for Token {
             fn display(&self) -> String
@@ -198,7 +393,7 @@ macro_rules! create_token {
 }
 
 DefineTokens!(
-    [If, Fn, Let, Return, While, For],
+    [If, Fn, Let, Return, While, For, Use],
     [
         [==]  => EqualEqual,
         [=]  => Equal,

@@ -3,7 +3,7 @@ use super::prelude::*;
 pub trait ToSourceString {
     fn to_source_string(&self) -> String;
 }
-impl Tokens {
+impl TokenStream {
     pub fn to_source_string(&self) -> String {
         let mut result = String::new();
         let iter = self.iter().peekable();
@@ -22,6 +22,6 @@ impl Tokens {
 }
 #[test]
 fn var() {
-    let tokens = Tokens::from("let a = x + 2 + 3 - 4;");
+    let tokens = TokenStream::from("let a = x + 2 + 3 - 4;");
     println!("{}", tokens.to_source_string());
 }

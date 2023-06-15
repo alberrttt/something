@@ -8,7 +8,7 @@ pub struct Ident {
     pub span: Span,
 }
 impl AppendTokens for Ident {
-    fn append_tokens(&self, tokens: &mut Tokens)
+    fn append_tokens(&self, tokens: &mut TokenStream)
     where
         Self: Sized,
     {
@@ -46,14 +46,14 @@ impl ParsingDisplay for Ident {
     }
 }
 impl Parse for Ident {
-    fn parse(input: &mut Tokens) -> ParseResult<Self> {
+    fn parse(input: &mut TokenStream) -> ParseResult<Self> {
         let token = input.advance()?;
         if let Token::Ident(token) = token {
             Ok(token.clone())
         } else {
             Err(ParseError::ExpectedToken(
                 Token::Ident(Ident::default()),
-                token.clone(), 
+                token.clone(),
                 // unwrap CAN panic, since it might be EOF, so there arent any more tokens
             ))
         }

@@ -4,14 +4,14 @@ use super::prelude::*;
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TokenizerProgramFile {
     pub name: String,
-    pub tokens: Tokens,
+    pub tokens: TokenStream,
 }
 
 impl TokenizerProgramFile {
     pub fn new(name: String, source_code: &str) -> Self {
         Self {
             name,
-            tokens: Tokens::from(source_code),
+            tokens: TokenStream::from(source_code),
         }
     }
 }

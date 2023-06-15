@@ -11,7 +11,7 @@ impl<T> AppendTokens for List<T>
 where
     T: Parse + AppendTokens,
 {
-    fn append_tokens(&self, tokens: &mut Tokens)
+    fn append_tokens(&self, tokens: &mut TokenStream)
     where
         Self: Sized,
     {
@@ -46,7 +46,7 @@ impl<T> Parse for List<T>
 where
     T: Parse + Clone + std::fmt::Debug,
 {
-    fn parse(input: &mut Tokens) -> ParseResult<Self>
+    fn parse(input: &mut TokenStream) -> ParseResult<Self>
     where
         Self: Clone + std::fmt::Debug + Clone,
     {
@@ -56,7 +56,6 @@ where
             list.push(match input.parse() {
                 Ok(item) => item,
                 Err(err) => {
-
                     println!("{}", err);
                     break;
                 }

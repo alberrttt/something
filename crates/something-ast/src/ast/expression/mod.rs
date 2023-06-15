@@ -19,7 +19,7 @@ pub enum Expression {
     Block(block::Block),
 }
 impl AppendTokens for Expression {
-    fn append_tokens(&self, tokens: &mut Tokens)
+    fn append_tokens(&self, tokens: &mut TokenStream)
     where
         Self: Sized,
     {
@@ -52,17 +52,17 @@ use crate::ast::delimiter::Parentheses;
 
 pub use self::call::*;
 impl Parse for Expression {
-    fn parse(input: &mut Tokens) -> ParseResult<Self> {
+    fn parse(input: &mut TokenStream) -> ParseResult<Self> {
         parse_expr(input)
     }
 }
 impl Parse for Box<Expression> {
-    fn parse(input: &mut Tokens) -> ParseResult<Self> {
+    fn parse(input: &mut TokenStream) -> ParseResult<Self> {
         Ok(Box::new(Expression::parse(input)?))
     }
 }
 
-impl Tokens {
+impl TokenStream {
     pub(in crate::ast::expression) fn expr_unit(&mut self) -> ParseResult<Expression> {
         match self.advance()?.clone() {
             Token::Lit(literal) => Ok(Expression::Lit(literal)),
@@ -102,7 +102,7 @@ impl Tokens {
         Ok(result)
     }
 }
-fn parse_expr(input: &mut Tokens) -> ParseResult<Expression> {
+fn parse_expr(input: &mut TokenStream) -> ParseResult<Expression> {
     let mut result = input.term()?;
     while peek_matches!(input, Token::Plus(_) | Token::Minus(_)) {
         let op = input.advance()?.clone();
@@ -135,7 +135,7 @@ impl Binary {
     }
 }
 impl AppendTokens for Binary {
-    fn append_tokens(&self, tokens: &mut Tokens)
+    fn append_tokens(&self, tokens: &mut TokenStream)
     where
         Self: Sized,
     {
@@ -176,7 +176,7 @@ impl From<Binary> for Expression {
 }
 
 impl Parse for Binary {
-    fn parse(input: &mut Tokens) -> ParseResult<Self> {
+    fn parse(input: &mut TokenStream) -> ParseResult<Self> {
         let expr = Expression::parse(input)?;
         todo!();
     }
@@ -188,7 +188,7 @@ pub struct Operator {
     pub token: Token,
 }
 impl AppendTokens for Operator {
-    fn append_tokens(&self, tokens: &mut Tokens)
+    fn append_tokens(&self, tokens: &mut TokenStream)
     where
         Self: Sized,
     {
@@ -196,7 +196,7 @@ impl AppendTokens for Operator {
     }
 }
 impl Parse for Operator {
-    fn parse(input: &mut Tokens) -> ParseResult<Self>
+    fn parse(input: &mut TokenStream) -> ParseResult<Self>
     where
         Self: Sized,
     {
@@ -288,7 +288,7 @@ impl From<Token> for OperatorKind {
 }
 
 impl Parse for OperatorKind {
-    fn parse(input: &mut Tokens) -> ParseResult<Self> {
+    fn parse(input: &mut TokenStream) -> ParseResult<Self> {
         let token = input.advance()?.clone();
         Ok(Self::from(token))
     }

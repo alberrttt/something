@@ -15,7 +15,7 @@ pub enum Repl {
 use colored::Colorize;
 use something_ast::tokenizer::prelude::*;
 impl Parse for Repl {
-    fn parse(input: &mut Tokens) -> ParseResult<Self> {
+    fn parse(input: &mut TokenStream) -> ParseResult<Self> {
         match input.step(|input| match input.parse() {
             Ok(ok) => Ok(Repl::Expr(ok)),
             Recoverable => Recoverable,
@@ -48,7 +48,7 @@ impl Parse for Repl {
     }
 }
 impl Parse for Box<Repl> {
-    fn parse(input: &mut Tokens) -> ParseResult<Self> {
+    fn parse(input: &mut TokenStream) -> ParseResult<Self> {
         Ok(Box::new(Repl::parse(input)?))
     }
 }
@@ -97,7 +97,7 @@ pub fn repl() {
         if input == "quit" {
             break; // Exit the loop if the user enters "quit"
         }
-        let mut tokens: Tokens = input.into();
+        let mut tokens: TokenStream = input.into();
 
         let ast = Repl::parse(&mut tokens);
         if let Ok(ast) = ast {

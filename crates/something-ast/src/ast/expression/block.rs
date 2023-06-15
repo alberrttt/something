@@ -1,6 +1,6 @@
 use std::{backtrace::Backtrace, slice::Iter};
 
-use crate::tokenizer::{list::List, prelude::ParseError, traits::AppendTokens, Parse, Tokens};
+use crate::tokenizer::{list::List, prelude::ParseError, traits::AppendTokens, Parse, TokenStream};
 use something_dev_tools::{ParseTokens, ParseTokensDisplay};
 
 use crate::ast::{
@@ -12,7 +12,7 @@ use crate::ast::{
 #[derive(Debug, Clone, ParseTokensDisplay)]
 pub struct Block(pub Braces<List<Node>>);
 impl AppendTokens for Block {
-    fn append_tokens(&self, tokens: &mut Tokens)
+    fn append_tokens(&self, tokens: &mut TokenStream)
     where
         Self: Sized,
     {
@@ -26,7 +26,7 @@ impl Block {
 }
 use crate::prelude::*;
 impl Parse for Block {
-    fn parse(input: &mut Tokens) -> ParseResult<Self> {
+    fn parse(input: &mut TokenStream) -> ParseResult<Self> {
         let tmp = input.step(|input| Parse::parse(input));
         match tmp {
             Ok(tmp) => Ok(Self(tmp)),

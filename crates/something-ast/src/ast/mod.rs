@@ -1,11 +1,11 @@
 use std::fmt::Display;
 
-use crate::tokenizer::{self, list::List, traits::AppendTokens, Parse, Tokens};
+use crate::tokenizer::{self, list::List, traits::AppendTokens, Parse, TokenStream};
 use prelude::{Children, Declaration, FunctionDeclaration};
 use something_dev_tools::{ParseTokens, ParseTokensDisplay};
 
 impl AppendTokens for TopLevelNode {
-    fn append_tokens(&self, tokens: &mut tokenizer::Tokens)
+    fn append_tokens(&self, tokens: &mut tokenizer::TokenStream)
     where
         Self: Sized,
     {
@@ -37,7 +37,7 @@ pub enum Node {
     Declaration(Declaration),
 }
 impl Parse for Node {
-    fn parse(input: &mut Tokens) -> ParseResult<Self> {
+    fn parse(input: &mut TokenStream) -> ParseResult<Self> {
         match input.step(|input| Parse::parse(input)) {
             Ok(variant) => return Ok(Node::Statement(variant)),
             Err(err) => {
@@ -56,12 +56,12 @@ impl Parse for Node {
     }
 }
 impl Parse for Box<Node> {
-    fn parse(input: &mut Tokens) -> ParseResult<Self> {
+    fn parse(input: &mut TokenStream) -> ParseResult<Self> {
         Ok(Box::new(Node::parse(input)?))
     }
 }
 impl AppendTokens for Node {
-    fn append_tokens(&self, tokens: &mut tokenizer::Tokens)
+    fn append_tokens(&self, tokens: &mut tokenizer::TokenStream)
     where
         Self: Sized,
     {
@@ -91,7 +91,7 @@ pub mod traits;
 use crate::prelude::*;
 impl From<&str> for Ast {
     fn from(value: &str) -> Self {
-        let mut tokens = tokenizer::Tokens::from(value);
+        let mut tokens = tokenizer::TokenStream::from(value);
         match Ast::parse(&mut tokens) {
             Ok(ast) => ast,
             Err(err) => {
@@ -107,7 +107,7 @@ impl From<&str> for Ast {
 macro_rules! ast {
     ($str: expr) => {{
         use $crate::prelude::*;
-        let mut tokens = $crate::tokenizer::Tokens::from($str);
+        let mut tokens = $crate::tokenizer::TokenStream::from($str);
         match (&mut tokens).parse() {
             Ok(value) => (value, tokens),
             Err(err) => {

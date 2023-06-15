@@ -84,7 +84,7 @@ pub fn tuple_parse_impl(input: TokenStream) -> TokenStream {
         impl<#(#tokens),*> AppendTokens for (#(#tokens),*)  where
         #(#tokens: AppendTokens),*
         {
-            fn append_tokens(&self, tokens: &mut Tokens) where Self: Sized {
+            fn append_tokens(&self, tokens: &mut TokenStream) where Self: Sized {
                 let (#(#tokens),*) = self;
                 #(#tokens.append_tokens(tokens);)*
             }
@@ -94,7 +94,7 @@ pub fn tuple_parse_impl(input: TokenStream) -> TokenStream {
         where
         #(#tokens: Parse),*
         {
-            fn parse(input: &mut Tokens) -> ParseResult<Self> where Self: Sized {
+            fn parse(input: &mut TokenStream) -> ParseResult<Self> where Self: Sized {
                 let tmp =  match A::parse(input) {
                     Ok(ok) => ok,
                     Err(_) | Recoverable => return Recoverable,
@@ -107,7 +107,7 @@ pub fn tuple_parse_impl(input: TokenStream) -> TokenStream {
         where
         #(#tokens: Parse),*
         {
-            fn parse(input: &mut Tokens) -> ParseResult<Self> where Self: Sized {
+            fn parse(input: &mut TokenStream) -> ParseResult<Self> where Self: Sized {
                 let tmp = match input.step(|input| match A::parse(input) {
                     Ok(ok) => Ok(ok),
                     Err(_) | Recoverable => return Recoverable,

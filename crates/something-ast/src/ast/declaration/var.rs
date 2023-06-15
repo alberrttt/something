@@ -3,15 +3,15 @@ use crate::prelude::*;
 use crate::tokenizer::prelude::*;
 #[derive(Debug, ParseTokensDisplay, Clone)]
 pub struct VariableDeclaration {
-    pub let_token: Let,
+    pub let_token: Tkn![Let],
     pub name: Ident,
-    pub type_annotation: Option<(Colon, Ident)>,
-    pub equal: Equal,
+    pub type_annotation: Option<(Tkn![:], Ident)>,
+    pub equal: Tkn![=],
     pub expression: Expression,
-    pub semicolon: Semicolon,
+    pub semicolon: Tkn![;],
 }
 impl Parse for VariableDeclaration {
-    fn parse(input: &mut Tokens) -> ParseResult<Self> {
+    fn parse(input: &mut TokenStream) -> ParseResult<Self> {
         let tmp = input.step(|input| Parse::parse(input));
         match tmp {
             Ok(tmp) => Ok(Self {
@@ -27,7 +27,7 @@ impl Parse for VariableDeclaration {
     }
 }
 impl AppendTokens for VariableDeclaration {
-    fn append_tokens(&self, tokens: &mut Tokens)
+    fn append_tokens(&self, tokens: &mut TokenStream)
     where
         Self: Sized,
     {
@@ -49,6 +49,7 @@ use crate::{
     tokenizer::{traits::AppendTokens, Parse},
 };
 use something_dev_tools::item_name;
+use Macros::Tkn;
 item_name!(VariableDeclaration, "variable declaration");
 
 #[test]

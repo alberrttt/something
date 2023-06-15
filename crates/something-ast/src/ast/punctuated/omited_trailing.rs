@@ -11,7 +11,7 @@ where
     T: AppendTokens,
     P: AppendTokens,
 {
-    fn append_tokens(&self, tokens: &mut Tokens)
+    fn append_tokens(&self, tokens: &mut TokenStream)
     where
         Self: Sized,
     {
@@ -38,7 +38,7 @@ where
     T: Debug + Parse,
     P: Debug + Parse,
 {
-    fn parse(input: &mut Tokens) -> ParseResult<Self> {
+    fn parse(input: &mut TokenStream) -> ParseResult<Self> {
         Ok(Self(Punctuated::<T, P>::parse_without_trailing(input)?))
     }
 }

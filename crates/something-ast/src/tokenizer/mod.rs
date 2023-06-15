@@ -22,17 +22,17 @@ pub mod program_file;
 pub mod to_string;
 pub mod token;
 pub mod traits;
+use crate::create_token;
+use crate::span;
 use error::ParseError;
 use ident::*;
 use lit::*;
+pub use token::TokenStream;
 use token::*;
 pub use traits::{Parse, ParsingDisplay};
-
-use crate::create_token;
-use crate::span;
 pub mod prelude {
     pub use super::super::prelude::*;
-    pub use super::Tokens;
+    pub use super::TokenStream;
     pub use super::{
         super::error::{self, *},
         delimiter::{self, *},
@@ -45,183 +45,8 @@ pub mod prelude {
     #[macro_use]
     pub use super::token::{*, self};
 }
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Tokens(pub Vec<Token>, pub usize);
-
-impl Deref for Tokens {
-    type Target = Vec<Token>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-impl DerefMut for Tokens {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
-    }
-}
-impl Index<usize> for Tokens {
-    type Output = Token;
-
-    fn index(&self, index: usize) -> &Self::Output {
-        &self.0[index]
-    }
-}
-impl From<Vec<Token>> for Tokens {
-    fn from(tokens: Vec<Token>) -> Self {
-        Self(tokens, 0)
-    }
-}
-impl IntoIterator for Tokens {
-    type Item = Token;
-    type IntoIter = std::vec::IntoIter<Self::Item>;
-
-    fn into_iter(self) -> Self::IntoIter {
-        self.0.into_iter()
-    }
-}
-impl From<&str> for Tokens {
-    fn from(tokens: &str) -> Self {
-        let mut tokenizer = Tokenizer::new(tokens);
-        tokenizer.tokens().unwrap()
-    }
-}
-impl Display for Tokens {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "[")?;
-        for token in &self.0 {
-            write!(f, "{:?}, ", token)?;
-        }
-        write!(f, "]")?;
-        std::result::Result::Ok(())
-    }
-}
-
-impl Tokens {
-    pub fn try_advance(&mut self, target: Token) -> ParseResult<Token> {
-        match self.peek() {
-            Ok(token) => {
-                if *token == target {
-                    let token = token.clone();
-                    self.advance();
-                    return Ok(token);
-                } else {
-                    return Err(ParseError::ExpectedToken(target, token.clone()));
-                }
-            }
-            Recoverable | Err(_) => return Recoverable, // idk if recoverable is the right thing to do here
-                                                        // but, if the self.peek() errors, it usually means that we're at the end of the tokens
-        }
-        todo!()
-    }
-    pub fn new() -> Self {
-        Self(Vec::new(), 0)
-    }
-    pub fn parse<T>(&mut self) -> ParseResult<T>
-    where
-        T: Parse,
-        T: Clone + std::fmt::Debug + Clone,
-    {
-        T::parse(self)
-    }
-    pub fn previous(&self) -> Option<&Token> {
-        self.0.get(self.1 - 1)
-    }
-    pub fn previous1(&self) -> Option<&Token> {
-        self.0.get(self.1 - 2)
-    }
-    pub fn previous2(&self) -> Option<&Token> {
-        self.0.get(self.1 - 3)
-    }
-    pub fn previous3(&self) -> Option<&Token> {
-        self.0.get(self.1 - 4)
-    }
-    pub fn at_end(&self) -> bool {
-        self.1 >= self.0.len()
-    }
-    pub fn distance_from_end(&self) -> usize {
-        self.0.len() - self.1
-    }
-    pub fn is_empty(&self) -> bool {
-        self.0.is_empty()
-    }
-    pub fn len(&self) -> usize {
-        self.0.len()
-    }
-    pub fn get(&self, i: usize) -> Option<&Token> {
-        self.0.get(i)
-    }
-    pub fn get_mut(&mut self, i: usize) -> Option<&mut Token> {
-        self.0.get_mut(i)
-    }
-    pub fn first(&self) -> Option<&Token> {
-        self.0.first()
-    }
-    pub fn last(&self) -> Option<&Token> {
-        self.0.last()
-    }
-    pub fn iter_mut(&mut self) -> std::slice::IterMut<'_, Token> {
-        self.0.iter_mut()
-    }
-
-    pub fn iter(&self) -> std::slice::Iter<'_, Token> {
-        self.0.iter()
-    }
-    pub fn advance(&mut self) -> ParseResult<&Token> {
-        self.1 += 1;
-        match self.0.get(self.1 - 1) {
-            Some(some) => Ok(some),
-            None => Err(ParseError::EndOfTokens),
-        }
-    }
-    pub fn peek(&self) -> ParseResult<&Token> {
-        match self.0.get(self.1) {
-            Some(token) => Ok(token),
-            None => Err(ParseError::EndOfTokens),
-        }
-    }
-
-    pub fn peek_n(&self, n: usize) -> ParseResult<&Token> {
-        match self.0.get(self.1 + n) {
-            Some(token) => Ok(token),
-            None => Err(ParseError::EndOfTokens),
-        }
-    }
-
-    pub fn peek1(&self) -> ParseResult<&Token> {
-        self.peek_n(1)
-    }
-    pub fn peek2(&self) -> ParseResult<&Token> {
-        self.peek_n(2)
-    }
-    pub fn peek3(&self) -> ParseResult<&Token> {
-        self.peek_n(3)
-    }
-
-    pub fn step<R>(&mut self, F: impl FnOnce(&mut Self) -> ParseResult<R>) -> ParseResult<R> {
-        let starting = self.1;
-        let stepped = F(self);
-        match stepped {
-            Ok(ok) => Ok(ok),
-            Err(e) => {
-                self.1 = starting;
-                Err(e)
-            }
-            Recoverable => {
-                self.1 = starting;
-                Recoverable
-            }
-        }
-    }
-}
-
-impl Default for Tokens {
-    fn default() -> Self {
-        Self::new()
-    }
-}
 impl Tokenizer<'_> {
-    pub fn tokens(&mut self) -> ParseResult<Tokens> {
+    pub fn tokens(&mut self) -> ParseResult<TokenStream> {
         let mut tokens = Vec::new();
         loop {
             let token = self.next_token();
@@ -235,7 +60,7 @@ impl Tokenizer<'_> {
                 return Err(e);
             }
         }
-        Ok(Tokens(tokens, 0))
+        Ok(TokenStream(tokens, 0))
     }
 }
 impl<'a> Tokenizer<'a> {
@@ -281,7 +106,7 @@ impl<'a> Tokenizer<'a> {
                     _ => {}
                 }
                 let tmp: Token =
-                    something_dev_tools::tokens_ident!(If, Let, While, Return, For, Fn);
+                    something_dev_tools::tokens_ident!(If, Let, While, Return, For, Fn, Use);
                 Ok(tmp)
             }
             '0'..='9' => Ok(Token::Lit(self.number()?)),
@@ -415,3 +240,4 @@ impl<'a> Tokenizer<'a> {
         self.input.chars().nth(self.current - 1)
     }
 }
+pub(crate) use crate::tokenizer::token::Macros::{self, *};

@@ -48,14 +48,14 @@ pub fn parse_tokens(input: TokenStream) -> TokenStream {
                     use std::fmt::{Display, Formatter};
                     use super::#name;
                     impl Parse for #name {
-                        fn parse(input: &mut Tokens) -> ParseResult<Self> {
+                        fn parse(input: &mut TokenStream) -> ParseResult<Self> {
                             #(#variants)*
                             Recoverable
                         }
                     }
 
                     impl Parse for Box<#name> {
-                        fn parse(input: &mut Tokens) -> ParseResult<Self> {
+                        fn parse(input: &mut TokenStream) -> ParseResult<Self> {
                             Ok(Box::new(#name::parse(input)?))
                         }
                     }
@@ -89,12 +89,12 @@ pub fn parse_tokens(input: TokenStream) -> TokenStream {
                     use super::#name;
                     #parse_impl
                     impl AppendTokens for #name {
-                        fn append_tokens(&self, tokens: &mut Tokens) {
+                        fn append_tokens(&self, tokens: &mut TokenStream) {
                             #(#to_vec)*
                         }
                     }
                     impl Parse for Box<#name> {
-                        fn parse(input: &mut Tokens) -> ParseResult<Self> {
+                        fn parse(input: &mut TokenStream) -> ParseResult<Self> {
                             Ok(Box::new(#name::parse(input)?))
                         }
                     }
@@ -127,7 +127,7 @@ fn for_struct_w_named_fields(struct_data: &DataStruct, name: &Ident) -> proc_mac
     quote! {
 
             impl Parse for #name {
-                fn parse(input: &mut Tokens) -> ParseResult<Self> {
+                fn parse(input: &mut TokenStream) -> ParseResult<Self> {
                     let tmp = input.step(|input| Parse::parse(input));
                     match tmp {
                         Ok(tmp) => {
@@ -154,7 +154,7 @@ fn for_struct_w_unamed_fields(struct_data: &DataStruct, name: &Ident) -> proc_ma
     });
     quote! {
             impl Parse for #name {
-                fn parse(input: &mut Tokens) -> ParseResult<Self> {
+                fn parse(input: &mut TokenStream) -> ParseResult<Self> {
                     let tmp = input.step(|input| Parse::parse(input));
                     match tmp {
                         Ok(tmp) => {

@@ -1,11 +1,14 @@
 use std::path::Display;
 
-use crate::tokenizer::{ident::Ident, prelude::*};
+use crate::tokenizer::{
+    ident::Ident,
+    prelude::{Macros::Tkn, *},
+};
 use something_dev_tools::{ParseTokens, ParseTokensDisplay};
 
 #[derive(Debug, Clone, ParseTokensDisplay, ParseTokens)]
 pub struct ReturnType {
-    pub arrow: RightArrow,
+    pub arrow: Tkn![->],
     pub ty: Ident,
 }
 impl std::fmt::Display for ReturnType {

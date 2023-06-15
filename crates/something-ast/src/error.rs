@@ -18,7 +18,7 @@ mod n {
     use super::*;
     #[derive(Debug, Clone)]
     pub struct ParseError {
-        pub surrounding: Tokens,
+        pub surrounding: TokenStream,
         pub kind: ParseErrorKind,
     }
     #[derive(Debug, Clone)]
@@ -61,7 +61,15 @@ impl std::fmt::Display for ParseError {
             }
             ParseError::ExpectedToken(expected, got) => {
                 write!(f, "{}", "Error: ".bold().red())?;
-                write!(f, "Expected token {:?}, got {:?}", expected, got)
+                write!(
+                    f,
+                    "Expected token `{}`, got {}",
+                    expected.to_string().bold(),
+                    match got {
+                        Token::Ident(ident) => format!("identifier `{}`", ident.to_string().bold()),
+                        _ => format!("token `{}`", got).bold().to_string(),
+                    }
+                )
             }
             ParseError::ExpectedEnd(Token) => {
                 write!(f, "{}", "Error: ".bold().red())?;

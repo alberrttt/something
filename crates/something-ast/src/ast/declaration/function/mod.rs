@@ -7,13 +7,13 @@ use crate::ast::{attribute::Attribute, expression::block::Block, punctuated::Pun
 
 use self::return_type::ReturnType;
 use super::super::prelude::*;
-
+use crate::tokenizer::token::Macros::Tkn;
 #[derive(Debug, Clone, ParseTokensDisplay)]
 pub struct FunctionDeclaration {
     // pub modifiers: Option<Attribute>,
-    pub fn_token: Fn,
+    pub fn_token: Tkn![Fn],
     pub name: Ident,
-    pub params: Parentheses<Punctuated<(Ident, Ident), Comma>>,
+    pub params: Parentheses<Punctuated<(Ident, Ident), Tkn![,]>>,
     pub body: Block,
     pub return_type: ReturnType,
 }
@@ -24,7 +24,7 @@ mod __functiondeclaration {
 
     use super::FunctionDeclaration;
     impl Parse for FunctionDeclaration {
-        fn parse(input: &mut Tokens) -> ParseResult<Self> {
+        fn parse(input: &mut TokenStream) -> ParseResult<Self> {
             let tmp = input.step(|input| Parse::parse(input));
             match tmp {
                 Ok(tmp) => Ok(Self {
@@ -39,7 +39,7 @@ mod __functiondeclaration {
         }
     }
     impl AppendTokens for FunctionDeclaration {
-        fn append_tokens(&self, tokens: &mut Tokens) {
+        fn append_tokens(&self, tokens: &mut TokenStream) {
             self.fn_token.clone().append_tokens(tokens);
             self.name.clone().append_tokens(tokens);
             self.params.clone().append_tokens(tokens);
@@ -48,7 +48,7 @@ mod __functiondeclaration {
         }
     }
     impl Parse for Box<FunctionDeclaration> {
-        fn parse(input: &mut Tokens) -> ParseResult<Self> {
+        fn parse(input: &mut TokenStream) -> ParseResult<Self> {
             Ok(Box::new(FunctionDeclaration::parse(input)?))
         }
     }

@@ -11,7 +11,7 @@ pub struct Literal {
     pub inner: lit_impl::Inner,
 }
 impl AppendTokens for Literal {
-    fn append_tokens(&self, tokens: &mut Tokens)
+    fn append_tokens(&self, tokens: &mut TokenStream)
     where
         Self: Sized,
     {
@@ -46,7 +46,7 @@ impl ParsingDisplay for Literal {
     }
 }
 impl Parse for Literal {
-    fn parse(input: &mut Tokens) -> ParseResult<Self> {
+    fn parse(input: &mut TokenStream) -> ParseResult<Self> {
         let token = input.advance()?;
         if let Token::Lit(token) = token {
             Ok(token.clone())

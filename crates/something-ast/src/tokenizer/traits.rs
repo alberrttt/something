@@ -1,11 +1,11 @@
 use std::{error::Error, fmt::Debug};
 
-use super::{error::ParseError, ident::Ident, Tokens};
+use super::{error::ParseError, ident::Ident, TokenStream};
 use crate::prelude::*;
 use something_dev_tools::tuple_parse_impl;
 
 pub trait AppendTokens {
-    fn append_tokens(&self, tokens: &mut Tokens)
+    fn append_tokens(&self, tokens: &mut TokenStream)
     where
         Self: Sized;
 }
@@ -13,7 +13,7 @@ impl<T> AppendTokens for Box<T>
 where
     T: AppendTokens,
 {
-    fn append_tokens(&self, tokens: &mut Tokens)
+    fn append_tokens(&self, tokens: &mut TokenStream)
     where
         Self: Sized,
     {
@@ -21,7 +21,7 @@ where
     }
 }
 pub trait Parse: ParsingDisplay + std::fmt::Debug {
-    fn parse(input: &mut Tokens) -> ParseResult<Self>
+    fn parse(input: &mut TokenStream) -> ParseResult<Self>
     where
         Self: Sized;
 }
@@ -51,7 +51,7 @@ where
     }
 }
 impl Parse for () {
-    fn parse(_input: &mut Tokens) -> ParseResult<Self> {
+    fn parse(_input: &mut TokenStream) -> ParseResult<Self> {
         Ok(())
     }
 }
@@ -64,7 +64,7 @@ tuple_parse_impl!(A, B);
 
 #[test]
 fn test_tuple() {
-    let mut tokens = Tokens::from("a b c d e f");
+    let mut tokens = TokenStream::from("a b c d e f");
     type idents = (Ident, Ident, Ident, Ident, Ident, Ident);
     let idents: idents = Parse::parse(&mut tokens).unwrap();
     assert_eq!(idents.0.to_string(), "a");
