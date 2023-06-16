@@ -1,7 +1,7 @@
 use std::fmt::Debug;
 
 use super::Punctuated;
-use crate::ast::prelude::*;
+
 use crate::tokenizer::prelude::*;
 
 #[derive(Debug, Clone)]
@@ -42,6 +42,9 @@ where
         Ok(Self(Punctuated::<T, P>::parse_without_trailing(input)?))
     }
 }
+use crate::ast;
+use crate::ast::prelude::*;
+use crate::tokenizer::prelude::*;
 #[test]
 fn test() {
     let (ast, _): (OmitTrailing<Ident, Comma>, _) = ast!("a, b, c");

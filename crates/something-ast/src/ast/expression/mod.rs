@@ -1,7 +1,5 @@
-use std::sync::mpsc::Receiver;
-
 use crate::tokenizer::prelude::*;
-use crate::{peek_matches, prelude::*, tkn_recover};
+use crate::{peek_matches, prelude::*};
 use something_dev_tools::{item_name, ParseTokensDisplay};
 use ParseResult;
 pub mod block;
@@ -63,7 +61,10 @@ impl Parse for Box<Expression> {
 }
 
 impl TokenStream {
-    pub(in crate::ast::expression) fn expr_unit(&mut self) -> ParseResult<Expression> {
+    pub(in crate::ast::expression) fn expr_unit(
+        &mut self,
+        can_recover: bool,
+    ) -> ParseResult<Expression> {
         match self.advance()?.clone() {
             Token::Lit(literal) => Ok(Expression::Lit(literal)),
             Token::Ident(ident) => {
@@ -75,38 +76,47 @@ impl TokenStream {
                 Ok(Expression::Ident(ident))
             }
 
-            _ => Err(ParseError::Generic(
-                concat!(
-                    "
-    Expected literal, got something else
-
-    Error originated from: 
-
-",
-                    file!(),
-                    ":",
-                    line!(),
-                    "\nFix this later pls"
-                )
-                .into(),
-            )),
+            _ => {
+                if can_recover {
+                    Recoverable
+                } else {
+                    Err(ParseError::Generic(
+                        concat!(
+                            "
+        Expected literal, got something else
+    
+        Error originated from: 
+    
+    ",
+                            file!(),
+                            ":",
+                            line!(),
+                            "\nFix this later pls"
+                        )
+                        .into(),
+                    ))
+                }
+            }
         }
     }
-    pub(in crate::ast::expression) fn term(&mut self) -> ParseResult<Expression> {
-        let mut result = self.expr_unit()?;
+    pub(in crate::ast::expression) fn term(
+        &mut self,
+        can_recover: bool,
+    ) -> ParseResult<Expression> {
+        let mut result = self.expr_unit(can_recover)?;
         while peek_matches!(self, Token::Star(_) | Token::Slash(_)) {
             let op = self.advance()?.clone();
-            let right = self.expr_unit()?;
+            let right = self.expr_unit(false)?;
             result = Expression::Binary(Binary::from_token(result, op, right));
         }
         Ok(result)
     }
 }
 fn parse_expr(input: &mut TokenStream) -> ParseResult<Expression> {
-    let mut result = input.term()?;
+    let mut result = input.term(true)?;
     while peek_matches!(input, Token::Plus(_) | Token::Minus(_)) {
         let op = input.advance()?.clone();
-        let right = input.term()?;
+        let right = input.term(false)?;
 
         result = Expression::Binary(Binary::from_token(result, op, right));
     }
@@ -177,7 +187,7 @@ impl From<Binary> for Expression {
 
 impl Parse for Binary {
     fn parse(input: &mut TokenStream) -> ParseResult<Self> {
-        let expr = Expression::parse(input)?;
+        let _expr = Expression::parse(input)?;
         todo!();
     }
 }

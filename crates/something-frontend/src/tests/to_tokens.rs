@@ -1,6 +1,6 @@
-use something_ast::ast::prelude::*;
-
-use something_ast::tokenizer::prelude::*;
+use crate::ast;
+use crate::ast::prelude::*;
+use crate::tokenizer::prelude::*;  
 #[test]
 fn test() {
     let (var, _): (VariableDeclaration, _) = something_ast::ast!("let var = 1;");

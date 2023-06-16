@@ -1,10 +1,9 @@
 use std::{collections::HashMap, rc::Rc};
 
-use something_frontend::{block::Block, Ident};
+use something_frontend::{Ident};
 
 use crate::{
-    traits::ResolveType,
-    types::{primitives::Primitive, sig::TypeSig},
+    types::{sig::TypeSig},
 };
 
 pub use super::Context;

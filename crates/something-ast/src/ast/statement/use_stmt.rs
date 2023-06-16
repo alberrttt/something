@@ -1,6 +1,6 @@
 use crate::ast::prelude::*;
-use crate::tokenizer::token::{self, *};
-use something_dev_tools::*;
+
+
 use Macros::Tkn;
 #[derive(Debug, Clone, ParseTokens, ParseTokensDisplay)]
 pub struct Use {
@@ -9,5 +9,5 @@ pub struct Use {
 }
 #[test]
 fn test() {
-    let (_, _): (Use, _) = ast!("d standard:io:print");
+    let (_, _): (Use, _) = ast!("use standard:io:print");
 }

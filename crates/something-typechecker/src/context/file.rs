@@ -1,4 +1,4 @@
-use std::{collections::HashMap, fs::File, rc::Rc};
+use std::{collections::HashMap, rc::Rc};
 
 use something_ast::ast::{Ast, TopLevelNode};
 use something_frontend::Ident;
@@ -23,7 +23,7 @@ impl FileContext {
     pub fn set(&mut self, key: Ident, value: TypeSig) -> Option<TypeSig> {
         self.variables.insert(key, value)
     }
-    pub fn typecheck(mut self, ast: Ast) -> Result<Self, TypeError> {
+    pub fn typecheck(self, ast: Ast) -> Result<Self, TypeError> {
         let mut ctx = self;
         for node in ast.nodes.iter() {
             match node {
@@ -49,7 +49,7 @@ impl TryFrom<Ast> for FileContext {
     type Error = TypeError;
 
     fn try_from(ast: Ast) -> Result<Self, Self::Error> {
-        let mut ctx = Self::default();
+        let ctx = Self::default();
         ctx.typecheck(ast)
     }
 }

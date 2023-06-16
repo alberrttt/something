@@ -1,13 +1,9 @@
-use std::{backtrace::Backtrace, slice::Iter};
+use std::slice::Iter;
 
-use crate::tokenizer::{list::List, prelude::ParseError, traits::AppendTokens, Parse, TokenStream};
-use something_dev_tools::{ParseTokens, ParseTokensDisplay};
+use crate::tokenizer::{list::List, traits::AppendTokens, Parse, TokenStream};
+use something_dev_tools::ParseTokensDisplay;
 
-use crate::ast::{
-    prelude::{Braces, Statement},
-    traits::Children,
-    Node,
-};
+use crate::ast::{prelude::Braces, traits::Children, Node};
 
 #[derive(Debug, Clone, ParseTokensDisplay)]
 pub struct Block(pub Braces<List<Node>>);

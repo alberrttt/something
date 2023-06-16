@@ -1,13 +1,9 @@
-use std::{error::Error, fmt::Debug};
-
-use super::{error::ParseError, ident::Ident, TokenStream};
+use super::TokenStream;
 use crate::prelude::*;
 use something_dev_tools::tuple_parse_impl;
 
 pub trait AppendTokens {
-    fn append_tokens(&self, tokens: &mut TokenStream)
-    where
-        Self: Sized;
+    fn append_tokens(&self, tokens: &mut TokenStream);
 }
 impl<T> AppendTokens for Box<T>
 where
@@ -61,7 +57,9 @@ tuple_parse_impl!(A, B, C, D, E);
 tuple_parse_impl!(A, B, C, D);
 tuple_parse_impl!(A, B, C);
 tuple_parse_impl!(A, B);
-
+use crate::ast;
+use crate::ast::prelude::*;
+use crate::tokenizer::prelude::*;
 #[test]
 fn test_tuple() {
     let mut tokens = TokenStream::from("a b c d e f");

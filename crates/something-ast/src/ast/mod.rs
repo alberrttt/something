@@ -61,7 +61,7 @@ impl Parse for Box<Node> {
     }
 }
 impl AppendTokens for Node {
-    fn append_tokens(&self, tokens: &mut tokenizer::TokenStream)
+    fn append_tokens(&self, _tokens: &mut tokenizer::TokenStream)
     where
         Self: Sized,
     {

@@ -11,7 +11,7 @@ use crate::{
     },
 };
 
-use super::{BlockContext, Context};
+use super::{Context};
 
 #[derive(Debug, Clone, Default)]
 pub struct FnContext {

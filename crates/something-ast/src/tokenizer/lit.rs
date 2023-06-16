@@ -1,7 +1,6 @@
 use super::prelude::*;
 use crate::prelude::*;
 use std::{
-    error::Error,
     fmt::{Display, Formatter},
 };
 #[derive(Clone, PartialEq, PartialOrd, Eq, Default)]

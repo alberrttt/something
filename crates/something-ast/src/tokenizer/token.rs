@@ -1,10 +1,11 @@
 use super::{prelude::*, Tokenizer};
 use crate::prelude::*;
 use casey::lower;
-use std::convert::Infallible;
+
+use std::backtrace::Backtrace;
 use std::fmt::Display;
+use std::fmt::Formatter;
 use std::ops::{Deref, DerefMut, Index};
-use std::{error::Error, fmt::Formatter};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TokenStream(pub Vec<Token>, pub usize);
@@ -132,20 +133,20 @@ impl TokenStream {
         self.1 += 1;
         match self.0.get(self.1 - 1) {
             Some(some) => Ok(some),
-            None => Err(ParseError::EndOfTokens),
+            None => Err(ParseError::EndOfTokens(Backtrace::capture())),
         }
     }
     pub fn peek(&self) -> ParseResult<&Token> {
         match self.0.get(self.1) {
             Some(token) => Ok(token),
-            None => Err(ParseError::EndOfTokens),
+            None => Err(ParseError::EndOfTokens(Backtrace::capture())),
         }
     }
 
     pub fn peek_n(&self, n: usize) -> ParseResult<&Token> {
         match self.0.get(self.1 + n) {
             Some(token) => Ok(token),
-            None => Err(ParseError::EndOfTokens),
+            None => Err(ParseError::EndOfTokens(Backtrace::capture())),
         }
     }
 
@@ -247,7 +248,17 @@ macro_rules! DefineTokens {
             ClosingParen(SpanShell),
             ClosingBrace(SpanShell),
             ClosingBracket(SpanShell),
+            /// If you want to report a parsing error, i.e converting a string to the number
+            /// from the source code, and you encounter an error,
+            /// you dont have a token to report the error on, so you use this
+            Error(SpanShell),
+        }
+        impl AppendTokens for Token {
+            fn append_tokens(&self, token_stream: &mut TokenStream)
 
+            {
+               token_stream.push(self.clone());
+            }
         }
         pub mod Macros {
             /// Macro for constructing tokens from their actualy syntatic representation
@@ -282,6 +293,7 @@ macro_rules! DefineTokens {
                     Token::ClosingParen {..} => ")".to_string(),
                     Token::ClosingBrace {..} => "}".to_string(),
                     Token::ClosingBracket {..} => "]".to_string(),
+                    Token::Error(_) => "Error".to_string(),
                 }
 
 
@@ -308,6 +320,7 @@ macro_rules! DefineTokens {
                     Token::ClosingParen {..} => write!(f, ")"),
                     Token::ClosingBrace {..} => write!(f, "}}"),
                     Token::ClosingBracket {..} => write!(f, "]"),
+                    Token::Error(_) => write!(f, "Error"),
                 }
             }
         }
@@ -325,6 +338,7 @@ macro_rules! DefineTokens {
                     Token::ClosingParen {..} => write!(f, ")"),
                     Token::ClosingBrace {..} => write!(f, "}}"),
                     Token::ClosingBracket {..} => write!(f, "]"),
+                    Token::Error(_) => write!(f, "Error"),
                 }
             }
         }

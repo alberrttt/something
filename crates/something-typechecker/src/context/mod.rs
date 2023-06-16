@@ -1,4 +1,4 @@
-use std::{collections::HashMap, rc::Rc};
+
 
 use something_frontend::{block::Block, Ident};
 
@@ -42,13 +42,13 @@ pub mod function;
 
 impl BlockContext {
     fn new(block: Block) -> Self {
-        let mut ctx = Self::default();
+        let ctx = Self::default();
         for node in block.iter() {
             match node {
-                something_ast::ast::Node::Statement(stmt) => todo!(),
+                something_ast::ast::Node::Statement(_stmt) => todo!(),
                 something_ast::ast::Node::Declaration(decl) => match decl {
                     something_frontend::Declaration::Function(_) => todo!(),
-                    something_frontend::Declaration::Var(var_decl) => todo!(),
+                    something_frontend::Declaration::Var(_var_decl) => todo!(),
                 },
             }
         }

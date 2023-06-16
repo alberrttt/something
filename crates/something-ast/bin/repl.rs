@@ -2,7 +2,7 @@ use something_ast::{
     ast::prelude::*,
     tokenizer::{Parse, ParsingDisplay},
 };
-use something_dev_tools::*;
+
 use std::{
     fmt::{Debug, Display},
     io::{self, Write},
@@ -25,8 +25,8 @@ impl Parse for Repl {
             Recoverable => {}
             Err(err) => return Err(err),
         };
-
-        match input.step(|input| match input.parse() {
+        println!("parsing fn now");
+        match input.step(|input| match FunctionDeclaration::parse(input) {
             Ok(ok) => Ok(Repl::Fn(ok)),
             Recoverable => Recoverable,
             Err(err) => Err(err),
@@ -35,6 +35,7 @@ impl Parse for Repl {
             Recoverable => {}
             Err(err) => return Err(err),
         };
+        println!("parsing node now");
         match input.step(|input| match input.parse() {
             Ok(ok) => Ok(Repl::Node(ok)),
             Recoverable => Recoverable,
@@ -75,7 +76,7 @@ impl Debug for Repl {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Repl::Expr(expr) => expr.fmt(f),
-            Repl::Fn(_func) => std::fmt::Debug::fmt(&self, f),
+            Repl::Fn(_func) => std::fmt::Debug::fmt(&_func, f),
             Repl::Node(node) => node.fmt(f),
         }
     }

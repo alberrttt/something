@@ -1,6 +1,6 @@
 use Macros::Tkn;
 
-use crate::tokenizer::{list::List, traits::AppendTokens};
+use crate::tokenizer::{list::List};
 
 use super::prelude::*;
 

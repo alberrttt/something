@@ -10,7 +10,7 @@ pub fn parse_tokens(input: TokenStream) -> TokenStream {
         Data::Enum(enum_data) => {
             let name = derive.ident;
 
-            let variants = enum_data.variants.iter().enumerate().map(|(i, f)| {
+            let variants = enum_data.variants.iter().enumerate().map(|(_i, f)| {
                 let variant_ident = &f.ident;
                 let fields = &f.fields;
                 match fields {

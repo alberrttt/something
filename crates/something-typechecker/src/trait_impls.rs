@@ -53,7 +53,7 @@ mod expression {
     use something_frontend::{Binary, Expression, Ident, Literal, OperatorKind};
 
     use crate::{
-        context::{block::BlockContext, Context},
+        context::{Context},
         error::{self, TypeError},
         traits::ResolveType,
         types::{self, primitives::Primitive, sig::TypeSig},
@@ -118,7 +118,7 @@ mod expression {
     impl ResolveType for Literal {
         type Context = ();
 
-        fn resolve(&self, ctx: &mut Self::Context) -> Result<TypeSig, TypeError> {
+        fn resolve(&self, _ctx: &mut Self::Context) -> Result<TypeSig, TypeError> {
             use something_ast::tokenizer::lit::lit_impl;
             Ok(match self.inner {
                 lit_impl::Inner::String(_) => Primitive::String.into(),

@@ -1,6 +1,6 @@
 use super::prelude::*;
 use std::fmt::Debug;
-use std::{error::Error, fmt::Display};
+use std::{fmt::Display};
 
 #[derive(Clone, Eq, Default)]
 pub struct Ident {

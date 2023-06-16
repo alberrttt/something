@@ -1,14 +1,14 @@
-use std::fmt::Display;
+use std::fmt::{Debug, Display};
 
-use crate::tokenizer::{list::List, traits::AppendTokens, Parse, ParsingDisplay};
+use crate::tokenizer::ParsingDisplay;
 use something_dev_tools::ParseTokensDisplay;
 
-use crate::ast::{attribute::Attribute, expression::block::Block, punctuated::Punctuated};
+use crate::ast::{expression::block::Block, punctuated::Punctuated};
 
 use self::return_type::ReturnType;
 use super::super::prelude::*;
 use crate::tokenizer::token::Macros::Tkn;
-#[derive(Debug, Clone, ParseTokensDisplay)]
+#[derive(Clone, ParseTokensDisplay)]
 pub struct FunctionDeclaration {
     // pub modifiers: Option<Attribute>,
     pub fn_token: Tkn![Fn],
@@ -17,10 +17,19 @@ pub struct FunctionDeclaration {
     pub body: Block,
     pub return_type: ReturnType,
 }
+impl Debug for FunctionDeclaration {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("FunctionDeclaration")
+            .field("fn_token", &self.fn_token)
+            .field("name", &self.name)
+            .field("params", &self.params)
+            .field("body", &self.body)
+            .field("return_type", &self.return_type)
+            .finish()
+    }
+}
 mod __functiondeclaration {
     use crate::tokenizer::prelude::*;
-    use colored::Colorize;
-    use std::fmt::{Display, Formatter};
 
     use super::FunctionDeclaration;
     impl Parse for FunctionDeclaration {
@@ -67,7 +76,7 @@ impl Display for FunctionDeclaration {
             self.params
                 .iter()
                 .enumerate()
-                .map(|(i, (name, _))| { format!("{}: {},", name.0, name.1) })
+                .map(|(_i, (name, _))| { format!("{}: {},", name.0, name.1) })
                 .collect::<String>()
         )?;
         write!(f, "{}", self.return_type)?;
@@ -81,6 +90,5 @@ impl Display for FunctionDeclaration {
         )
     }
 }
-use something_dev_tools::item_name;
 
 pub mod return_type;

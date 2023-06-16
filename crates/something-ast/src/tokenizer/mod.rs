@@ -1,9 +1,5 @@
 use crate::prelude::*;
-use std::{
-    error::Error,
-    fmt::Display,
-    ops::{Deref, DerefMut, Index},
-};
+
 #[derive(Debug)]
 pub struct Tokenizer<'a> {
     input: &'a str,
@@ -225,7 +221,7 @@ impl<'a> Tokenizer<'a> {
         let span = span![self.starting, self.current, self.line, self.line_current];
         let lexeme = match self.input[self.starting..self.current].parse::<f64>() {
             std::result::Result::Ok(ok) => ok,
-            std::result::Result::Err(err) => return Err(ParseError::Boxed(Box::new(err))),
+            std::result::Result::Err(err) => return Err(ParseError::ParseFloatError(err)),
         };
 
         Ok(Literal::new_num(span, lexeme))
@@ -240,4 +236,4 @@ impl<'a> Tokenizer<'a> {
         self.input.chars().nth(self.current - 1)
     }
 }
-pub(crate) use crate::tokenizer::token::Macros::{self, *};
+pub(crate) use crate::tokenizer::token::Macros::*;

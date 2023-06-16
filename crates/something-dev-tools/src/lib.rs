@@ -28,7 +28,7 @@ pub fn tuple_parse_impl(input: TokenStream) -> TokenStream {
 }
 mod item_name;
 #[proc_macro]
-pub fn item_name(input: TokenStream) -> TokenStream {
+pub fn item_name(_input: TokenStream) -> TokenStream {
     use quote::quote;
 
     quote! {}.into()
