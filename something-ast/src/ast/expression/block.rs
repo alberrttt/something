@@ -3,10 +3,10 @@ use std::slice::Iter;
 use crate::tokenizer::{list::List, traits::AppendTokens, Parse, TokenStream};
 use something_dev_tools::ParseTokensDisplay;
 
-use crate::ast::{prelude::Braces, traits::Children, Node};
+use crate::ast::{prelude::Brace, traits::Children, Node};
 
 #[derive(Debug, Clone, ParseTokensDisplay)]
-pub struct Block(pub Braces<List<Node>>);
+pub struct Block(pub Brace<List<Node>>);
 impl AppendTokens for Block {
     fn append_tokens(&self, tokens: &mut TokenStream)
     where
@@ -17,7 +17,7 @@ impl AppendTokens for Block {
 }
 impl Block {
     pub fn iter(&self) -> Iter<Node> {
-        self.0 .1.iter()
+        self.0.inner.iter()
     }
 }
 use crate::prelude::*;
@@ -33,7 +33,7 @@ impl Parse for Block {
 }
 impl Children<Node> for Block {
     fn children(&self) -> std::slice::Iter<Node> {
-        self.0 .1.iter()
+        self.0.iter()
     }
 }
 use something_dev_tools::item_name;

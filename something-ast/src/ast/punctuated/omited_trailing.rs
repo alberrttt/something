@@ -1,5 +1,7 @@
 use std::fmt::Debug;
 
+use Macros::Tkn;
+
 use super::Punctuated;
 
 use crate::tokenizer::prelude::*;
@@ -47,8 +49,16 @@ use crate::ast::prelude::*;
 use crate::tokenizer::prelude::*;
 #[test]
 fn test() {
-    let (ast, _): (OmitTrailing<Ident, Comma>, _) = ast!("a, b, c");
-    dbg!(ast);
+    let mut tokens = crate::tokenizer::TokenStream::from("a,b,c,d,");
+
+    dbg!(match tokens.parse::<Punctuated<Ident, Tkn![,]>>() {
+        Ok(value) => (value, tokens),
+        Err(err) => {
+            println!("{}", err);
+            panic!();
+        }
+        Recoverable => todo!(),
+    });
 }
 // create a test that should fail and is properly intergrated into rust's unit testing
 #[test]

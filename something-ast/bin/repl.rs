@@ -99,7 +99,7 @@ pub fn repl() {
             break; // Exit the loop if the user enters "quit"
         }
         let mut tokens: TokenStream = input.into();
-
+        dbg!(&tokens);
         let ast = Repl::parse(&mut tokens);
         if let Ok(ast) = ast {
             println!("{:?}", ast);

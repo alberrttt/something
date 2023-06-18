@@ -12,7 +12,7 @@ pub enum Expression {
     Binary(Binary),
     Call(Call),
     Ident(Ident),
-    Grouping(Parentheses<Box<Expression>>),
+    Grouping(Paren<Box<Expression>>),
     If(if_expr::If),
     Block(block::Block),
 }
@@ -46,7 +46,7 @@ impl std::fmt::Debug for Expression {
     }
 }
 item_name!(Expression, "expression");
-use crate::ast::delimiter::Parentheses;
+use crate::ast::delimiter::Paren;
 
 pub use self::call::*;
 impl Parse for Expression {

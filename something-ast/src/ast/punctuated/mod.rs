@@ -1,8 +1,10 @@
 mod omited_trailing;
 use std::ops::Deref;
 
-use crate::tokenizer::prelude::*;
+use crate::{ast, tokenizer::prelude::*};
+use clap::error::Error;
 pub use omited_trailing::*;
+use Macros::Tkn;
 
 // prolly need better error handling soon
 #[derive(Debug, Clone)]
@@ -100,23 +102,26 @@ where
     pub fn parse_terminated(input: &mut TokenStream) -> ParseResult<Self> {
         let mut vec = Vec::new();
         loop {
-            if input.at_end() || input.is_empty() {
+            let item = match input.step(|input| T::parse(input)) {
+                Ok(ok) => ok,
+                Err(err) => return Err(err),
+                Recoverable => break,
+                // this is a hack, but it works, it might cause problems later
+            };
+
+            let punct = if if input.peek().is_ok() {
+                // this check might be jjanky but it works ( for now )
+                input.peek().unwrap().is_closing_delimiter()
+            } else {
+                false
+            } {
                 break;
-            }
-            let item = T::parse(input)?;
-            let punct = if input.is_empty() {
-                None
             } else {
                 let parse = input.step(|f| P::parse(f));
                 match parse {
                     Ok(punct) => Some(punct),
                     Err(err) => {
-                        if input.distance_from_end() == 0 {
-                            vec.push((item, None));
-                            break;
-                        } else {
-                            return Err(err);
-                        }
+                        return Err(err);
                     }
                     Recoverable => todo!(),
                 }
@@ -125,4 +130,9 @@ where
         }
         Ok(Self(vec))
     }
+}
+
+#[test]
+fn test() {
+    let (_, _): (Punctuated<Ident, Tkn!(,)>, _) = ast!("a,b,c);");
 }

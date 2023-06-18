@@ -1,9 +1,9 @@
 [workspace]
 members = [
-    "crates/something-frontend",
-    "crates/something-dev-tools",
-    "crates/something-ast",
-    "crates/something-typechecker",
-    "crates/something-slib",
-    "crates/something-common",
+    "something-frontend",
+    "something-dev-tools",
+    "something-ast",
+    "something-typechecker",
+    "something-slib",
+    "something-common",
 ]

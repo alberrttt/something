@@ -9,7 +9,6 @@ pub struct Tokenizer<'a> {
     // this is relative to the start of the line
     line_current: usize,
 }
-pub mod delimiter;
 use super::error;
 pub mod ident;
 pub mod list;
@@ -31,7 +30,6 @@ pub mod prelude {
     pub use super::TokenStream;
     pub use super::{
         super::error::{self, *},
-        delimiter::{self, *},
         ident::{self, *},
         list::{self, *},
         lit::{self, *},
@@ -125,26 +123,12 @@ impl<'a> Tokenizer<'a> {
                 create_token!(self, Less)
             }),
             ';' => Ok(create_token!(self, Semicolon)),
-            '(' => Ok(Token::Parentheses(self.paren_delimiter())),
-            '[' => Ok(Token::Brackets(self.bracket_delimiter())),
-            '{' => Ok(Token::Braces(self.brace_delimiter())),
-            ')' => Ok(Token::ClosingParen(SpanShell {
-                span: span![self.starting, self.current, self.line, self.line_current],
-            })),
-            ']' => Ok(Token::ClosingBracket(SpanShell {
-                span: span![self.starting, self.current, self.line, self.line_current],
-            })),
-            '}' => Ok(Token::ClosingBrace(SpanShell {
-                span: span![self.starting, self.current, self.line, self.line_current],
-            })),
-            '$' => Ok(create_token!(self, Dollar)),
-
-            // '(' => Ok(create_token!(self, LeftParen)),
-            // ')' => Ok(create_token!(self, RightParen)),
-            // '{' => Ok(create_token!(self, LeftBrace)),
-            // '}' => Ok(create_token!(self, RightBrace)),
-            // '[' => Ok(create_token!(self, LeftBracket)),
-            // ']' => Ok(create_token!(self, RightBracket)),
+            '(' => Ok(create_token!(self, LeftParen no struct)),
+            ')' => Ok(create_token!(self, RightParen no struct)),
+            '{' => Ok(create_token!(self, LeftBrace no struct)),
+            '}' => Ok(create_token!(self, RightBrace no struct)),
+            '[' => Ok(create_token!(self, LeftBracket no struct)),
+            ']' => Ok(create_token!(self, RightBracket no struct)),
             ',' => Ok(create_token!(self, Comma)),
             '#' => Ok(create_token!(self, Hash)),
             ':' => Ok(create_token!(self, Colon)),

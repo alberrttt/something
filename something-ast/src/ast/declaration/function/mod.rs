@@ -13,7 +13,7 @@ pub struct FunctionDeclaration {
     // pub modifiers: Option<Attribute>,
     pub fn_token: Tkn![Fn],
     pub name: Ident,
-    pub params: Parentheses<Punctuated<(Ident, Ident), Tkn![,]>>,
+    pub params: Paren<Punctuated<(Ident, Ident), Tkn![,]>>,
     pub body: Block,
     pub return_type: ReturnType,
 }

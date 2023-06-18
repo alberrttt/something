@@ -225,7 +225,6 @@ macro_rules! define_token {
         }
     };
 }
-use super::delimiter::*;
 use super::ident::*;
 use something_dev_tools::Span;
 #[derive(Debug, Clone, PartialEq, Eq, Span)]
@@ -242,12 +241,14 @@ macro_rules! DefineTokens {
             $($keyword($keyword)),+,
             $($token($token)),+,
             $($misc($misc)),+,
-            Parentheses(Delimiter<'(',')'>),
-            Braces(Delimiter<'{','}'>),
-            Brackets(Delimiter<'[',']'>),
-            ClosingParen(SpanShell),
-            ClosingBrace(SpanShell),
-            ClosingBracket(SpanShell),
+
+            LeftParen(LeftParen),
+            LeftBrace(LeftBrace),
+            LeftBracket(LeftBracket),
+            RightParen(RightParen),
+            RightBrace(RightBrace),
+            RightBracket(RightBracket),
+
             /// If you want to report a parsing error, i.e converting a string to the number
             /// from the source code, and you encounter an error,
             /// you dont have a token to report the error on, so you use this
@@ -287,12 +288,12 @@ macro_rules! DefineTokens {
                     $(Token::$keyword(k) => k.display()),+,
                     $(Token::$token(t) => t.display()),+,
                     $(Token::$misc(m) => ParsingDisplay::display(m)),+,
-                    Token::Parentheses(_) => "()".to_string(),
-                    Token::Braces(_) => "{}".to_string(),
-                    Token::Brackets(_) => "[]".to_string(),
-                    Token::ClosingParen {..} => ")".to_string(),
-                    Token::ClosingBrace {..} => "}".to_string(),
-                    Token::ClosingBracket {..} => "]".to_string(),
+                    Token::LeftParen {..} => "(".to_string(),
+                    Token::LeftBrace {..} => "{".to_string(),
+                    Token::LeftBracket {..} => "[".to_string(),
+                    Token::RightParen {..} => ")".to_string(),
+                    Token::RightBrace {..} => "}".to_string(),
+                    Token::RightBracket {..} => "]".to_string(),
                     Token::Error(_) => "Error".to_string(),
                 }
 
@@ -314,12 +315,13 @@ macro_rules! DefineTokens {
                     $(Token::$keyword(k) => write!(f, "{}", k),)+
                     $(Token::$token(t) => write!(f, "{}", t),)+
                     $(Token::$misc(m) => write!(f, "{}", m),)+
-                    Token::Parentheses(_) => write!(f, "()"),
-                    Token::Braces(_) => write!(f, "{{}}"),
-                    Token::Brackets(_) => write!(f, "[]"),
-                    Token::ClosingParen {..} => write!(f, ")"),
-                    Token::ClosingBrace {..} => write!(f, "}}"),
-                    Token::ClosingBracket {..} => write!(f, "]"),
+                    Token::LeftParen {..} => write!(f, "("),
+                    Token::LeftBrace {..} => write!(f, "{{"),
+                    Token::LeftBracket {..} => write!(f, "["),
+
+                    Token::RightParen {..} => write!(f, ")"),
+                    Token::RightBrace {..} => write!(f, "}}"),
+                    Token::RightBracket {..} => write!(f, "]"),
                     Token::Error(_) => write!(f, "Error"),
                 }
             }
@@ -332,12 +334,12 @@ macro_rules! DefineTokens {
                     $(Token::$keyword(k) => write!(f, "{:?}", k),)+
                     $(Token::$token(t) => write!(f, "{:?}", t),)+
                     $(Token::$misc(m) => write!(f, "{:?}", m),)+
-                    Token::Parentheses(_) => write!(f, "()"),
-                    Token::Braces(_) => write!(f, "{{}}"),
-                    Token::Brackets(_) => write!(f, "[]"),
-                    Token::ClosingParen {..} => write!(f, ")"),
-                    Token::ClosingBrace {..} => write!(f, "}}"),
-                    Token::ClosingBracket {..} => write!(f, "]"),
+                    Token::LeftParen {..} => write!(f, "("),
+                    Token::LeftBrace {..} => write!(f, "{{"),
+                    Token::LeftBracket {..} => write!(f, "["),
+                    Token::RightParen {..} => write!(f, ")"),
+                    Token::RightBrace {..} => write!(f, "}}"),
+                    Token::RightBracket {..} => write!(f, "]"),
                     Token::Error(_) => write!(f, "Error"),
                 }
             }
@@ -359,6 +361,42 @@ macro_rules! DefineTokens {
                 }
             }
         )+
+        define_token!(LeftParen);
+        impl std::fmt::Display for LeftParen {
+            fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+                write!(f, "(")
+            }
+        }
+        define_token!(LeftBrace);
+        impl std::fmt::Display for LeftBrace {
+            fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+                write!(f, "{{")
+            }
+        }
+        define_token!(LeftBracket);
+        impl std::fmt::Display for LeftBracket {
+            fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+                write!(f, "[")
+            }
+        }
+        define_token!(RightParen);
+        impl std::fmt::Display for RightParen {
+            fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+                write!(f, ")")
+            }
+        }
+        define_token!(RightBrace);
+        impl std::fmt::Display for RightBrace {
+            fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+                write!(f, "}}")
+            }
+        }
+        define_token!(RightBracket);
+        impl std::fmt::Display for RightBracket {
+            fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+                write!(f, "]")
+            }
+        }
         $(
             #[derive(Clone, PartialEq, Eq, Default)]
             pub struct $misc {
@@ -402,8 +440,10 @@ macro_rules! create_token {
         Token::$name($name {
             span: span![$self.starting, $self.current, $self.line, $self.line_current],
         })
+    };
+    [$self:ident, $name:ident no struct] => {
+        Token::$name($name { span: span![$self.starting, $self.current, $self.line, $self.line_current], })
     }
-
 }
 
 DefineTokens!(
@@ -437,7 +477,14 @@ DefineTokens!(
         Whitespace
     ]
 );
-
+impl Token {
+    pub fn is_closing_delimiter(&self) -> bool {
+        matches!(
+            self,
+            Token::RightParen { .. } | Token::RightBrace { .. } | Token::RightBracket { .. }
+        )
+    }
+}
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Default, Hash)]
 pub struct Span {
     pub start: usize,

@@ -9,7 +9,7 @@ pub struct If {
 }
 pub enum ThenBlock {
     Statement(Statement),
-    Block(Braces<List<Node>>),
+    Block(Brace<List<Node>>),
 }
 impl Parse for If {
     fn parse(input: &mut TokenStream) -> ParseResult<Self> {

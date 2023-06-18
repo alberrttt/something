@@ -46,6 +46,7 @@ impl<T> Parse for List<T>
 where
     T: Parse + Clone + std::fmt::Debug,
 {
+    #[track_caller]
     fn parse(input: &mut TokenStream) -> ParseResult<Self>
     where
         Self: Clone + std::fmt::Debug + Clone,
@@ -53,6 +54,9 @@ where
         let mut list = Self::new();
         while !input.at_end() {
             let _next = input.peek()?.clone();
+            if _next.is_closing_delimiter() {
+                break;
+            }
             list.push(match input.parse() {
                 Ok(item) => item,
                 Err(err) => {

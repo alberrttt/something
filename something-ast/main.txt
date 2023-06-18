@@ -1,0 +1,6 @@
+fn X(type a, type b, type c) { 
+    let x = 1;
+    let y = 2;
+    let z = 3;
+    print(x, y, z);
+} -> Y

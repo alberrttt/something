@@ -1,4 +1,0 @@
-fn x() { 
-    
-    let  y: number = 1;
-} -> void
