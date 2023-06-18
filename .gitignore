@@ -1,1 +1,7 @@
 target
+frontend.sh
+dev-tools.sh
+ast.sh
+typechecker.sh
+slib.sh
+common.sh
