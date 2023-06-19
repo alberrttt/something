@@ -9,7 +9,7 @@ macro_rules! gen_tests {
             #[test]
             fn $name() {
                 let source = include_str!(concat!("../cases/",$file, ".txt"));
-                let mut tokens = Tokenizer::new(source).tokens().unwrap();
+                let mut tokens = something_ast::Parser::new($file, source);
                 let node = Node::parse(&mut tokens).unwrap();
                 println!("{:#?}",&node);
                 println!("{}",node.display());
@@ -26,35 +26,27 @@ gen_tests![
 ];
 #[test]
 fn binary_test() {
-    let mut tokens = Tokenizer::new(include_str!("../cases/binary.txt"))
-        .tokens()
-        .unwrap();
+    let mut tokens = something_ast::Parser::new("binary", include_str!("../cases/binary.txt"));
 
     dbg!(Expression::parse(&mut tokens).unwrap());
 }
 #[test]
 fn call_binary_test() {
-    let mut tokens = Tokenizer::new(include_str!("../cases/call_binary.txt"))
-        .tokens()
-        .unwrap();
+    let mut tokens = something_ast::Parser::new("binary", include_str!("../cases/call_binary.txt"));
     dbg!(tokens.peek());
 
     dbg!(Expression::parse(&mut tokens).unwrap().display());
 }
 #[test]
 fn expr_test() {
-    let mut tokens = Tokenizer::new(include_str!("../cases/expr.txt"))
-        .tokens()
-        .unwrap();
+    let mut tokens = something_ast::Parser::new("binary", include_str!("../cases/expr.txt"));
     dbg!(tokens.peek());
 
     dbg!(Expression::parse(&mut tokens));
 }
 #[test]
 fn if_expr_test() {
-    let mut tokens = Tokenizer::new(include_str!("../cases/if.txt"))
-        .tokens()
-        .unwrap();
+    let mut tokens = something_ast::Parser::new("binary", include_str!("../cases/if.txt"));
     dbg!(tokens.peek());
 
     dbg!(Expression::parse(&mut tokens));
@@ -66,9 +58,10 @@ mod punctuated {
 
     #[test]
     fn punctuated_terminating_test() {
-        let mut tokens = Tokenizer::new(include_str!("../cases/punctuated_terminating.txt"))
-            .tokens()
-            .unwrap();
+        let mut tokens = something_ast::Parser::new(
+            "binary",
+            include_str!("../cases/punctuated_terminating.txt"),
+        );
         dbg!(tokens.peek());
         let tmp = Punctuated::<Literal, token::Comma>::parse_terminated(&mut tokens).unwrap();
         dbg!(&tmp);
@@ -76,18 +69,18 @@ mod punctuated {
     }
     #[test]
     fn punctuated_trailing_test() {
-        let mut tokens = Tokenizer::new(include_str!("../cases/punctuated_trailing.txt"))
-            .tokens()
-            .unwrap();
+        let mut tokens =
+            something_ast::Parser::new("binary", include_str!("../cases/punctuated_trailing.txt"));
         dbg!(tokens.peek());
 
         dbg!(Punctuated::<Literal, Comma>::parse_trailing(&mut tokens).unwrap());
     }
     #[test]
     fn punctuated_no_trailing_test() {
-        let mut tokens = Tokenizer::new(include_str!("../cases/punctuated_no_trailing.txt"))
-            .tokens()
-            .unwrap();
+        let mut tokens = something_ast::Parser::new(
+            "binary",
+            include_str!("../cases/punctuated_no_trailing.txt"),
+        );
         dbg!(tokens.peek());
 
         dbg!(Punctuated::<Literal, Comma>::parse_without_trailing(&mut tokens).unwrap());

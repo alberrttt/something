@@ -11,16 +11,16 @@ pub struct VariableDeclaration {
     pub semicolon: Tkn![;],
 }
 impl Parse for VariableDeclaration {
-    fn parse(input: &mut TokenStream) -> ParseResult<Self> {
-        let tmp = input.step(|input| Parse::parse(input));
+    fn parse(parser: &mut crate::parser::Parser) -> ParseResult<Self> {
+        let tmp = parser.step(|parser| Parse::parse(parser));
         match tmp {
             Ok(tmp) => Ok(Self {
                 let_token: tmp,
-                name: Parse::parse(input)?,
-                type_annotation: Parse::parse(input)?,
-                equal: Parse::parse(input)?,
-                expression: Parse::parse(input)?,
-                semicolon: Parse::parse(input)?,
+                name: Parse::parse(parser)?,
+                type_annotation: Parse::parse(parser)?,
+                equal: Parse::parse(parser)?,
+                expression: Parse::parse(parser)?,
+                semicolon: Parse::parse(parser)?,
             }),
             Err(_) | Recoverable => Recoverable,
         }

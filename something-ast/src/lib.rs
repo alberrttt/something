@@ -3,8 +3,9 @@
 
 pub mod ast;
 pub mod error;
+pub mod parser;
 pub mod tokenizer;
-
+pub use parser::Parser;
 pub mod prelude {
     pub type ParseResult<T> = something_common::Result<T, ParseError>;
     pub use something_common::Result::*;

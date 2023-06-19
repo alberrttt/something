@@ -57,8 +57,8 @@ where
     T: Parse,
     P: Parse,
 {
-    fn parse(input: &mut TokenStream) -> ParseResult<Self> {
-        Self::parse_terminated(input)
+    fn parse(parser: &mut crate::parser::Parser) -> ParseResult<Self> {
+        Self::parse_terminated(parser)
     }
 }
 impl<T, P> Punctuated<T, P>
@@ -69,55 +69,55 @@ where
     pub fn has_trailing(&self) -> bool {
         self.0.last().unwrap().1.is_some()
     }
-    pub fn parse_without_trailing(input: &mut TokenStream) -> ParseResult<Self> {
+    pub fn parse_without_trailing(parser: &mut crate::parser::Parser) -> ParseResult<Self> {
         let mut vec = Vec::new();
         loop {
-            let item = T::parse(input)?;
-            if input.at_end() || input.is_empty() {
+            let item = T::parse(parser)?;
+            if parser.at_end() || parser.is_empty() {
                 vec.push((item, None));
                 break;
             }
-            let punct = P::parse(input)?;
-            if input.at_end() || input.is_empty() {
+            let punct = P::parse(parser)?;
+            if parser.at_end() || parser.is_empty() {
                 return Err(ParseError::ExpectedEnd(
-                    (*input.previous().unwrap()).clone(),
+                    (*parser.previous().unwrap()).clone(),
                 ));
             }
             vec.push((item, Some(punct)));
         }
         Ok(Self(vec))
     }
-    pub fn parse_trailing(input: &mut TokenStream) -> ParseResult<Self> {
+    pub fn parse_trailing(parser: &mut crate::parser::Parser) -> ParseResult<Self> {
         let mut vec = Vec::new();
         loop {
-            if input.at_end() || input.is_empty() {
+            if parser.at_end() || parser.is_empty() {
                 break;
             }
-            let item = T::parse(input)?;
+            let item = T::parse(parser)?;
 
-            vec.push((item, Some(P::parse(input)?)));
+            vec.push((item, Some(P::parse(parser)?)));
         }
         Ok(Self(vec))
     }
-    pub fn parse_terminated(input: &mut TokenStream) -> ParseResult<Self> {
+    pub fn parse_terminated(parser: &mut crate::parser::Parser) -> ParseResult<Self> {
         let mut vec = Vec::new();
         loop {
-            let item = match input.step(|input| T::parse(input)) {
+            let item = match parser.step(|parser| T::parse(parser)) {
                 Ok(ok) => ok,
                 Err(err) => return Err(err),
                 Recoverable => break,
                 // this is a hack, but it works, it might cause problems later
             };
 
-            let punct = if if input.peek().is_ok() {
+            let punct = if if parser.peek().is_ok() {
                 // this check might be jjanky but it works ( for now )
-                input.peek().unwrap().is_closing_delimiter()
+                parser.peek().unwrap().is_closing_delimiter()
             } else {
                 false
             } {
                 break;
             } else {
-                let parse = input.step(|f| P::parse(f));
+                let parse = parser.step(|f| P::parse(f));
                 match parse {
                     Ok(punct) => Some(punct),
                     Err(err) => {

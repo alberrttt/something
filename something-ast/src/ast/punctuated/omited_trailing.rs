@@ -4,6 +4,7 @@ use Macros::Tkn;
 
 use super::Punctuated;
 
+use crate::parser::Parser;
 use crate::tokenizer::prelude::*;
 
 #[derive(Debug, Clone)]
@@ -40,8 +41,8 @@ where
     T: Debug + Parse,
     P: Debug + Parse,
 {
-    fn parse(input: &mut TokenStream) -> ParseResult<Self> {
-        Ok(Self(Punctuated::<T, P>::parse_without_trailing(input)?))
+    fn parse(parser: &mut crate::parser::Parser) -> ParseResult<Self> {
+        Ok(Self(Punctuated::<T, P>::parse_without_trailing(parser)?))
     }
 }
 use crate::ast;
@@ -49,7 +50,7 @@ use crate::ast::prelude::*;
 use crate::tokenizer::prelude::*;
 #[test]
 fn test() {
-    let mut tokens = crate::tokenizer::TokenStream::from("a,b,c,d,");
+    let mut tokens = Parser::new("test", "a,b,c,d,");
 
     dbg!(match tokens.parse::<Punctuated<Ident, Tkn![,]>>() {
         Ok(value) => (value, tokens),

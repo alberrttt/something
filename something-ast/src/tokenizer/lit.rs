@@ -1,8 +1,6 @@
 use super::prelude::*;
 use crate::prelude::*;
-use std::{
-    fmt::{Display, Formatter},
-};
+use std::fmt::{Display, Formatter};
 #[derive(Clone, PartialEq, PartialOrd, Eq, Default)]
 pub struct Literal {
     /// discriminant
@@ -45,8 +43,8 @@ impl ParsingDisplay for Literal {
     }
 }
 impl Parse for Literal {
-    fn parse(input: &mut TokenStream) -> ParseResult<Self> {
-        let token = input.advance()?;
+    fn parse(parser: &mut crate::parser::Parser) -> ParseResult<Self> {
+        let token = parser.advance()?;
         if let Token::Lit(token) = token {
             Ok(token.clone())
         } else {

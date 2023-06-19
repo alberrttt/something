@@ -24,7 +24,7 @@ fn main() {
         Commands::Repl => repl::repl(),
         Commands::Run { file } => {
             let file = fs::read_to_string(file).unwrap();
-            let mut tokens = TokenStream::from(file.as_str());
+            let mut tokens = something_ast::Parser::new("", file.as_str());
             let ast = match Ast::parse(&mut tokens) {
                 Ok(ok) => ok,
                 Err(err) => {

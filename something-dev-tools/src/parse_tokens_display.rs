@@ -2,8 +2,8 @@ use proc_macro::TokenStream;
 
 use quote::{format_ident, TokenStreamExt};
 use syn::DeriveInput;
-pub fn parse_tokens_display(input: TokenStream) -> TokenStream {
-    let derive = syn::parse_macro_input!(input as syn::DeriveInput);
+pub fn parse_tokens_display(parser: TokenStream) -> TokenStream {
+    let derive = syn::parse_macro_input!(parser as syn::DeriveInput);
 
     let name = &derive.ident;
 

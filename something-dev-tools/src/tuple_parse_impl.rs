@@ -6,8 +6,8 @@ use syn::{parse::Parse, parse_macro_input, punctuated::Punctuated, Token};
 // where
 //     $($ty: Parse),*
 // {
-//     fn parse(input: &mut Tokens) -> Result<Self, ParseError> where Self: Sized {
-//         Ok(($($ty::parse(input)?),*))
+//     fn parse(parser: &mut Tokens) -> Result<Self, ParseError> where Self: Sized {
+//         Ok(($($ty::parse(parser)?),*))
 //     }
 // }
 // impl<$($ty),*> ParsingDisplay for ($($ty),*) where $($ty: ParsingDisplay),* {
@@ -20,8 +20,8 @@ use syn::{parse::Parse, parse_macro_input, punctuated::Punctuated, Token};
 // }
 struct P(Punctuated<syn::Ident, Token![,]>);
 impl Parse for P {
-    fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
-        Ok(Self(Punctuated::parse_terminated(input)?))
+    fn parse(parser: syn::parse::ParseStream) -> syn::Result<Self> {
+        Ok(Self(Punctuated::parse_terminated(parser)?))
     }
 }
 pub fn tuple_parse_impl(input: TokenStream) -> TokenStream {
@@ -94,21 +94,21 @@ pub fn tuple_parse_impl(input: TokenStream) -> TokenStream {
         where
         #(#tokens: Parse),*
         {
-            fn parse(input: &mut TokenStream) -> ParseResult<Self> where Self: Sized {
-                let tmp =  match A::parse(input) {
+            fn parse(parser: &mut crate::parser::Parser) -> ParseResult<Self> where Self: Sized {
+                let tmp =  match A::parse(parser) {
                     Ok(ok) => ok,
                     Err(_) | Recoverable => return Recoverable,
                 };
 
-                Ok((tmp, #(#tokens_parsing::parse(input).unwrap()),*))
+                Ok((tmp, #(#tokens_parsing::parse(parser).unwrap()),*))
             }
         }
         impl<#(#tokens),*> Parse for Option<(#(#tokens),*)>
         where
         #(#tokens: Parse),*
         {
-            fn parse(input: &mut TokenStream) -> ParseResult<Self> where Self: Sized {
-                let tmp = match input.step(|input| match A::parse(input) {
+            fn parse(parser: &mut crate::parser::Parser) -> ParseResult<Self> where Self: Sized {
+                let tmp = match parser.step(|parser| match A::parse(parser) {
                     Ok(ok) => Ok(ok),
                     Err(_) | Recoverable => return Recoverable,
                 }) {
@@ -116,7 +116,7 @@ pub fn tuple_parse_impl(input: TokenStream) -> TokenStream {
                     Err(_) | Recoverable => return Ok(None),
                 };
 
-                Ok(Some((tmp, #(#tokens_parsing::parse(input).unwrap()),*)))
+                Ok(Some((tmp, #(#tokens_parsing::parse(parser).unwrap()),*)))
             }
         }
         impl<#(#tokens),*> ParsingDisplay for (#(#tokens),*)

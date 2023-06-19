@@ -15,8 +15,8 @@ pub enum Repl {
 use colored::Colorize;
 use something_ast::tokenizer::prelude::*;
 impl Parse for Repl {
-    fn parse(input: &mut TokenStream) -> ParseResult<Self> {
-        match input.step(|input| match input.parse() {
+    fn parse(parser: &mut something_ast::Parser) -> ParseResult<Self> {
+        match parser.step(|parser| match parser.parse() {
             Ok(ok) => Ok(Repl::Expr(ok)),
             Recoverable => Recoverable,
             Err(err) => Err(err),
@@ -26,7 +26,7 @@ impl Parse for Repl {
             Err(err) => return Err(err),
         };
         println!("parsing fn now");
-        match input.step(|input| match FunctionDeclaration::parse(input) {
+        match parser.step(|parser| match FunctionDeclaration::parse(parser) {
             Ok(ok) => Ok(Repl::Fn(ok)),
             Recoverable => Recoverable,
             Err(err) => Err(err),
@@ -36,7 +36,7 @@ impl Parse for Repl {
             Err(err) => return Err(err),
         };
         println!("parsing node now");
-        match input.step(|input| match input.parse() {
+        match parser.step(|parser| match parser.parse() {
             Ok(ok) => Ok(Repl::Node(ok)),
             Recoverable => Recoverable,
             Err(err) => Err(err),
@@ -49,8 +49,8 @@ impl Parse for Repl {
     }
 }
 impl Parse for Box<Repl> {
-    fn parse(input: &mut TokenStream) -> ParseResult<Self> {
-        Ok(Box::new(Repl::parse(input)?))
+    fn parse(parser: &mut something_ast::parser::Parser) -> ParseResult<Self> {
+        Ok(Box::new(Repl::parse(parser)?))
     }
 }
 impl ParsingDisplay for Repl {
@@ -91,21 +91,20 @@ pub fn repl() {
         print!("\n>> ");
         io::stdout().flush().unwrap(); // Flush stdout to ensure prompt is displayed
 
-        let mut input = String::new();
-        io::stdin().read_line(&mut input).unwrap(); // Read user input
+        let mut parser = String::new();
+        io::stdin().read_line(&mut parser).unwrap(); // Read user parser
 
-        let input = input.trim(); // Remove trailing newline
-        if input == "quit" {
+        let source = parser.trim(); // Remove trailing newline
+        if source == "quit" {
             break; // Exit the loop if the user enters "quit"
         }
-        let mut tokens: TokenStream = input.into();
-        dbg!(&tokens);
-        let ast = Repl::parse(&mut tokens);
+        let mut parser: something_ast::Parser<'_> = something_ast::Parser::new("file_name", source);
+        let ast = Repl::parse(&mut parser);
         if let Ok(ast) = ast {
             println!("{:?}", ast);
-            if !tokens.at_end() {
+            if !parser.at_end() {
                 print!("{}", "Error: ".bold().red());
-                println!("\nTokens left over: {:#?}\n", &tokens.0[tokens.1..]);
+                println!("\nTokens left over: {:#?}\n", &parser.0[parser.1..]);
             }
         } else {
             println!("{}", ast.err().unwrap());

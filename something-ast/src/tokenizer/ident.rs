@@ -1,6 +1,6 @@
 use super::prelude::*;
 use std::fmt::Debug;
-use std::{fmt::Display};
+use std::fmt::Display;
 
 #[derive(Clone, Eq, Default)]
 pub struct Ident {
@@ -46,8 +46,8 @@ impl ParsingDisplay for Ident {
     }
 }
 impl Parse for Ident {
-    fn parse(input: &mut TokenStream) -> ParseResult<Self> {
-        let token = input.advance()?;
+    fn parse(parser: &mut crate::parser::Parser) -> ParseResult<Self> {
+        let token = parser.advance()?;
         if let Token::Ident(token) = token {
             Ok(token.clone())
         } else {

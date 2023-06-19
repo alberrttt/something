@@ -17,7 +17,7 @@ where
     }
 }
 pub trait Parse: ParsingDisplay + std::fmt::Debug {
-    fn parse(input: &mut TokenStream) -> ParseResult<Self>
+    fn parse(parser: &mut crate::parser::Parser) -> ParseResult<Self>
     where
         Self: Sized;
 }
@@ -47,7 +47,7 @@ where
     }
 }
 impl Parse for () {
-    fn parse(_input: &mut TokenStream) -> ParseResult<Self> {
+    fn parse(_parser: &mut crate::parser::Parser) -> ParseResult<Self> {
         Ok(())
     }
 }
@@ -62,7 +62,7 @@ use crate::ast::prelude::*;
 use crate::tokenizer::prelude::*;
 #[test]
 fn test_tuple() {
-    let mut tokens = TokenStream::from("a b c d e f");
+    let mut tokens = crate::parser::Parser::new("", "a b c d e f");
     type idents = (Ident, Ident, Ident, Ident, Ident, Ident);
     let idents: idents = Parse::parse(&mut tokens).unwrap();
     assert_eq!(idents.0.to_string(), "a");

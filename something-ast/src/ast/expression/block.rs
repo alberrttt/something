@@ -22,8 +22,8 @@ impl Block {
 }
 use crate::prelude::*;
 impl Parse for Block {
-    fn parse(input: &mut TokenStream) -> ParseResult<Self> {
-        let tmp = input.step(|input| Parse::parse(input));
+    fn parse(parser: &mut crate::parser::Parser) -> ParseResult<Self> {
+        let tmp = parser.step(|parser| Parse::parse(parser));
         match tmp {
             Ok(tmp) => Ok(Self(tmp)),
             Err(err) => Err(err),

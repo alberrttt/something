@@ -7,21 +7,21 @@ macro_rules! gen_impl {
             T: Parse,
         {
             #[track_caller]
-            fn parse(input: &mut TokenStream) -> ParseResult<Self>
+            fn parse(parser: &mut crate::parser::Parser) -> ParseResult<Self>
             where
                 Self: Sized,
             {
-                if let Ok(Token::$variant(_)) = input.peek() {
-                    let Token::$variant(tmp) = input.advance()?.clone() else {
-                                                unsafe {
-                                                    std::hint::unreachable_unchecked();
-                                                }
-                                            };
-                    let inner = Parse::parse(input).unwrap();
+                if let Ok(Token::$variant(_)) = parser.peek() {
+                    let Token::$variant(tmp) = parser.advance()?.clone() else {
+                                                        unsafe {
+                                                            std::hint::unreachable_unchecked();
+                                                        }
+                                                    };
+                    let inner = Parse::parse(parser).unwrap();
                     return Ok(Self {
                         opening: tmp,
                         inner,
-                        closing: Parse::parse(input)?,
+                        closing: Parse::parse(parser)?,
                     });
                 } else {
                     Recoverable

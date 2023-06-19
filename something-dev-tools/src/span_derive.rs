@@ -1,10 +1,10 @@
 use proc_macro::TokenStream;
 use quote::quote;
-pub fn span_derive(input: TokenStream) -> TokenStream {
-    let derive_input = syn::parse_macro_input!(input as syn::DeriveInput);
-    match derive_input.data {
+pub fn span_derive(parser: TokenStream) -> TokenStream {
+    let derive_parser = syn::parse_macro_input!(parser as syn::DeriveInput);
+    match derive_parser.data {
         syn::Data::Struct(_) => {
-            let name = derive_input.ident;
+            let name = derive_parser.ident;
             quote! {
                 impl #name {
                    pub fn span(&self) -> Span {
@@ -15,7 +15,7 @@ pub fn span_derive(input: TokenStream) -> TokenStream {
             .into()
         }
         syn::Data::Enum(e) => {
-            let name = derive_input.ident;
+            let name = derive_parser.ident;
             let mut arms = Vec::new();
             for variant in e.variants {
                 let variant_name = variant.ident;

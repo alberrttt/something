@@ -2,7 +2,7 @@ use crate::prelude::*;
 
 #[derive(Debug)]
 pub struct Tokenizer<'a> {
-    input: &'a str,
+    parser: &'a str,
     starting: usize,
     current: usize,
     line: usize,
@@ -67,16 +67,16 @@ impl<'a> Tokenizer<'a> {
                 _ => break,
             }
         }
-        let lexeme = self.input[self.starting..self.current].to_string();
+        let lexeme = self.parser[self.starting..self.current].to_string();
 
         Ok(Ident {
             name: lexeme,
             span: span![self.starting, self.current, self.line, self.line_current],
         })
     }
-    pub fn new(input: &'a str) -> Self {
+    pub fn new(parser: &'a str) -> Self {
         Tokenizer {
-            input,
+            parser,
             starting: 0,
             current: 0,
             line: 1,
@@ -85,7 +85,7 @@ impl<'a> Tokenizer<'a> {
     }
 
     fn next_token(&mut self) -> ParseResult<Token> {
-        if self.current >= self.input.len() {
+        if self.current >= self.parser.len() {
             return Ok(create_token!(self, Eof));
         }
         self.starting = self.current;
@@ -191,7 +191,7 @@ impl<'a> Tokenizer<'a> {
             self.advance();
         }
         let span = span![self.starting, self.current, self.line, self.line_current];
-        let lexeme = self.input[self.starting + 1..self.current - 1].to_owned();
+        let lexeme = self.parser[self.starting + 1..self.current - 1].to_owned();
         Ok(Literal::new_str(span, lexeme))
     }
     fn number(&mut self) -> ParseResult<Literal> {
@@ -203,7 +203,7 @@ impl<'a> Tokenizer<'a> {
             }
         }
         let span = span![self.starting, self.current, self.line, self.line_current];
-        let lexeme = match self.input[self.starting..self.current].parse::<f64>() {
+        let lexeme = match self.parser[self.starting..self.current].parse::<f64>() {
             std::result::Result::Ok(ok) => ok,
             std::result::Result::Err(err) => return Err(ParseError::ParseFloatError(err)),
         };
@@ -212,12 +212,12 @@ impl<'a> Tokenizer<'a> {
     }
 
     fn peek(&self) -> Option<char> {
-        self.input.chars().nth(self.current)
+        self.parser.chars().nth(self.current)
     }
     fn advance(&mut self) -> Option<char> {
         self.current += 1;
         self.line_current += 1;
-        self.input.chars().nth(self.current - 1)
+        self.parser.chars().nth(self.current - 1)
     }
 }
 pub(crate) use crate::tokenizer::token::Macros::*;

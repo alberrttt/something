@@ -47,17 +47,17 @@ where
     T: Parse + Clone + std::fmt::Debug,
 {
     #[track_caller]
-    fn parse(input: &mut TokenStream) -> ParseResult<Self>
+    fn parse(parser: &mut crate::parser::Parser) -> ParseResult<Self>
     where
         Self: Clone + std::fmt::Debug + Clone,
     {
         let mut list = Self::new();
-        while !input.at_end() {
-            let _next = input.peek()?.clone();
+        while !parser.at_end() {
+            let _next = parser.peek()?.clone();
             if _next.is_closing_delimiter() {
                 break;
             }
-            list.push(match input.parse() {
+            list.push(match parser.parse() {
                 Ok(item) => item,
                 Err(err) => {
                     println!("{}", err);

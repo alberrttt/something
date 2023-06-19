@@ -4,12 +4,12 @@ use syn::parse::Parse;
 use syn::Token;
 pub struct IdentName(pub syn::Ident, pub Token![,], pub syn::LitStr);
 impl Parse for IdentName {
-    fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
-        Ok(Self(input.parse()?, input.parse()?, input.parse()?))
+    fn parse(parser: syn::parse::ParseStream) -> syn::Result<Self> {
+        Ok(Self(parser.parse()?, parser.parse()?, parser.parse()?))
     }
 }
-pub fn item_name(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
-    let ident_name = syn::parse_macro_input!(input as IdentName);
+pub fn item_name(parser: proc_macro::TokenStream) -> proc_macro::TokenStream {
+    let ident_name = syn::parse_macro_input!(parser as IdentName);
     let ident = &ident_name.0;
     let name = &ident_name.2;
     let fmtident = format_ident!("__{}", ident);

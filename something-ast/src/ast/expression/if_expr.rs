@@ -12,10 +12,10 @@ pub enum ThenBlock {
     Block(Brace<List<Node>>),
 }
 impl Parse for If {
-    fn parse(input: &mut TokenStream) -> ParseResult<Self> {
-        let if_token = input.parse()?;
-        let predicate = input.parse().unwrap();
-        let then_branch = input.parse().unwrap();
+    fn parse(parser: &mut crate::parser::Parser) -> ParseResult<Self> {
+        let if_token = parser.parse()?;
+        let predicate = parser.parse().unwrap();
+        let then_branch = parser.parse().unwrap();
         Ok(Self {
             if_token,
             predicate,

@@ -3,8 +3,8 @@ use proc_macro2::Ident;
 use quote::{format_ident, quote};
 
 use syn::{parse_macro_input, Data, DataStruct, DeriveInput, Type};
-pub fn parse_tokens(input: TokenStream) -> TokenStream {
-    let derive = parse_macro_input!(input as DeriveInput);
+pub fn parse_tokens(parser: TokenStream) -> TokenStream {
+    let derive = parse_macro_input!(parser as DeriveInput);
 
     match derive.data {
         Data::Enum(enum_data) => {
@@ -17,7 +17,7 @@ pub fn parse_tokens(input: TokenStream) -> TokenStream {
                     syn::Fields::Named(_) => todo!(),
                     syn::Fields::Unnamed(_) => {
                         quote! {
-                            match input.step(|input| Parse::parse(input)) {
+                            match parser.step(|parser| Parse::parse(parser)) {
                                 Ok(variant) => return Ok(#name::#variant_ident(variant)),
 
                                 Err(err) => {
@@ -48,15 +48,15 @@ pub fn parse_tokens(input: TokenStream) -> TokenStream {
                     use std::fmt::{Display, Formatter};
                     use super::#name;
                     impl Parse for #name {
-                        fn parse(input: &mut TokenStream) -> ParseResult<Self> {
+                        fn parse(parser: &mut crate::parser::Parser) -> ParseResult<Self> {
                             #(#variants)*
                             Recoverable
                         }
                     }
 
                     impl Parse for Box<#name> {
-                        fn parse(input: &mut TokenStream) -> ParseResult<Self> {
-                            Ok(Box::new(#name::parse(input)?))
+                        fn parse(parser: &mut crate::parser::Parser) -> ParseResult<Self> {
+                            Ok(Box::new(#name::parse(parser)?))
                         }
                     }
                 }
@@ -94,8 +94,8 @@ pub fn parse_tokens(input: TokenStream) -> TokenStream {
                         }
                     }
                     impl Parse for Box<#name> {
-                        fn parse(input: &mut TokenStream) -> ParseResult<Self> {
-                            Ok(Box::new(#name::parse(input)?))
+                        fn parse(parser: &mut crate::parser::Parser) -> ParseResult<Self> {
+                            Ok(Box::new(#name::parse(parser)?))
                         }
                     }
                 }
@@ -120,15 +120,15 @@ fn for_struct_w_named_fields(struct_data: &DataStruct, name: &Ident) -> proc_mac
                 panic!("only empty types r supported")
             }
         } else {
-            quote! {#ident: Parse::parse(input)?,}
+            quote! {#ident: Parse::parse(parser)?,}
         }
     });
     let variant_identifier = &variant.ident;
     quote! {
 
             impl Parse for #name {
-                fn parse(input: &mut TokenStream) -> ParseResult<Self> {
-                    let tmp = input.step(|input| Parse::parse(input));
+                fn parse(parser: &mut crate::parser::Parser) -> ParseResult<Self> {
+                    let tmp = parser.step(|parser| Parse::parse(parser));
                     match tmp {
                         Ok(tmp) => {
                             Ok(Self {
@@ -149,13 +149,13 @@ fn for_struct_w_named_fields(struct_data: &DataStruct, name: &Ident) -> proc_mac
 fn for_struct_w_unamed_fields(struct_data: &DataStruct, name: &Ident) -> proc_macro2::TokenStream {
     let fields = struct_data.fields.iter().skip(1).map(|_field| {
         quote! {
-            Parse::parse(input).unwrap()
+            Parse::parse(parser).unwrap()
         }
     });
     quote! {
             impl Parse for #name {
-                fn parse(input: &mut TokenStream) -> ParseResult<Self> {
-                    let tmp = input.step(|input| Parse::parse(input));
+                fn parse(parser: &mut crate::parser::Parser) -> ParseResult<Self> {
+                    let tmp = parser.step(|parser| Parse::parse(parser));
                     match tmp {
                         Ok(tmp) => {
                             Ok(Self(tmp, #(#fields),*))

@@ -33,15 +33,15 @@ mod __functiondeclaration {
 
     use super::FunctionDeclaration;
     impl Parse for FunctionDeclaration {
-        fn parse(input: &mut TokenStream) -> ParseResult<Self> {
-            let tmp = input.step(|input| Parse::parse(input));
+        fn parse(parser: &mut crate::parser::Parser) -> ParseResult<Self> {
+            let tmp = parser.step(|parser| Parse::parse(parser));
             match tmp {
                 Ok(tmp) => Ok(Self {
                     fn_token: tmp,
-                    name: Parse::parse(input)?,
-                    params: Parse::parse(input)?,
-                    body: Parse::parse(input)?,
-                    return_type: Parse::parse(input)?,
+                    name: Parse::parse(parser)?,
+                    params: Parse::parse(parser)?,
+                    body: Parse::parse(parser)?,
+                    return_type: Parse::parse(parser)?,
                 }),
                 Err(_) | Recoverable => Recoverable,
             }
@@ -57,8 +57,8 @@ mod __functiondeclaration {
         }
     }
     impl Parse for Box<FunctionDeclaration> {
-        fn parse(input: &mut TokenStream) -> ParseResult<Self> {
-            Ok(Box::new(FunctionDeclaration::parse(input)?))
+        fn parse(parser: &mut crate::parser::Parser) -> ParseResult<Self> {
+            Ok(Box::new(FunctionDeclaration::parse(parser)?))
         }
     }
 }

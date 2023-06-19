@@ -1,3 +1,4 @@
+use crate::parser::Parser;
 use crate::tokenizer::prelude::*;
 use crate::{peek_matches, prelude::*};
 use something_dev_tools::{item_name, ParseTokensDisplay};
@@ -50,17 +51,17 @@ use crate::ast::delimiter::Paren;
 
 pub use self::call::*;
 impl Parse for Expression {
-    fn parse(input: &mut TokenStream) -> ParseResult<Self> {
-        parse_expr(input)
+    fn parse(parser: &mut crate::parser::Parser) -> ParseResult<Self> {
+        parse_expr(parser)
     }
 }
 impl Parse for Box<Expression> {
-    fn parse(input: &mut TokenStream) -> ParseResult<Self> {
-        Ok(Box::new(Expression::parse(input)?))
+    fn parse(parser: &mut crate::parser::Parser) -> ParseResult<Self> {
+        Ok(Box::new(Expression::parse(parser)?))
     }
 }
 
-impl TokenStream {
+impl Parser<'_> {
     pub(in crate::ast::expression) fn expr_unit(
         &mut self,
         can_recover: bool,
@@ -112,11 +113,11 @@ impl TokenStream {
         Ok(result)
     }
 }
-fn parse_expr(input: &mut TokenStream) -> ParseResult<Expression> {
-    let mut result = input.term(true)?;
-    while peek_matches!(input, Token::Plus(_) | Token::Minus(_)) {
-        let op = input.advance()?.clone();
-        let right = input.term(false)?;
+fn parse_expr(parser: &mut crate::parser::Parser) -> ParseResult<Expression> {
+    let mut result = parser.term(true)?;
+    while peek_matches!(parser, Token::Plus(_) | Token::Minus(_)) {
+        let op = parser.advance()?.clone();
+        let right = parser.term(false)?;
 
         result = Expression::Binary(Binary::from_token(result, op, right));
     }
@@ -186,8 +187,8 @@ impl From<Binary> for Expression {
 }
 
 impl Parse for Binary {
-    fn parse(input: &mut TokenStream) -> ParseResult<Self> {
-        let _expr = Expression::parse(input)?;
+    fn parse(parser: &mut crate::parser::Parser) -> ParseResult<Self> {
+        let _expr = Expression::parse(parser)?;
         todo!();
     }
 }
@@ -206,13 +207,13 @@ impl AppendTokens for Operator {
     }
 }
 impl Parse for Operator {
-    fn parse(input: &mut TokenStream) -> ParseResult<Self>
+    fn parse(parser: &mut crate::parser::Parser) -> ParseResult<Self>
     where
         Self: Sized,
     {
-        let token = input.peek()?.clone();
+        let token = parser.peek()?.clone();
         Ok(Self {
-            kind: input.parse()?,
+            kind: parser.parse()?,
             token,
         })
     }
@@ -298,8 +299,8 @@ impl From<Token> for OperatorKind {
 }
 
 impl Parse for OperatorKind {
-    fn parse(input: &mut TokenStream) -> ParseResult<Self> {
-        let token = input.advance()?.clone();
+    fn parse(parser: &mut crate::parser::Parser) -> ParseResult<Self> {
+        let token = parser.advance()?.clone();
         Ok(Self::from(token))
     }
 }

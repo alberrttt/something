@@ -37,15 +37,15 @@ pub enum Node {
     Declaration(Declaration),
 }
 impl Parse for Node {
-    fn parse(input: &mut TokenStream) -> ParseResult<Self> {
-        match input.step(|input| Parse::parse(input)) {
+    fn parse(parser: &mut crate::parser::Parser) -> ParseResult<Self> {
+        match parser.step(|parser| Parse::parse(parser)) {
             Ok(variant) => return Ok(Node::Statement(variant)),
             Err(err) => {
                 return Err(err);
             }
             Recoverable => {}
         }
-        match input.step(|input| Parse::parse(input)) {
+        match parser.step(|parser| Parse::parse(parser)) {
             Ok(variant) => return Ok(Node::Declaration(variant)),
             Err(err) => {
                 return Err(err);
@@ -56,8 +56,8 @@ impl Parse for Node {
     }
 }
 impl Parse for Box<Node> {
-    fn parse(input: &mut TokenStream) -> ParseResult<Self> {
-        Ok(Box::new(Node::parse(input)?))
+    fn parse(parser: &mut crate::parser::Parser) -> ParseResult<Self> {
+        Ok(Box::new(Node::parse(parser)?))
     }
 }
 impl AppendTokens for Node {
@@ -89,25 +89,12 @@ pub mod punctuated;
 pub mod statement;
 pub mod traits;
 use crate::prelude::*;
-impl From<&str> for Ast {
-    fn from(value: &str) -> Self {
-        let mut tokens = tokenizer::TokenStream::from(value);
-        match Ast::parse(&mut tokens) {
-            Ok(ast) => ast,
-            Err(err) => {
-                println!("{}", err);
-                panic!();
-            }
-            something_common::Result::Recoverable => todo!(),
-        }
-    }
-}
 
 #[macro_export]
 macro_rules! ast {
     ($str: expr) => {{
         use $crate::prelude::*;
-        let mut tokens = $crate::tokenizer::TokenStream::from($str);
+        let mut tokens = $crate::parser::Parser::new("test", $str);
         match (&mut tokens).parse() {
             Ok(value) => (value, tokens),
             Err(err) => {

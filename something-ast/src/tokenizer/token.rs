@@ -79,13 +79,7 @@ impl TokenStream {
     pub fn new() -> Self {
         Self(Vec::new(), 0)
     }
-    pub fn parse<T>(&mut self) -> ParseResult<T>
-    where
-        T: Parse,
-        T: Clone + std::fmt::Debug + Clone,
-    {
-        T::parse(self)
-    }
+
     pub fn previous(&self) -> Option<&Token> {
         self.0.get(self.1 - 1)
     }
@@ -159,22 +153,6 @@ impl TokenStream {
     pub fn peek3(&self) -> ParseResult<&Token> {
         self.peek_n(3)
     }
-
-    pub fn step<R>(&mut self, F: impl FnOnce(&mut Self) -> ParseResult<R>) -> ParseResult<R> {
-        let starting = self.1;
-        let stepped = F(self);
-        match stepped {
-            Ok(ok) => Ok(ok),
-            Err(e) => {
-                self.1 = starting;
-                Err(e)
-            }
-            Recoverable => {
-                self.1 = starting;
-                Recoverable
-            }
-        }
-    }
 }
 
 impl Default for TokenStream {
@@ -214,8 +192,8 @@ macro_rules! define_token {
             }
         }
         impl Parse for $name {
-            fn parse(input: &mut TokenStream) -> ParseResult<Self> {
-                let token = input.advance()?;
+            fn parse(parser: &mut crate::parser::Parser) -> ParseResult<Self> {
+                let token = parser.advance()?;
                 if let Token::$name(token) = token {
                     Ok(token.clone())
                 } else {

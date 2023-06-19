@@ -13,16 +13,16 @@ pub struct Call {
 }
 
 impl Call {
-    pub fn parse_with_ident(ident: Ident, input: &mut TokenStream) -> ParseResult<Self> {
-        let args: Paren<Punctuated<Expression, Comma>> = Paren::parse(input)?;
+    pub fn parse_with_ident(ident: Ident, parser: &mut crate::parser::Parser) -> ParseResult<Self> {
+        let args: Paren<Punctuated<Expression, Comma>> = Paren::parse(parser)?;
         Ok(Self { ident, args })
     }
 }
 
 impl Parse for Call {
-    fn parse(input: &mut TokenStream) -> ParseResult<Self> {
-        let ident = Ident::parse(input)?;
-        Self::parse_with_ident(ident, input)
+    fn parse(parser: &mut crate::parser::Parser) -> ParseResult<Self> {
+        let ident = Ident::parse(parser)?;
+        Self::parse_with_ident(ident, parser)
     }
 }
 
