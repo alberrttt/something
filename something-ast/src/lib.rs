@@ -8,8 +8,8 @@ pub mod tokenizer;
 pub use parser::Parser;
 pub mod prelude {
     pub type ParseResult<T> = something_common::Result<T, ParseError>;
-    pub use something_common::Result::*;
-
     use crate::error::ParseError;
+    pub use something_common::devprintln;
+    pub use something_common::Result::*;
 }
 pub mod macros;

@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use crate::tokenizer::{self, list::List, traits::AppendTokens, Parse, TokenStream};
+use crate::tokenizer::{self, list::List, token::Token, traits::AppendTokens, Parse, TokenStream};
 use prelude::{Children, Declaration, FunctionDeclaration};
 use something_dev_tools::{ParseTokens, ParseTokensDisplay};
 
@@ -41,11 +41,19 @@ impl Parse for Node {
         match parser.step(|parser| Parse::parse(parser)) {
             Ok(variant) => return Ok(Node::Statement(variant)),
             Err(err) => {
+                loop {
+                    if let Ok(Token::Semicolon(_)) = parser.peek() {
+                        parser.advance();
+                        break;
+                    }
+                    parser.advance();
+                }
+
                 return Err(err);
             }
             Recoverable => {}
         }
-        match parser.step(|parser| Parse::parse(parser)) {
+        match Parse::parse(parser) {
             Ok(variant) => return Ok(Node::Declaration(variant)),
             Err(err) => {
                 return Err(err);
@@ -98,7 +106,7 @@ macro_rules! ast {
         match (&mut tokens).parse() {
             Ok(value) => (value, tokens),
             Err(err) => {
-                println!("{}", err);
+                devprintln!("{}", err);
                 panic!();
             }
             Recoverable => todo!(),

@@ -23,8 +23,7 @@ impl Block {
 use crate::prelude::*;
 impl Parse for Block {
     fn parse(parser: &mut crate::parser::Parser) -> ParseResult<Self> {
-        let tmp = parser.step(|parser| Parse::parse(parser));
-        match tmp {
+        match Parse::parse(parser) {
             Ok(tmp) => Ok(Self(tmp)),
             Err(err) => Err(err),
             Recoverable => Recoverable,

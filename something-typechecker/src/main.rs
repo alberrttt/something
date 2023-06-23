@@ -18,8 +18,8 @@ pub fn main() {
     let (ast, _tokens): (Ast, _) = something_ast::ast!(SRC);
     let ctx = FileContext::default();
     let file_ctx: FileContext = ctx.typecheck(ast).unwrap_or_else(|err| {
-        eprintln!("Error: {}", err);
+        edevprintln!("Error: {}", err);
         std::process::exit(1);
     });
-    println!("{:#?}", file_ctx);
+    devprintln!("{:#?}", file_ctx);
 }

@@ -25,7 +25,7 @@ impl Parse for Repl {
             Recoverable => {}
             Err(err) => return Err(err),
         };
-        println!("parsing fn now");
+        devprintln!("parsing fn now");
         match parser.step(|parser| match FunctionDeclaration::parse(parser) {
             Ok(ok) => Ok(Repl::Fn(ok)),
             Recoverable => Recoverable,
@@ -35,7 +35,7 @@ impl Parse for Repl {
             Recoverable => {}
             Err(err) => return Err(err),
         };
-        println!("parsing node now");
+        devprintln!("parsing node now");
         match parser.step(|parser| match parser.parse() {
             Ok(ok) => Ok(Repl::Node(ok)),
             Recoverable => Recoverable,
@@ -82,7 +82,7 @@ impl Debug for Repl {
     }
 }
 pub fn repl() {
-    println!(
+    devprintln!(
         "{}\nRunning REPL.\nType `quit` to quit\n",
         format!("{} {}", env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION")).bold()
     );
@@ -101,13 +101,13 @@ pub fn repl() {
         let mut parser: something_ast::Parser<'_> = something_ast::Parser::new("file_name", source);
         let ast = Repl::parse(&mut parser);
         if let Ok(ast) = ast {
-            println!("{:?}", ast);
+            devprintln!("{:?}", ast);
             if !parser.at_end() {
                 print!("{}", "Error: ".bold().red());
-                println!("\nTokens left over: {:#?}\n", &parser.0[parser.1..]);
+                devprintln!("\nTokens left over: {:#?}\n", &parser.0[parser.1..]);
             }
         } else {
-            println!("{}", ast.err().unwrap());
+            devprintln!("{}", ast.err().unwrap());
             continue;
         }
     }

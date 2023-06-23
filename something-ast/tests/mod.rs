@@ -11,8 +11,8 @@ macro_rules! gen_tests {
                 let source = include_str!(concat!("../cases/",$file, ".txt"));
                 let mut tokens = something_ast::Parser::new($file, source);
                 let node = Node::parse(&mut tokens).unwrap();
-                println!("{:#?}",&node);
-                println!("{}",node.display());
+                devprintln!("{:#?}",&node);
+                devprintln!("{}",node.display());
             }
         )*
     };
@@ -65,7 +65,7 @@ mod punctuated {
         dbg!(tokens.peek());
         let tmp = Punctuated::<Literal, token::Comma>::parse_terminated(&mut tokens).unwrap();
         dbg!(&tmp);
-        println!("{}", tmp.display());
+        devprintln!("{}", tmp.display());
     }
     #[test]
     fn punctuated_trailing_test() {

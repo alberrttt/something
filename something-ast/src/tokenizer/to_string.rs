@@ -23,5 +23,5 @@ impl TokenStream {
 #[test]
 fn var() {
     let tokens = TokenStream::from("let a = x + 2 + 3 - 4;");
-    println!("{}", tokens.to_source_string());
+    devprintln!("{}", tokens.to_source_string());
 }

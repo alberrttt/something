@@ -55,7 +55,7 @@ fn test() {
     dbg!(match tokens.parse::<Punctuated<Ident, Tkn![,]>>() {
         Ok(value) => (value, tokens),
         Err(err) => {
-            println!("{}", err);
+            devprintln!("{}", err);
             panic!();
         }
         Recoverable => todo!(),

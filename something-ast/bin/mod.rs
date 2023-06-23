@@ -28,12 +28,12 @@ fn main() {
             let ast = match Ast::parse(&mut tokens) {
                 Ok(ok) => ok,
                 Err(err) => {
-                    println!("{err}");
+                    devprintln!("{err}");
                     panic!()
                 }
                 Recoverable => todo!(),
             };
-            println!("{:?}", &ast);
+            devprintln!("\n{:?}", &ast);
         }
     }
 }

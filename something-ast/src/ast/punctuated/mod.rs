@@ -134,5 +134,5 @@ where
 
 #[test]
 fn test() {
-    let (_, _): (Punctuated<Ident, Tkn!(,)>, _) = ast!("a,b,c);");
+    let (_, _): (Punctuated<Ident, Tkn!(,)>, _) = ast!("a,b,c;");
 }

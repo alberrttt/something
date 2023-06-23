@@ -1,3 +1,5 @@
+/// To you, when you had your sanity
+/// this list is jankey and weird. You should rewrite it.
 use super::prelude::*;
 
 #[derive(Clone, PartialEq)]
@@ -57,14 +59,16 @@ where
             if _next.is_closing_delimiter() {
                 break;
             }
-            list.push(match parser.parse() {
-                Ok(item) => item,
+            match parser.parse() {
+                Ok(item) => list.push(item),
                 Err(err) => {
-                    println!("{}", err);
-                    break;
+                    devprintln!("{}", err);
                 }
-                Recoverable => todo!(),
-            });
+                // dangerous because it can just fall into a loop that never ends cuz peek() doesn't advance
+                Recoverable => {
+                    todo!()
+                }
+            }
         }
         Ok(list)
     }

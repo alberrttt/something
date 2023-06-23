@@ -3,10 +3,25 @@ use colored::Colorize;
 use crate::ast::prelude::*;
 use crate::tokenizer::prelude::*;
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct ParseError {
     pub surrounding: TokenStream,
     pub kind: ParseErrorKind,
+    pub backtrace: Option<Backtrace>,
+}
+impl Clone for ParseError {
+    fn clone(&self) -> Self {
+        Self {
+            surrounding: self.surrounding.clone(),
+            kind: self.kind.clone(),
+            backtrace: match &self.backtrace {
+                Some(backtrace) => {
+                    panic!();
+                }
+                None => None,
+            },
+        }
+    }
 }
 #[allow(non_snake_case)]
 impl ParseError {
@@ -42,6 +57,8 @@ impl ParseError {
         Self {
             surrounding: tokenstream,
             kind,
+
+            backtrace: Some(Backtrace::capture()),
         }
     }
 }
@@ -70,6 +87,19 @@ pub struct ExpectedToken {
 impl std::fmt::Display for ParseError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", "Error ".red().bold())?;
+        match &self.backtrace {
+            Some(b) => {
+                if std::env::var("ERR_BACKTRACE").unwrap_or_default() == "1" {
+                    match &self.backtrace {
+                        Some(backtrace) => {
+                            writeln!(f, "\n{}", backtrace)?;
+                        }
+                        None => {}
+                    }
+                }
+            }
+            None => {}
+        }
         use ParseErrorKind::*;
         match &self.kind {
             FloatParseError(float_parse_error) => {

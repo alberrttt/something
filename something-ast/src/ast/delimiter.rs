@@ -21,7 +21,19 @@ macro_rules! gen_impl {
                     return Ok(Self {
                         opening: tmp,
                         inner,
-                        closing: Parse::parse(parser)?,
+                        closing: {
+
+
+                            match Parse::parse(parser) {
+                            Ok(ok) => ok,
+                            Err(err) => {
+
+                                return Err(err);
+                            }
+                            Recoverable => {
+                               todo!()
+                            }
+                        }},
                     });
                 } else {
                     Recoverable
