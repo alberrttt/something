@@ -114,7 +114,7 @@ impl Parser<'_> {
     }
 }
 fn parse_expr(parser: &mut crate::parser::Parser) -> ParseResult<Expression> {
-    let mut result = parser.term(true)?;
+    let mut result: Expression = parser.term(true)?;
     while peek_matches!(parser, Token::Plus(_) | Token::Minus(_)) {
         let op = parser.advance()?.clone();
         let right = parser.term(false)?;

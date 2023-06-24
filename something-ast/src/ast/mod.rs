@@ -2,8 +2,8 @@ use std::fmt::Display;
 
 use crate::tokenizer::{self, list::List, token::Token, traits::AppendTokens, Parse, TokenStream};
 use prelude::{Children, Declaration, FunctionDeclaration};
+use something_common::devprintln;
 use something_dev_tools::{ParseTokens, ParseTokensDisplay};
-
 impl AppendTokens for TopLevelNode {
     fn append_tokens(&self, tokens: &mut tokenizer::TokenStream)
     where
@@ -106,7 +106,7 @@ macro_rules! ast {
         match (&mut tokens).parse() {
             Ok(value) => (value, tokens),
             Err(err) => {
-                devprintln!("{}", err);
+                $crate::prelude::devprintln!("{}", err);
                 panic!();
             }
             Recoverable => todo!(),

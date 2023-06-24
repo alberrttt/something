@@ -1,6 +1,7 @@
 fn X(type a, type b, type c) { 
+    let z;
+
     let x = 1;
     let y = 2;
-    let z = ;
     print(x, y, z);
  } -> Y
