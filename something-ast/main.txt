@@ -1,7 +1,3 @@
 fn X(type a, type b, type c) { 
-    let z;
-
-    let x = 1;
-    let y = 2;
-    print(x, y, z);
+    Z(a,b,c,a);
  } -> Y

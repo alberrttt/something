@@ -1,5 +1,6 @@
 use std::{collections::HashMap, rc::Rc};
 
+use something_ast::prelude::devprintln;
 use something_frontend::{FunctionDeclaration, Ident};
 
 use crate::{
@@ -42,6 +43,7 @@ impl FnContext {
         self.parameters = {
             let mut parameters: HashMap<Ident, TypeSig> = HashMap::new();
             for ((ty, name), _) in value.params.iter() {
+                devprintln!("{}: {}", name, ty);
                 parameters.insert(name.clone(), Primitive::from(ty).into());
             }
             parameters

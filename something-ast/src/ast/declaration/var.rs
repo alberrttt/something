@@ -14,55 +14,49 @@ pub struct VariableDeclaration {
 }
 impl Parse for VariableDeclaration {
     fn parse(parser: &mut crate::parser::Parser) -> ParseResult<Self> {
-        let tmp = parser.step(|parser| Parse::parse(parser));
-        if let Ok(tmp) = tmp {
-            let fields = (|| -> ParseResult<_> {
-                let name = Parse::parse(parser)?;
-                let type_annotation = Parse::parse(parser)?;
-                let equal = Parse::parse(parser)?;
-                let expression = match Parse::parse(parser) {
-                    Ok(ok) => ok,
-                    Err(err) => return Err(err),
-                    Recoverable => {
-                        return Err(ParseError::Generic(format!(
-                            "{} expected expression got  {}",
-                            concat!(file!(), ":", line!()),
-                            parser.peek().unwrap()
-                        )));
-                    }
-                };
-                let semicolon = Parse::parse(parser)?;
+        let tmp: ParseResult<Tkn!(Let)> = parser.step(|parser| Parse::parse(parser));
+        match tmp {
+            Ok(tmp) => {
+                let fields = parser.step(|parser| {
+                    let name = Parse::parse(parser)?;
+                    let type_annotation = Parse::parse(parser)?;
+                    let equal = Parse::parse(parser)?;
+                    let expression = Parse::parse(parser)?;
+                    let semicolon = Parse::parse(parser)?;
 
-                Ok((name, type_annotation, equal, expression, semicolon))
-            })();
-            let fields = match fields {
-                Ok(ok) => ok,
-                Err(err) => {
-                    // recover by consuming all tokens until you reach the last, which is the semicolon
-                    loop {
-                        if let Token::Semicolon(_) = parser.peek()? {
-                            parser.advance();
-                            break;
-                        } else {
-                            parser.advance();
+                    Ok((name, type_annotation, equal, expression, semicolon))
+                });
+                let fields = match fields {
+                    Ok(ok) => ok,
+                    Err(err) => {
+                        // recover by consuming all tokens until you reach the last, which is the semicolon
+                        loop {
+                            devprintln!("{}", parser.peek()?);
+                            if let Token::Semicolon(_) = parser.peek()? {
+                                parser.advance()?;
+                                break;
+                            } else {
+                                parser.advance();
+                            }
                         }
+
+                        something_common::devprintln!("recovered");
+                        return Err(err);
                     }
-                    something_common::devprintln!("recovered");
-                    return Err(err);
-                }
-                Recoverable => return Recoverable,
-            };
-            let (name, type_annotation, equal, expression, semicolon) = fields;
-            Ok(Self {
-                let_token: tmp,
-                name,
-                type_annotation,
-                equal,
-                expression,
-                semicolon,
-            })
-        } else {
-            panic!()
+                    Recoverable => return Recoverable,
+                };
+                let (name, type_annotation, equal, expression, semicolon) = fields;
+                Ok(Self {
+                    let_token: tmp,
+                    name,
+                    type_annotation,
+                    equal,
+                    expression,
+                    semicolon,
+                })
+            }
+            Err(err) => Err(err),
+            Recoverable => Recoverable,
         }
     }
 }

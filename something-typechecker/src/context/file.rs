@@ -1,6 +1,9 @@
 use std::{collections::HashMap, rc::Rc};
 
-use something_ast::ast::{Ast, TopLevelNode};
+use something_ast::{
+    ast::{Ast, TopLevelNode},
+    prelude::devprintln,
+};
 use something_frontend::Ident;
 
 use crate::{
@@ -28,6 +31,9 @@ impl FileContext {
         for node in ast.nodes.iter() {
             match node {
                 TopLevelNode::FunctionDeclaration(fn_decl) => {
+                    devprintln!("name: {}", fn_decl.name);
+                    devprintln!("params: {:#?}", fn_decl.params);
+                    todo!(); // punctuation is broken for some reason, so fn_decl.params is empty
                     let fn_ctx = FnContext {
                         parent: Some(Rc::new(Context::File(ctx.clone()))),
                         ..Default::default()

@@ -8,12 +8,12 @@ use Macros::Tkn;
 
 // prolly need better error handling soon
 #[derive(Debug, Clone)]
-pub struct Punctuated<T, P>(pub Vec<(T, Option<P>)>);
-impl<T, P> AppendTokens for Punctuated<T, P>
+pub struct Punctuated<Item, Punctuation>(pub Vec<(Item, Option<Punctuation>)>);
+impl<Item, Punctuation> AppendTokens for Punctuated<Item, Punctuation>
 where
     Self: Sized,
-    T: AppendTokens,
-    P: AppendTokens,
+    Item: AppendTokens,
+    Punctuation: AppendTokens,
 {
     fn append_tokens(&self, tokens: &mut TokenStream) {
         for (t, p) in &self.0 {
@@ -61,23 +61,24 @@ where
         Self::parse_terminated(parser)
     }
 }
-impl<T, P> Punctuated<T, P>
+impl<Item, Punctuation> Punctuated<Item, Punctuation>
 where
-    T: Parse,
-    P: Parse,
+    Item: Parse,
+    Punctuation: Parse,
 {
     pub fn has_trailing(&self) -> bool {
         self.0.last().unwrap().1.is_some()
     }
     pub fn parse_without_trailing(parser: &mut crate::parser::Parser) -> ParseResult<Self> {
+        todo!();
         let mut vec = Vec::new();
         loop {
-            let item = T::parse(parser)?;
+            let item = Item::parse(parser)?;
             if parser.at_end() || parser.is_empty() {
                 vec.push((item, None));
                 break;
             }
-            let punct = P::parse(parser)?;
+            let punct = Punctuation::parse(parser)?;
             if parser.at_end() || parser.is_empty() {
                 return Err(ParseError::ExpectedEnd(
                     (*parser.previous().unwrap()).clone(),
@@ -93,31 +94,33 @@ where
             if parser.at_end() || parser.is_empty() {
                 break;
             }
-            let item = T::parse(parser)?;
+            let item = Item::parse(parser)?;
 
-            vec.push((item, Some(P::parse(parser)?)));
+            vec.push((item, Some(Punctuation::parse(parser)?)));
         }
         Ok(Self(vec))
     }
     pub fn parse_terminated(parser: &mut crate::parser::Parser) -> ParseResult<Self> {
         let mut vec = Vec::new();
         loop {
-            let item = match parser.step(|parser| T::parse(parser)) {
+            let item = match parser.step(|parser| Item::parse(parser)) {
                 Ok(ok) => ok,
                 Err(err) => return Err(err),
                 Recoverable => break,
                 // this is a hack, but it works, it might cause problems later
             };
 
-            let punct = if if parser.peek().is_ok() {
+            let should_stop = if parser.peek().is_ok() {
                 // this check might be jjanky but it works ( for now )
                 parser.peek().unwrap().is_closing_delimiter()
             } else {
                 false
-            } {
+            };
+            let punct = if should_stop {
+                vec.push((item, None));
                 break;
             } else {
-                let parse = parser.step(|f| P::parse(f));
+                let parse = parser.step(|f| Punctuation::parse(f));
                 match parse {
                     Ok(punct) => Some(punct),
                     Err(err) => {
