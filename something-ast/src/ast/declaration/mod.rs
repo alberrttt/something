@@ -1,6 +1,9 @@
 use something_dev_tools::item_name;
 
 use super::prelude::*;
+use crate::error::ExpectedToken;
+use crate::error::ParseError;
+use crate::error::ParseErrorKind;
 use crate::prelude::*;
 use crate::tokenizer::Parse;
 mod function;
@@ -21,13 +24,37 @@ impl Parse for Declaration {
     {
         match Parse::parse(parser) {
             Ok(tmp) => return Ok(Self::Var(tmp)),
-            Err(err) => return Err(err),
+            Err(err) => {
+                // if it errors on the first token, we can probably recover
+
+                if !matches!(
+                    err.kind,
+                    ParseErrorKind::ExpectedToken(ExpectedToken {
+                        expected: Token::Let(_),
+                        ..
+                    })
+                ) {
+                    return Err(err);
+                }
+            }
             Recoverable => {}
         };
         let tmp = parser.step(|parser| Parse::parse(parser));
         match tmp {
             Ok(tmp) => Ok(Self::Function(tmp)),
-            Err(err) => Err(err),
+            Err(err) => {
+                if !matches!(
+                    err.kind,
+                    ParseErrorKind::ExpectedToken(ExpectedToken {
+                        expected: Token::Fn(_),
+                        ..
+                    })
+                ) {
+                    Err(err)
+                } else {
+                    Err(ParseError::Generic("Expected function or variable".into()))
+                }
+            }
             Recoverable => Recoverable,
         }
     }

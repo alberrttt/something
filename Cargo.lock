@@ -325,20 +325,15 @@ dependencies = [
 ]
 
 [[package]]
-name = "something-slib"
+name = "something-semantic"
 version = "0.1.0"
 dependencies = [
- "something-typechecker",
+ "something-ast",
 ]
 
 [[package]]
-name = "something-typechecker"
+name = "something-slib"
 version = "0.1.0"
-dependencies = [
- "colored",
- "something-ast",
- "something-frontend",
-]
 
 [[package]]
 name = "static_assertions"

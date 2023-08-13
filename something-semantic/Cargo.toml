@@ -1,11 +1,10 @@
 [package]
-name = "something-typechecker"
+name = "something-semantic"
 version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+
 something-ast = { path = "../something-ast" }
-something-frontend = { path = "../something-frontend" }
-colored = "2.0.0"

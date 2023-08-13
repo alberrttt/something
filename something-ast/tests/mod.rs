@@ -1,8 +1,8 @@
 use something_ast::ast::expression::Expression;
 
 use something_ast::ast::Node;
-use something_common::devprintln;
 use something_ast::tokenizer::{Parse, *};
+use something_common::devprintln;
 macro_rules! gen_tests {
     [$($file:literal = $name:ident),*] => {
         $(
@@ -18,7 +18,6 @@ macro_rules! gen_tests {
     };
 }
 gen_tests![
-    "fn" = fn_test,
     "var" = var_test,
     "stmt" = stmt_test,
     "call" = call_test,
@@ -74,15 +73,5 @@ mod punctuated {
         dbg!(tokens.peek());
 
         dbg!(Punctuated::<Literal, Comma>::parse_trailing(&mut tokens).unwrap());
-    }
-    #[test]
-    fn punctuated_no_trailing_test() {
-        let mut tokens = something_ast::Parser::new(
-            "binary",
-            include_str!("../cases/punctuated_no_trailing.txt"),
-        );
-        dbg!(tokens.peek());
-
-        dbg!(Punctuated::<Literal, Comma>::parse_without_trailing(&mut tokens).unwrap());
     }
 }

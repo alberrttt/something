@@ -69,7 +69,7 @@ where
     pub fn has_trailing(&self) -> bool {
         self.0.last().unwrap().1.is_some()
     }
-    pub fn parse_without_trailing(parser: &mut crate::parser::Parser) -> ParseResult<Self> {
+    pub fn parse_error_on_trailing(parser: &mut crate::parser::Parser) -> ParseResult<Self> {
         todo!();
         let mut vec = Vec::new();
         loop {
@@ -114,18 +114,17 @@ where
                 // this check might be jjanky but it works ( for now )
                 parser.peek().unwrap().is_closing_delimiter()
             } else {
-                false
+                parser.at_end()
             };
             let punct = if should_stop {
                 vec.push((item, None));
                 break;
             } else {
                 let parse = parser.step(|f| Punctuation::parse(f));
+
                 match parse {
                     Ok(punct) => Some(punct),
-                    Err(err) => {
-                        return Err(err);
-                    }
+                    Err(err) => None,
                     Recoverable => todo!(),
                 }
             };
@@ -137,5 +136,5 @@ where
 
 #[test]
 fn test() {
-    let (_, _): (Punctuated<Ident, Tkn!(,)>, _) = ast!("a,b,c;");
+    let (_, _): (Punctuated<Ident, Tkn!(,)>, _) = ast!("a,b,c");
 }

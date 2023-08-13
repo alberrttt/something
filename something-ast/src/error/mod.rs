@@ -3,11 +3,19 @@ use colored::Colorize;
 use crate::ast::prelude::*;
 use crate::tokenizer::prelude::*;
 
-#[derive(Debug)]
 pub struct ParseError {
-    pub surrounding: TokenStream,
+    pub surrounding: Option<TokenStream>,
     pub kind: ParseErrorKind,
     pub backtrace: Option<Backtrace>,
+}
+
+impl Debug for ParseError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("ParseError")
+            .field("surrounding", &self.surrounding)
+            .field("kind", &self.kind)
+            .finish()
+    }
 }
 impl Clone for ParseError {
     fn clone(&self) -> Self {
@@ -55,7 +63,7 @@ impl ParseError {
         let mut tokenstream = TokenStream::default();
         surrounding_tokens.append_tokens(&mut tokenstream);
         Self {
-            surrounding: tokenstream,
+            surrounding: Some(tokenstream),
             kind,
 
             backtrace: Some(Backtrace::capture()),
@@ -73,20 +81,22 @@ pub enum ParseErrorKind {
 }
 use std::backtrace::Backtrace;
 use std::error::Error;
+use std::fmt::Debug;
 use std::{any, default};
 #[derive(Debug, Clone)]
 pub struct ExpectedAst {
-    ast: any::TypeId,
+    pub ast: any::TypeId,
 }
 #[derive(Debug, Clone)]
 pub struct ExpectedToken {
-    expected: Token,
-    at: usize, // <- an index to `surrounding`
+    pub expected: Token,
+    pub at: usize, // <- an index to `surrounding`
 }
 
 impl std::fmt::Display for ParseError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", "Error ".red().bold())?;
+        let surrounding = self.surrounding.as_ref().unwrap();
         match &self.backtrace {
             Some(b) => {
                 if std::env::var("ERR_BACKTRACE").unwrap_or_default() == "1" {
@@ -110,7 +120,7 @@ impl std::fmt::Display for ParseError {
                     f,
                     "Expected token {:?} instead of {}",
                     token.expected,
-                    self.surrounding.get(token.at).unwrap()
+                    surrounding.get(token.at).unwrap()
                 )
             }
             ExpectedEnd(_) => todo!(),

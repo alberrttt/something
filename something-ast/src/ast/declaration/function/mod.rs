@@ -17,6 +17,18 @@ pub struct FunctionDeclaration {
     pub body: Block,
     pub return_type: ReturnType,
 }
+// write a test
+#[test ]
+fn test() {
+    let (function_declaration, _): (Declaration, _) = ast!(
+        "fn x(number x, number y) { 
+        let z: number = y + x;
+    } -> void"
+    );
+    assert!(matches!(function_declaration, Declaration::Function(_)));
+    dbg!(function_declaration);
+}
+
 impl Debug for FunctionDeclaration {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("FunctionDeclaration")

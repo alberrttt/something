@@ -3,7 +3,7 @@ pub use crate::ast::prelude::*;
 use self::tokenizer::Tkn;
 #[derive(Debug, Clone, ParseTokens, ParseTokensDisplay)]
 pub struct Path {
-    pub segments: OmitTrailing<Ident, Tkn![:]>,
+    pub segments: Punctuated<Ident, Tkn![:]>,
 }
 
 #[test]

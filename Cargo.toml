@@ -3,7 +3,7 @@ members = [
     "something-frontend",
     "something-dev-tools",
     "something-ast",
-    "something-typechecker",
+    "something-semantic",
     "something-slib",
     "something-common",
 ]

@@ -83,7 +83,7 @@ pub mod error {
     pub use crate::error::*;
 }
 #[derive(Debug, Clone, ParseTokens, ParseTokensDisplay)]
-pub enum TopLevelNode {
+pub enum   TopLevelNode {
     FunctionDeclaration(FunctionDeclaration),
 }
 #[derive(Debug, Clone, ParseTokens, ParseTokensDisplay, Default)]

@@ -1,3 +1,0 @@
-fn x(number x, number y) { 
-    let z: number = y + x;
-} -> void

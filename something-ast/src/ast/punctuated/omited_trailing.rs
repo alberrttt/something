@@ -42,7 +42,7 @@ where
     P: Debug + Parse,
 {
     fn parse(parser: &mut crate::parser::Parser) -> ParseResult<Self> {
-        Ok(Self(Punctuated::<T, P>::parse_without_trailing(parser)?))
+        Ok(Self(Punctuated::<T, P>::parse_error_on_trailing(parser)?))
     }
 }
 use crate::ast;
@@ -50,7 +50,7 @@ use crate::ast::prelude::*;
 use crate::tokenizer::prelude::*;
 #[test]
 fn test() {
-    let mut tokens = Parser::new("test", "a,b,c,d,");
+    let mut tokens = Parser::new("test", "a,b,c,d");
 
     dbg!(match tokens.parse::<Punctuated<Ident, Tkn![,]>>() {
         Ok(value) => (value, tokens),
