@@ -1,14 +1,24 @@
+#![feature(associated_type_defaults)]
 use std::collections::HashSet;
 
 use something_ast::{ast::prelude::*, prelude::devprintln};
-use symbol::{Symbol, SymbolTable, Type};
-
+use symbol::{FnType, Symbol, SymbolTable, Type};
+use type_infer::InferType;
+mod error; 
+mod scopes;
 mod symbol;
-
+mod type_infer;
 #[derive(Clone)]
 pub struct Module<'a> {
     pub declarations: &'a [Declaration],
     pub module_symbols: HashSet<Symbol>,
+}
+#[allow(non_camel_case_types)]
+struct __debug_hack(String);
+impl std::fmt::Debug for __debug_hack {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
 }
 impl<'a> std::fmt::Debug for Module<'a> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -18,9 +28,11 @@ impl<'a> std::fmt::Debug for Module<'a> {
                 &self
                     .declarations
                     .iter()
-                    .map(|f| match f {
-                        Declaration::Var(var) => format!("var<{}>", var.name.to_string()),
-                        Declaration::Function(f) => format!("fn<{}>", f.name.to_string()),
+                    .map(|f| {
+                        __debug_hack(match f {
+                            Declaration::Var(var) => format!("var<{}>", var.name.to_string()),
+                            Declaration::Function(f) => format!("fn<{}>", f.name.to_string()),
+                        })
                     })
                     .collect::<Vec<_>>(),
             )
@@ -50,8 +62,18 @@ impl<'a> Module<'a> {
     }
 
     fn add_function_to_symbol_table(&mut self, function: &FunctionDeclaration) {
+        let params: Vec<(Type, Ident)> = function
+            .params
+            .iter()
+            .map(|((ty, ident), _)| (ty.infer_type().unwrap(), ident.clone()))
+            .collect();
+
+        let fn_type = FnType {
+            params,
+            return_type: Box::new(function.return_type.ty.infer_type().unwrap()),
+        };
         self.module_symbols.insert(Symbol {
-            symbol_type: Type::Function,
+            symbol_type: Type::Function(fn_type),
             name: function.name.to_string(),
         });
     }

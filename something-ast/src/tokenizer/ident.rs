@@ -2,11 +2,12 @@ use super::prelude::*;
 use std::fmt::Debug;
 use std::fmt::Display;
 
-#[derive(Clone, Eq, Default)]
+#[derive(Clone, Eq, Default, PartialOrd, Ord)]
 pub struct Ident {
     pub name: String,
     pub span: Span,
 }
+
 impl AppendTokens for Ident {
     fn append_tokens(&self, tokens: &mut TokenStream)
     where

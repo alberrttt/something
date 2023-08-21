@@ -325,15 +325,16 @@ dependencies = [
 ]
 
 [[package]]
-name = "something-semantic"
+name = "something-slib"
+version = "0.1.0"
+
+[[package]]
+name = "something-typecheck"
 version = "0.1.0"
 dependencies = [
  "something-ast",
+ "something-common",
 ]
-
-[[package]]
-name = "something-slib"
-version = "0.1.0"
 
 [[package]]
 name = "static_assertions"
