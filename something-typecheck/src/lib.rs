@@ -4,7 +4,7 @@ use std::collections::HashSet;
 use something_ast::{ast::prelude::*, prelude::devprintln};
 use symbol::{FnType, Symbol, SymbolTable, Type};
 use type_infer::InferType;
-mod error; 
+mod error;
 mod scopes;
 mod symbol;
 mod type_infer;
@@ -70,10 +70,10 @@ impl<'a> Module<'a> {
 
         let fn_type = FnType {
             params,
-            return_type: Box::new(function.return_type.ty.infer_type().unwrap()),
+            return_type: function.return_type.ty.infer_type().unwrap(),
         };
         self.module_symbols.insert(Symbol {
-            symbol_type: Type::Function(fn_type),
+            symbol_type: Type::Function(Box::new(fn_type)),
             name: function.name.to_string(),
         });
     }

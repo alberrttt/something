@@ -19,12 +19,12 @@ pub enum Type {
     Bool,
     Void,
     /// TODO, IT PROLLS NEEDS A SUB SYMBOL TABLE
-    Function(FnType),
+    Function(Box<FnType>),
 }
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct FnType {
     pub params: Vec<(Type, Ident)>,
-    pub return_type: Box<Type>,
+    pub return_type: Type,
 }
 impl Debug for FnType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
