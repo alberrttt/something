@@ -23,7 +23,7 @@ pub enum Type {
 }
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct FnType {
-    pub params: Vec<(Type, Ident)>,
+    pub params: Vec<Symbol>,
     pub return_type: Type,
 }
 impl Debug for FnType {
