@@ -1,9 +1,12 @@
 #![feature(associated_type_defaults)]
-use std::collections::{HashMap, HashSet};
+use std::{
+    collections::{HashMap, HashSet},
+    rc::Rc,
+};
 
 use scopes::Scope;
 use something_ast::{ast::prelude::*, prelude::devprintln};
-use symbol::{FnType, Symbol, SymbolTable, Type};
+use symbol::{FnSig, Symbol, SymbolTable, Type};
 use type_infer::{InferLiteralType, InferType};
 mod error;
 mod scopes;
@@ -13,7 +16,7 @@ mod type_infer;
 pub struct Module<'a> {
     pub declarations: &'a [Declaration],
     pub module_symbols: Vec<Symbol>,
-    pub fn_scopes: HashMap<usize, Scope>,
+    pub fn_scopes: Vec<Scope>,
 }
 #[allow(non_camel_case_types)]
 struct __debug_hack(String);
@@ -39,7 +42,7 @@ impl<'a> std::fmt::Debug for Module<'a> {
                     .collect::<Vec<_>>(),
             )
             .field("module_symbols", &self.module_symbols)
-            .field("fn_scopes",  & self.fn_scopes)
+            .field("fn_scopes", &self.fn_scopes)
             .finish()
     }
 }
@@ -48,7 +51,7 @@ impl<'a> Module<'a> {
         Self {
             declarations,
             module_symbols: Vec::new(),
-            fn_scopes: HashMap::new(),
+            fn_scopes: Vec::new(),
         }
     }
 
@@ -69,13 +72,15 @@ impl<'a> Module<'a> {
         let params = function
             .params
             .iter()
-            .map(|((ty, ident), _)| Symbol {
-                symbol_type: ty.infer_literal_type().unwrap(),
-                name: ident.to_string(),
+            .map(|((ty, ident), _)| {
+                Rc::new(Symbol {
+                    symbol_type: ty.infer_literal_type().unwrap(),
+                    name: ident.to_string(),
+                })
             })
             .collect();
 
-        let fn_type = FnType {
+        let fn_type = FnSig {
             params,
             return_type: function.return_type.ty.infer_literal_type().unwrap(),
         };
@@ -84,10 +89,8 @@ impl<'a> Module<'a> {
             symbol_type: Type::Function(Box::new(fn_type.clone())),
             name: function.name.to_string(),
         });
-        self.fn_scopes.insert(
-            self.module_symbols.len() - 1,
-            Scope::create_scope_from_function(function, fn_type),
-        );
+        self.fn_scopes
+            .push(Scope::create_scope_from_function(function, fn_type));
     }
     #[allow(unreachable_code)]
     fn add_variable_to_symbol_table(&mut self, variable: &VariableDeclaration) {
@@ -114,4 +117,14 @@ fn test() {
     let mut module = Module::new(&decls);
     module.populate_symbol_table();
     devprintln!("{:#?}", module);
+}
+mod type_check;
+
+trait FindSymbolHack {
+    fn find_symbol(&self, name: &str) -> Option<&Symbol>;
+}
+impl FindSymbolHack for Vec<Symbol> {
+    fn find_symbol(&self, name: &str) -> Option<&Symbol> {
+        self.iter().find(|s| s.name == name)
+    }
 }

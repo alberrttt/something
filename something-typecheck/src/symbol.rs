@@ -1,4 +1,4 @@
-use std::{collections::HashSet, fmt::Debug};
+use std::{collections::HashSet, fmt::Debug, rc::Rc};
 
 use something_ast::tokenizer::prelude::Ident;
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -19,14 +19,14 @@ pub enum Type {
     Bool,
     Void,
     /// TODO, IT PROLLS NEEDS A SUB SYMBOL TABLE
-    Function(Box<FnType>),
+    Function(Box<FnSig>),
 }
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct FnType {
-    pub params: Vec<Symbol>,
+pub struct FnSig {
+    pub params: Vec<Rc<Symbol>>,
     pub return_type: Type,
 }
-impl Debug for FnType {
+impl Debug for FnSig {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "fn({:?}) -> {:?}", self.params, self.return_type)
     }
