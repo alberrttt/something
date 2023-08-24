@@ -31,7 +31,7 @@ impl Parse for VariableDeclaration {
                     Err(err) => {
                         // recover by consuming all tokens until you reach the last, which is the semicolon
                         loop {
-                            devprintln!("{}", parser.peek()?);
+                            // devprintln!("{}", parser.peek()?);
                             if let Token::Semicolon(_) = parser.peek()? {
                                 parser.advance()?;
                                 break;

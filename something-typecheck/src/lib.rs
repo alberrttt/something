@@ -107,7 +107,7 @@ fn test() {
     let (decls, _): (List<Declaration>, _) = something_ast::ast!(
         "
     fn x(float x, int y) { 
-        let z: float = y + x;
+        let z: float = y + x + a;
     } -> void
     fn a(float b, int c) { 
         let d: float = c + b;
