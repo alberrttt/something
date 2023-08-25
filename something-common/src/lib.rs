@@ -108,7 +108,7 @@ impl<T, E> Result<T, E> {
             Result::Err(_) => false,
         }
     }
-    pub fn is_err(&self) -> bool {
+    pub const fn is_err(&self) -> bool {
         match self {
             Result::Ok(_) => false,
             Result::Recoverable => false,

@@ -18,8 +18,7 @@ impl Debug for Symbol {
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[allow(dead_code)]
 pub enum Type {
-    Int,
-    Float,
+    Number,
     Bool,
     Void,
     /// TODO, IT PROLLS NEEDS A SUB SYMBOL TABLE
@@ -28,8 +27,7 @@ pub enum Type {
 impl Display for Type {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Type::Int => write!(f, "int"),
-            Type::Float => write!(f, "float"),
+            Type::Number => write!(f, "int"),
             Type::Bool => write!(f, "bool"),
             Type::Void => write!(f, "void"),
             Type::Function(sig) => write!(f, "fn({:?}) -> {:?}", sig.params, sig.return_type),

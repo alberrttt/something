@@ -1,4 +1,8 @@
-use std::{collections::HashSet, rc::Rc};
+use std::{
+    cell::{RefCell, UnsafeCell},
+    collections::HashSet,
+    rc::Rc,
+};
 
 use something_ast::{
     ast::{
@@ -22,27 +26,44 @@ pub struct Scope {
     pub symbols: Vec<Rc<Symbol>>,
     pub parent: Option<Rc<Scope>>,
 }
-trait ResolveType<'a> {
+trait CheckType<'a> {
     type With = &'a ();
+    type Against = ();
     type Output = Result<Type, TypeError>;
-    fn resolve_type(&self, with: Self::With) -> Self::Output;
+    fn resolve_type(&self, with: Self::With, against: Self::Against) -> Self::Output;
 }
 
-impl<'a> ResolveType<'a> for Expression {
-    type With = Option<&'a mut Scope>;
-
-    fn resolve_type(&self, mut with: Self::With) -> Self::Output {
+impl<'a> CheckType<'a> for Expression {
+    type With = Option<Rc<RefCell<Scope>>>;
+    type Against = Option<Type>;
+    fn resolve_type(&self, with: Self::With, against: Self::Against) -> Self::Output {
         let tmp = match self {
             Expression::Lit(lit) => lit.infer_literal_type(),
-            Expression::Binary(binary) => todo!(),
+            Expression::Binary(binary) => {
+                // TODO: Probably check if the operator is valid for the types
+                // Also, have a type error like: "Expected X type, but got a binary expression with Y and Z types"
+                let left: Type = binary.left.resolve_type(with.clone(), against.clone())?;
+                let right: Type = binary.right.resolve_type(with.clone(), against)?;
+                if left == right {
+                    Ok(left)
+                } else {
+                    Err(TypeError::Generic(format!(
+                        "Type mismatch: expected {}, found {}",
+                        left, right
+                    )))
+                }
+            }
             Expression::Call(_) => todo!(),
             Expression::Ident(ident) => {
-                if let Some(scope) = &mut with {
+                if let Some(scope) = with {
+                    let scope = scope.borrow();
                     match scope
                         .resolve_symbol(ident.name.as_str())
                         .map(|symbol| symbol.symbol_type.clone())
-                        .ok_or(TypeError::Generic("Symbol not found"))
-                    {
+                        .ok_or(TypeError::Generic(format!(
+                            "Symbol not found, got ident `{}`",
+                            ident.name
+                        ))) {
                         std::result::Result::Ok(ok) => Ok(ok),
                         std::result::Result::Err(err) => Err(err),
                     }
@@ -66,20 +87,25 @@ impl Scope {
     }
     pub fn create_scope_from_function(function: FunctionDeclaration, fn_sig: FnSig) -> Self {
         let mut symbols: Vec<_> = fn_sig.params.to_vec();
-        let mut scope = Self {
+        let mut scope = Rc::new(RefCell::new(Self {
             symbols,
             parent: None,
-        };
+        }));
+
         for stmt in function.body.iter() {
             match stmt {
                 Node::Declaration(decl) => match decl {
                     Declaration::Var(var) => {
-                        let (expr) = var.expression.clone().resolve_type(Some(&mut scope));
+                        let expr: something_common::Result<Type, TypeError> = var
+                            .expression
+                            .clone()
+                            .resolve_type(Some(scope.clone()), None);
+
                         if let Ok(ty) = var.infer_literal_type() {
                             match expr {
                                 Ok(expr) => {
                                     if expr == ty {
-                                        scope.symbols.push(Rc::new(Symbol {
+                                        scope.borrow_mut().symbols.push(Rc::new(Symbol {
                                             name: var.name.to_string(),
                                             symbol_type: { ty },
                                         }));
@@ -97,10 +123,17 @@ impl Scope {
                                 _ => todo!(),
                             }
                         } else {
-                            scope.symbols.push(Rc::new(Symbol {
+                            let symbol = Rc::new(Symbol {
                                 name: var.name.to_string(),
-                                symbol_type: { expr.unwrap() },
-                            }));
+                                symbol_type: match expr {
+                                    Ok(ok) => ok,
+                                    _ => var
+                                        .expression
+                                        .resolve_type(Some(scope.clone()), None)
+                                        .unwrap(),
+                                },
+                            });
+                            scope.borrow_mut().symbols.push(symbol);
                         }
                     }
                     Declaration::Function(_) => todo!(),
@@ -108,6 +141,6 @@ impl Scope {
                 Node::Statement(_) => todo!(),
             }
         }
-        scope
+        Rc::into_inner(scope).unwrap().into_inner()
     }
 }

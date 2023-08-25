@@ -31,7 +31,7 @@ impl InferLiteralType for Expression {
         match self {
             Expression::Lit(literal) => literal.infer_literal_type(),
 
-            _ => panic!(),
+            _ => Recoverable,
         }
     }
 }
@@ -41,7 +41,7 @@ impl InferLiteralType for Literal {
     fn infer_literal_type(&self) -> Self::Output {
         match self.inner {
             something_ast::tokenizer::prelude::lit_impl::Inner::String(_) => todo!(),
-            lit_impl::Inner::Number(_) => Ok(Type::Float),
+            lit_impl::Inner::Number(n) => Ok(Type::Number),
             lit_impl::Inner::Boolean(_) => Ok(Type::Bool),
         }
     }
@@ -49,8 +49,7 @@ impl InferLiteralType for Literal {
 impl InferLiteralType for Ident {
     fn infer_literal_type(&self) -> Self::Output {
         match self.name.as_str() {
-            "int" => Ok(Type::Int),
-            "float" => Ok(Type::Float),
+            "number" => Ok(Type::Number),
             "bool" => Ok(Type::Bool),
             "void" => Ok(Type::Void),
             _ => Err(TypeError::Generic(
@@ -66,10 +65,10 @@ impl InferLiteralType for Ident {
 // try to convert an ident into a type, and add test cases like int, random_string, etc.
 fn test_infer_literal_type() {
     let ident = Ident::from("int");
-    assert_eq!(ident.infer_literal_type().unwrap(), Type::Int);
+    assert_eq!(ident.infer_literal_type().unwrap(), Type::Number);
 
     let ident = Ident::from("float");
-    assert_eq!(ident.infer_literal_type().unwrap(), Type::Float);
+    assert_eq!(ident.infer_literal_type().unwrap(), Type::Number);
 
     let ident = Ident::from("bool");
     assert_eq!(ident.infer_literal_type().unwrap(), Type::Bool);

@@ -106,12 +106,12 @@ impl<'a> Module<'a> {
 fn test() {
     let (decls, _): (List<Declaration>, _) = something_ast::ast!(
         "
-    fn x(float x, int y) { 
-        let z: float = y + x + a;
+    fn x(number x, number y) { 
+        let a: number = 1;
+        let b = true;
+        let z: number = y + x + a + b;
     } -> void
-    fn a(float b, int c) { 
-        let d: float = c + b;
-    } -> void
+
     "
     );
     let mut module = Module::new(&decls);
