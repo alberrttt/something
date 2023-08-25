@@ -10,3 +10,4 @@ edition = "2021"
 
 something-ast = { path = "../something-ast" }
 something-common = { path = "../something-common" }
+colored = "2.0.4"

@@ -1,6 +1,8 @@
 use std::{
     cell::{RefCell, UnsafeCell},
     collections::HashSet,
+    fmt::Debug,
+    marker::PhantomData,
     rc::Rc,
 };
 
@@ -26,8 +28,8 @@ pub struct Scope {
     pub symbols: Vec<Rc<Symbol>>,
     pub parent: Option<Rc<Scope>>,
 }
-trait CheckType<'a> {
-    type With = &'a ();
+pub trait CheckType<'a> {
+    type With = ();
     type Against = ();
     type Output = Result<Type, TypeError>;
     fn resolve_type(&self, with: Self::With, against: Self::Against) -> Self::Output;
@@ -42,15 +44,20 @@ impl<'a> CheckType<'a> for Expression {
             Expression::Binary(binary) => {
                 // TODO: Probably check if the operator is valid for the types
                 // Also, have a type error like: "Expected X type, but got a binary expression with Y and Z types"
+
                 let left: Type = binary.left.resolve_type(with.clone(), against.clone())?;
-                let right: Type = binary.right.resolve_type(with.clone(), against)?;
+                let right: Type = binary.right.resolve_type(with.clone(), against.clone())?;
+                if let Some(against) = against {
+                    if left != against && right != against {}
+                }
                 if left == right {
                     Ok(left)
                 } else {
-                    Err(TypeError::Generic(format!(
-                        "Type mismatch: expected {}, found {}",
-                        left, right
-                    )))
+                    Err(TypeError::MismatchExpressionType(
+                        Expression::Binary(binary.clone()),
+                        None,
+                        right,
+                    ))
                 }
             }
             Expression::Call(_) => todo!(),
@@ -85,13 +92,16 @@ impl Scope {
             .find(|symbol| symbol.name == name)
             .cloned()
     }
-    pub fn create_scope_from_function(function: FunctionDeclaration, fn_sig: FnSig) -> Self {
+    pub fn create_scope_from_function(
+        function: FunctionDeclaration,
+        fn_sig: FnSig,
+    ) -> (Self, Vec<TypeError>) {
         let mut symbols: Vec<_> = fn_sig.params.to_vec();
         let mut scope = Rc::new(RefCell::new(Self {
             symbols,
             parent: None,
         }));
-
+        let mut errors = vec![];
         for stmt in function.body.iter() {
             match stmt {
                 Node::Declaration(decl) => match decl {
@@ -110,11 +120,11 @@ impl Scope {
                                             symbol_type: { ty },
                                         }));
                                     } else {
-                                        devprintln!(
-                                            "Type mismatch: expected {}, found {}",
+                                        errors.push(TypeError::MismatchExpressionType(
+                                            var.expression.clone(),
+                                            Some(expr),
                                             ty,
-                                            expr
-                                        );
+                                        ))
                                     }
                                 }
                                 Err(err) => {
@@ -141,6 +151,6 @@ impl Scope {
                 Node::Statement(_) => todo!(),
             }
         }
-        Rc::into_inner(scope).unwrap().into_inner()
+        (Rc::into_inner(scope).unwrap().into_inner(), errors)
     }
 }

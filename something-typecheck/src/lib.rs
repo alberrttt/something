@@ -89,8 +89,11 @@ impl<'a> Module<'a> {
             symbol_type: Type::Function(Box::new(fn_type.clone())),
             name: function.name.to_string(),
         });
-        self.fn_scopes
-            .push(Scope::create_scope_from_function(function, fn_type));
+        let (scope, errs) = Scope::create_scope_from_function(function, fn_type);
+        errs.iter().rev().for_each(|f| {
+            println!("{}", f);
+        });
+        self.fn_scopes.push(scope);
     }
     #[allow(unreachable_code)]
     fn add_variable_to_symbol_table(&mut self, variable: &VariableDeclaration) {
@@ -107,7 +110,7 @@ fn test() {
     let (decls, _): (List<Declaration>, _) = something_ast::ast!(
         "
     fn x(number x, number y) { 
-        let a: number = 1;
+        let a: bool = 1;
         let b = true;
         let z: number = y + x + a + b;
     } -> void

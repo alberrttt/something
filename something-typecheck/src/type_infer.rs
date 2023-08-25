@@ -64,10 +64,7 @@ impl InferLiteralType for Ident {
 #[test]
 // try to convert an ident into a type, and add test cases like int, random_string, etc.
 fn test_infer_literal_type() {
-    let ident = Ident::from("int");
-    assert_eq!(ident.infer_literal_type().unwrap(), Type::Number);
-
-    let ident = Ident::from("float");
+    let ident = Ident::from("number");
     assert_eq!(ident.infer_literal_type().unwrap(), Type::Number);
 
     let ident = Ident::from("bool");
