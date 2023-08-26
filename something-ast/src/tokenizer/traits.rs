@@ -16,6 +16,16 @@ where
         (**self).append_tokens(tokens)
     }
 }
+pub trait ToTokens {
+    fn to_tokens(&self) -> TokenStream;
+}
+impl<T: AppendTokens> ToTokens for T {
+    fn to_tokens(&self) -> TokenStream {
+        let mut tokens = TokenStream::new();
+        self.append_tokens(&mut tokens);
+        tokens
+    }
+}
 pub trait Parse: ParsingDisplay + std::fmt::Debug {
     fn parse(parser: &mut crate::parser::Parser) -> ParseResult<Self>
     where

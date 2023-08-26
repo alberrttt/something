@@ -16,6 +16,11 @@ pub struct SurroundingTokensPayload {
     pub tokens: TokenStream,
     pub range: Range<u16>,
 }
+impl SurroundingTokensPayload {
+    pub fn new(tokens: TokenStream, range: Range<u16>) -> Self {
+        Self { tokens, range }
+    }
+}
 impl Debug for TypeError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("TypeError")
@@ -40,6 +45,18 @@ impl Clone for TypeError {
 }
 #[allow(non_snake_case)]
 impl TypeError {
+    pub fn IncompatibleBinaryOperation(
+        left: (Expression, Type),
+        right: (Expression, Type),
+    ) -> Self {
+        Self::create(
+            &left.0,
+            TypeErrorKind::IncompatibleBinaryOperation {
+                left: left.clone(),
+                right,
+            },
+        )
+    }
     pub fn MismatchExpressionType(
         expression: Expression,
         infered: Option<Type>,
@@ -82,6 +99,10 @@ impl TypeError {
 pub enum TypeErrorKind {
     Generic(String),
     Mismatch(TypeMismatch),
+    IncompatibleBinaryOperation {
+        left: (Expression, Type),
+        right: (Expression, Type),
+    },
 }
 #[derive(Debug, Clone)]
 pub enum TypeMismatch {
@@ -108,7 +129,7 @@ pub struct ExpectedToken {
 
 impl std::fmt::Display for TypeError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", "Error ".red().bold())?;
+        write!(f, "{}", "error ".red().bold())?;
         let surrounding = self.surrounding.as_ref().unwrap();
         match &self.backtrace {
             Some(b) => {
@@ -128,13 +149,40 @@ impl std::fmt::Display for TypeError {
             Generic(string) => {
                 write!(f, "{}", string)
             }
+            IncompatibleBinaryOperation { left, right } => {
+                // TODO
+                writeln!(
+                    f,
+                    "cannot apply operator to operands of type `{}` and `{}`",
+                    left.1, right.1,
+                )
+            }
             Mismatch(mismatch) => match mismatch {
                 TypeMismatch::ExpressionTypeMismatch((expression, infered_type), expected_type) => {
-                    write!(
+                    let expr_tkns = expression.to_tokens();
+                    let expr_start = expr_tkns.first().unwrap().span().start;
+                    let expr_end = expr_tkns.last().unwrap().span().end;
+                    let surrounding = self.surrounding.as_ref().unwrap();
+                    writeln!(
                         f,
-                        "{}:\n\texpected {expected_type}\n\t `{expression_display}` has type {infered_type}",
-                        "Type mismatch".bright_red().bold(),
-                        expression_display = expression.display(),
+                        "{}: {}",
+                        "type mismatch".bright_red().bold(),
+                        format!("expected `{expected_type}` but got `{infered_type}`").yellow(),
+                    )?;
+                    writeln!(
+                        f,
+                        "{}\t...\n{x}\t{}",
+                        "   |".red(),
+                        surrounding.to_source_string(),
+                        x = format!(" {} |", expr_tkns.first().unwrap().span().line).red()
+                    )?;
+                    writeln!(
+                        f,
+                        "\t{:offset$}{arrow} {}",
+                        "",
+                        format!(" has type {}", infered_type).bright_red().bold(),
+                        offset = expr_start - surrounding.first().unwrap().span().start,
+                        arrow = "^".repeat(expr_end - expr_start).bright_red().bold(),
                     )
                 }
             },

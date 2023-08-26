@@ -11,7 +11,7 @@ use something_ast::{
         prelude::{Declaration, Expression, FunctionDeclaration},
         Node,
     },
-    tokenizer::prelude::Ident,
+    tokenizer::{prelude::Ident, traits::ToTokens},
 };
 
 use crate::{
@@ -47,16 +47,15 @@ impl<'a> CheckType<'a> for Expression {
 
                 let left: Type = binary.left.resolve_type(with.clone(), against.clone())?;
                 let right: Type = binary.right.resolve_type(with.clone(), against.clone())?;
-                if let Some(against) = against {
-                    if left != against && right != against {}
+                if let Some(against) = &against {
+                    if &left != against && &right != against {}
                 }
                 if left == right {
                     Ok(left)
                 } else {
-                    Err(TypeError::MismatchExpressionType(
-                        Expression::Binary(binary.clone()),
-                        None,
-                        right,
+                    Err(TypeError::IncompatibleBinaryOperation(
+                        (*binary.left.to_owned(), left),
+                        (*binary.right.to_owned(), right),
                     ))
                 }
             }
@@ -104,50 +103,52 @@ impl Scope {
         let mut errors = vec![];
         for stmt in function.body.iter() {
             match stmt {
-                Node::Declaration(decl) => match decl {
-                    Declaration::Var(var) => {
-                        let expr: something_common::Result<Type, TypeError> = var
-                            .expression
-                            .clone()
-                            .resolve_type(Some(scope.clone()), None);
+                Node::Declaration(decl) => {
+                    match decl {
+                        Declaration::Var(var) => {
+                            let expr: something_common::Result<Type, TypeError> = var
+                                .expression
+                                .clone()
+                                .resolve_type(Some(scope.clone()), None);
 
-                        if let Ok(ty) = var.infer_literal_type() {
-                            match expr {
-                                Ok(expr) => {
-                                    if expr == ty {
-                                        scope.borrow_mut().symbols.push(Rc::new(Symbol {
-                                            name: var.name.to_string(),
-                                            symbol_type: { ty },
-                                        }));
-                                    } else {
-                                        errors.push(TypeError::MismatchExpressionType(
-                                            var.expression.clone(),
-                                            Some(expr),
-                                            ty,
-                                        ))
+                            if let Ok(ty) = var.infer_literal_type() {
+                                match expr {
+                                    Ok(expr) => {
+                                        if expr == ty {
+                                            scope.borrow_mut().symbols.push(Rc::new(Symbol {
+                                                name: var.name.to_string(),
+                                                symbol_type: { ty },
+                                            }));
+                                        } else {
+                                            errors.push(TypeError {
+                                            surrounding: Some(var.to_tokens()),
+                                            kind: crate::error::TypeErrorKind::Mismatch(crate::error::TypeMismatch::ExpressionTypeMismatch((var.expression.clone(),expr), ty)),
+                                            backtrace: None,
+                                        })
+                                        }
                                     }
+                                    Err(err) => {
+                                        devprintln!("{}", err);
+                                    }
+                                    _ => todo!(),
                                 }
-                                Err(err) => {
-                                    devprintln!("{}", err);
-                                }
-                                _ => todo!(),
+                            } else {
+                                let symbol = Rc::new(Symbol {
+                                    name: var.name.to_string(),
+                                    symbol_type: match expr {
+                                        Ok(ok) => ok,
+                                        _ => var
+                                            .expression
+                                            .resolve_type(Some(scope.clone()), None)
+                                            .unwrap(),
+                                    },
+                                });
+                                scope.borrow_mut().symbols.push(symbol);
                             }
-                        } else {
-                            let symbol = Rc::new(Symbol {
-                                name: var.name.to_string(),
-                                symbol_type: match expr {
-                                    Ok(ok) => ok,
-                                    _ => var
-                                        .expression
-                                        .resolve_type(Some(scope.clone()), None)
-                                        .unwrap(),
-                                },
-                            });
-                            scope.borrow_mut().symbols.push(symbol);
                         }
+                        Declaration::Function(_) => todo!(),
                     }
-                    Declaration::Function(_) => todo!(),
-                },
+                }
                 Node::Statement(_) => todo!(),
             }
         }
