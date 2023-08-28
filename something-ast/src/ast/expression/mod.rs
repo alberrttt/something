@@ -26,7 +26,7 @@ impl AppendTokens for Expression {
             Expression::Lit(lit) => lit.append_tokens(tokens),
             Expression::Binary(binary) => binary.append_tokens(tokens),
             Expression::Call(_) => todo!(),
-            Expression::Ident(_) => todo!(),
+            Expression::Ident(ident) => ident.append_tokens(tokens),
             Expression::Grouping(_) => todo!(),
             Expression::If(_) => todo!(),
             Expression::Block(_) => todo!(),

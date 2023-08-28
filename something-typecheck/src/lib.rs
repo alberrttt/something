@@ -90,7 +90,7 @@ impl<'a> Module<'a> {
             name: function.name.to_string(),
         });
         let (scope, errs) = Scope::create_scope_from_function(function, fn_type);
-        errs.iter().rev().for_each(|f| {
+        errs.iter().for_each(|f| {
             println!("{}", f);
         });
         self.fn_scopes.push(scope);

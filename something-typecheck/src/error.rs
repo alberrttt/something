@@ -45,18 +45,28 @@ impl Clone for TypeError {
 }
 #[allow(non_snake_case)]
 impl TypeError {
+    #[track_caller]
+    pub fn UndefinedIdentifier(ident: Ident, surrounding: TokenStream) -> Self {
+        Self {
+            surrounding: Some(surrounding),
+            kind: TypeErrorKind::UndefinedIdentifier(ident),
+            backtrace: Some(Backtrace::capture()),
+        }
+    }
+    #[track_caller]
     pub fn IncompatibleBinaryOperation(
         left: (Expression, Type),
         right: (Expression, Type),
+        surrounding: TokenStream,
     ) -> Self {
-        Self::create(
-            &left.0,
-            TypeErrorKind::IncompatibleBinaryOperation {
-                left: left.clone(),
-                right,
-            },
-        )
+        Self {
+            surrounding: Some(surrounding),
+            kind: TypeErrorKind::IncompatibleBinaryOperation { left, right },
+
+            backtrace: Some(Backtrace::capture()),
+        }
     }
+    #[track_caller]
     pub fn MismatchExpressionType(
         expression: Expression,
         infered: Option<Type>,
@@ -76,6 +86,7 @@ impl TypeError {
             )),
         )
     }
+    #[track_caller]
     pub fn Generic(msg: impl Into<String>) -> Self {
         Self::create(
             &Token::Eof(Default::default()),
@@ -99,6 +110,7 @@ impl TypeError {
 pub enum TypeErrorKind {
     Generic(String),
     Mismatch(TypeMismatch),
+    UndefinedIdentifier(Ident),
     IncompatibleBinaryOperation {
         left: (Expression, Type),
         right: (Expression, Type),
@@ -126,6 +138,33 @@ pub struct ExpectedToken {
     pub expected: Token,
     pub at: usize, // <- an index to `surrounding`
 }
+// create a macro that adds some formatting to the writeln!
+macro_rules! err_write {
+    (red bold $f:ident, $msg:expr) => {
+        write!($f, "{}", $msg.red().bold())
+    };
+    (red bold $f:ident, $msg:expr, $($args:expr),*) => {
+        write!($f, "{}", format!($msg, $($args),*).red().bold())
+    };
+    (red $f:ident, $msg:expr) => {
+        write!($f, "{}", $msg.red())
+    };
+    (red $f:ident, $msg:expr, $($args:expr),*) => {
+        write!($f, "{}", format!($msg, $($args),*).red())
+    };
+    (yellow $f:ident, $msg:expr) => {
+        write!($f, "{}", $msg.yellow())
+    };
+    (yellow $f:ident, $msg:expr, $($args:expr),*) => {
+        write!($f, "{}", format!($msg, $($args),*).yellow())
+    };
+    ($f:ident, $msg:expr) => {
+        write!($f, "{}", $msg)
+    };
+    ($f:ident, $msg:expr, $($args:expr),*) => {
+        write!($f, "{}", format!($msg, $($args),*))
+    };
+}
 
 impl std::fmt::Display for TypeError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -146,16 +185,52 @@ impl std::fmt::Display for TypeError {
         }
         use TypeErrorKind::*;
         match &self.kind {
+            UndefinedIdentifier(ident) => {
+                writeln!(
+                    f,
+                    "{}: {}",
+                    "undefined identifier".bright_red().bold(),
+                    format!("`{}`", ident.name).yellow(),
+                )?;
+                writeln!(
+                    f,
+                    "{}\t...\n{x}\t{}",
+                    "   |".red(),
+                    surrounding.to_source_string(),
+                    x = format!(" {} |", ident.span.line).red()
+                )?;
+                writeln!(
+                    f,
+                    "\t{:offset$}{arrow} {}",
+                    "",
+                    format!(" undefined identifier `{}`", ident.name)
+                        .bright_red()
+                        .bold(),
+                    offset = ident.span.start - surrounding.first().unwrap().span().start,
+                    arrow = "^"
+                        .repeat(ident.span.end - ident.span.start)
+                        .bright_red()
+                        .bold(),
+                )?;
+            }
             Generic(string) => {
-                write!(f, "{}", string)
+                write!(f, "{}", string)?;
             }
             IncompatibleBinaryOperation { left, right } => {
-                // TODO
                 writeln!(
                     f,
                     "cannot apply operator to operands of type `{}` and `{}`",
                     left.1, right.1,
-                )
+                )?;
+                let line_number = surrounding.0.first().unwrap().span().line;
+
+                writeln!(
+                    f,
+                    "{}\t...\n{x}\t{}",
+                    "   |".red(),
+                    surrounding.to_source_string(),
+                    x = format!(" {} |", line_number).red()
+                )?;
             }
             Mismatch(mismatch) => match mismatch {
                 TypeMismatch::ExpressionTypeMismatch((expression, infered_type), expected_type) => {
@@ -183,10 +258,11 @@ impl std::fmt::Display for TypeError {
                         format!(" has type {}", infered_type).bright_red().bold(),
                         offset = expr_start - surrounding.first().unwrap().span().start,
                         arrow = "^".repeat(expr_end - expr_start).bright_red().bold(),
-                    )
+                    )?;
                 }
             },
         }
+        writeln!(f)
     }
 }
 impl std::error::Error for TypeError {}

@@ -11,7 +11,11 @@ use something_ast::{
         prelude::{Declaration, Expression, FunctionDeclaration},
         Node,
     },
-    tokenizer::{prelude::Ident, traits::ToTokens},
+    tokenizer::{
+        prelude::Ident,
+        traits::{AppendTokens, ToTokens},
+        TokenStream,
+    },
 };
 
 use crate::{
@@ -56,6 +60,7 @@ impl<'a> CheckType<'a> for Expression {
                     Err(TypeError::IncompatibleBinaryOperation(
                         (*binary.left.to_owned(), left),
                         (*binary.right.to_owned(), right),
+                        TokenStream::new(),
                     ))
                 }
             }
@@ -66,10 +71,10 @@ impl<'a> CheckType<'a> for Expression {
                     match scope
                         .resolve_symbol(ident.name.as_str())
                         .map(|symbol| symbol.symbol_type.clone())
-                        .ok_or(TypeError::Generic(format!(
-                            "Symbol not found, got ident `{}`",
-                            ident.name
-                        ))) {
+                        .ok_or(TypeError::UndefinedIdentifier(
+                            ident.clone(),
+                            TokenStream::new(),
+                        )) {
                         std::result::Result::Ok(ok) => Ok(ok),
                         std::result::Result::Err(err) => Err(err),
                     }
@@ -120,15 +125,19 @@ impl Scope {
                                                 symbol_type: { ty },
                                             }));
                                         } else {
-                                            errors.push(TypeError {
-                                            surrounding: Some(var.to_tokens()),
-                                            kind: crate::error::TypeErrorKind::Mismatch(crate::error::TypeMismatch::ExpressionTypeMismatch((var.expression.clone(),expr), ty)),
-                                            backtrace: None,
-                                        })
+                                            errors.push(
+                                                TypeError {
+                                                    surrounding: Some(var.to_tokens()),
+                                                    kind: crate::error::TypeErrorKind::Mismatch(crate::error::TypeMismatch::ExpressionTypeMismatch((var.expression.clone(),expr), ty)),
+                                                    backtrace: None,
+                                                }
+                                            )
                                         }
                                     }
-                                    Err(err) => {
-                                        devprintln!("{}", err);
+                                    Err(mut err) => {
+                                        var.clone()
+                                            .append_tokens(err.surrounding.as_mut().unwrap());
+                                        errors.push(err);
                                     }
                                     _ => todo!(),
                                 }
