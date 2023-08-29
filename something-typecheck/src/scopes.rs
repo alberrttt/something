@@ -1,4 +1,5 @@
 use std::{
+    backtrace::{self, Backtrace},
     cell::{RefCell, UnsafeCell},
     collections::HashSet,
     fmt::Debug,
@@ -21,6 +22,7 @@ use something_ast::{
 use crate::{
     error::TypeError,
     symbol::{FnSig, Symbol, Type},
+    type_check::TypeCheck,
     type_infer::{InferLiteralType, InferType},
 };
 use something_common::{
@@ -100,65 +102,14 @@ impl Scope {
         function: FunctionDeclaration,
         fn_sig: FnSig,
     ) -> (Self, Vec<TypeError>) {
-        let mut symbols: Vec<_> = fn_sig.params.to_vec();
-        let mut scope = Rc::new(RefCell::new(Self {
-            symbols,
+        let scope = Rc::new(RefCell::new(Self {
+            symbols: fn_sig.params.to_vec(),
             parent: None,
         }));
         let mut errors = vec![];
         for stmt in function.body.iter() {
-            match stmt {
-                Node::Declaration(decl) => {
-                    match decl {
-                        Declaration::Var(var) => {
-                            let expr: something_common::Result<Type, TypeError> = var
-                                .expression
-                                .clone()
-                                .resolve_type(Some(scope.clone()), None);
-
-                            if let Ok(ty) = var.infer_literal_type() {
-                                match expr {
-                                    Ok(expr) => {
-                                        if expr == ty {
-                                            scope.borrow_mut().symbols.push(Rc::new(Symbol {
-                                                name: var.name.to_string(),
-                                                symbol_type: { ty },
-                                            }));
-                                        } else {
-                                            errors.push(
-                                                TypeError {
-                                                    surrounding: Some(var.to_tokens()),
-                                                    kind: crate::error::TypeErrorKind::Mismatch(crate::error::TypeMismatch::ExpressionTypeMismatch((var.expression.clone(),expr), ty)),
-                                                    backtrace: None,
-                                                }
-                                            )
-                                        }
-                                    }
-                                    Err(mut err) => {
-                                        var.clone()
-                                            .append_tokens(err.surrounding.as_mut().unwrap());
-                                        errors.push(err);
-                                    }
-                                    _ => todo!(),
-                                }
-                            } else {
-                                let symbol = Rc::new(Symbol {
-                                    name: var.name.to_string(),
-                                    symbol_type: match expr {
-                                        Ok(ok) => ok,
-                                        _ => var
-                                            .expression
-                                            .resolve_type(Some(scope.clone()), None)
-                                            .unwrap(),
-                                    },
-                                });
-                                scope.borrow_mut().symbols.push(symbol);
-                            }
-                        }
-                        Declaration::Function(_) => todo!(),
-                    }
-                }
-                Node::Statement(_) => todo!(),
+            if let Some(err) = stmt.type_check(scope.clone(), None) {
+                errors.push(err);
             }
         }
         (Rc::into_inner(scope).unwrap().into_inner(), errors)

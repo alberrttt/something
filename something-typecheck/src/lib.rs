@@ -12,6 +12,7 @@ mod error;
 mod scopes;
 mod symbol;
 mod type_infer;
+mod typecheck_node;
 #[derive(Clone)]
 pub struct Module<'a> {
     pub declarations: &'a [Declaration],
@@ -99,6 +100,7 @@ impl<'a> Module<'a> {
     fn add_variable_to_symbol_table(&mut self, variable: &VariableDeclaration) {
         // we need to add literal type inference or make use explicit type annotation
         let symbol_type = todo!();
+
         self.module_symbols.push(Symbol {
             name: variable.name.to_string(),
             symbol_type,

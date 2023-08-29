@@ -57,11 +57,16 @@ impl TypeError {
     pub fn IncompatibleBinaryOperation(
         left: (Expression, Type),
         right: (Expression, Type),
+        operator: Operator,
         surrounding: TokenStream,
     ) -> Self {
         Self {
             surrounding: Some(surrounding),
-            kind: TypeErrorKind::IncompatibleBinaryOperation { left, right },
+            kind: TypeErrorKind::IncompatibleBinaryOperation(IncompatibleBinOp {
+                left,
+                right,
+                operator,
+            }),
 
             backtrace: Some(Backtrace::capture()),
         }
@@ -111,10 +116,13 @@ pub enum TypeErrorKind {
     Generic(String),
     Mismatch(TypeMismatch),
     UndefinedIdentifier(Ident),
-    IncompatibleBinaryOperation {
-        left: (Expression, Type),
-        right: (Expression, Type),
-    },
+    IncompatibleBinaryOperation(IncompatibleBinOp),
+}
+#[derive(Debug, Clone)]
+pub struct IncompatibleBinOp {
+    pub left: (Expression, Type),
+    pub right: (Expression, Type),
+    pub operator: Operator,
 }
 #[derive(Debug, Clone)]
 pub enum TypeMismatch {
@@ -168,6 +176,9 @@ macro_rules! err_write {
 
 impl std::fmt::Display for TypeError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if let Some(backtrace) = self.backtrace.as_ref() {
+            writeln!(f, "{}", backtrace)?;
+        }
         write!(f, "{}", "error ".red().bold())?;
         let surrounding = self.surrounding.as_ref().unwrap();
         match &self.backtrace {
@@ -216,7 +227,11 @@ impl std::fmt::Display for TypeError {
             Generic(string) => {
                 write!(f, "{}", string)?;
             }
-            IncompatibleBinaryOperation { left, right } => {
+            IncompatibleBinaryOperation(IncompatibleBinOp {
+                left,
+                right,
+                operator,
+            }) => {
                 writeln!(
                     f,
                     "cannot apply operator to operands of type `{}` and `{}`",
