@@ -1,6 +1,7 @@
 use std::{default, fmt::Display};
 
 use colored::{ColoredString, Colorize};
+use pad::{Alignment, PadStr};
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct Msg {
     pub header: ColoredString,
@@ -54,7 +55,14 @@ impl Msg {
         text_on_margin: ColoredString,
     ) -> Self {
         self.body_margin = self.body_margin.max(text_on_margin.len() as u8 - 1);
-        self.body.push((Some(text_on_margin), body_text));
+        self.body.push((
+            Some(match self.msg_type {
+                MsgType::Info => text_on_margin.bright_blue(),
+                MsgType::Warning => text_on_margin.yellow(),
+                MsgType::Error => text_on_margin.red(),
+            }),
+            body_text,
+        ));
         self
     }
 }
@@ -66,9 +74,9 @@ impl Display for Msg {
             f,
             "{}",
             match self.msg_type {
-                MsgType::Info => "Info: ".bright_blue(),
-                MsgType::Warning => "Warning: ".yellow(),
-                MsgType::Error => "Error: ".red(),
+                MsgType::Info => "info ".bright_blue(),
+                MsgType::Warning => "warning ".yellow(),
+                MsgType::Error => "error ".red(),
             }
             .bold()
         )?;
@@ -78,11 +86,14 @@ impl Display for Msg {
         }
         // TODO
         for (margin, body) in &self.body {
-            if let Some(margin) = margin {
-                writeln!(f, "  {margin} | {body}",)?;
-            } else {
-                writeln!(f, "    | {body}", body = body)?;
+            let red_bar = "|".red().to_string();
+            let margin_text = match margin {
+                Some(margin) => margin.pad_to_width(self.body_margin as usize + 1),
+                None => "".pad_to_width(self.body_margin as usize + 1),
             }
+            .red()
+            .to_string();
+            writeln!(f, "{margin_text} {}\t{body}", red_bar, body = body,)?;
         }
         Ok(())
     }
@@ -92,9 +103,9 @@ impl Display for Msg {
 fn test() {
     let msg = Msg::error()
         .header("Deprecation".into())
-        .subheader(vec!["Version 1.2.3".into(), "testing".into()])
         .push_body("...".into())
         .push_body_w_margin("let var = 134".into(), "1".into())
+        .push_body_w_margin("print(hello world)".into(), "12".into())
         .push_body("...".into());
     println!("{}", msg);
 }

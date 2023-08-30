@@ -1,4 +1,5 @@
 use colored::Colorize;
+use something_common::msg::Msg;
 
 use crate::ast::prelude::*;
 use crate::scopes::CheckType;
@@ -197,6 +198,9 @@ impl std::fmt::Display for TypeError {
         use TypeErrorKind::*;
         match &self.kind {
             UndefinedIdentifier(ident) => {
+                let msg = Msg::error();
+                let msg = msg.header("undefined identifier".into());
+
                 writeln!(
                     f,
                     "{}: {}",
