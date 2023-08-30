@@ -56,17 +56,6 @@ mod punctuated {
     use something_ast::tokenizer::{prelude::*, Tokenizer};
 
     #[test]
-    fn punctuated_terminating_test() {
-        let mut tokens = something_ast::Parser::new(
-            "binary",
-            include_str!("../cases/punctuated_terminating.txt"),
-        );
-        dbg!(tokens.peek());
-        let tmp = Punctuated::<Literal, token::Comma>::parse_terminated(&mut tokens).unwrap();
-        dbg!(&tmp);
-        devprintln!("{}", tmp.display());
-    }
-    #[test]
     fn punctuated_trailing_test() {
         let mut tokens =
             something_ast::Parser::new("binary", include_str!("../cases/punctuated_trailing.txt"));

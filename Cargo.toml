@@ -4,6 +4,5 @@ members = [
     "something-dev-tools",
     "something-ast",
     "something-typecheck",
-    "something-slib",
     "something-common",
 ]

@@ -281,6 +281,9 @@ dependencies = [
 [[package]]
 name = "something-common"
 version = "0.1.0"
+dependencies = [
+ "colored",
+]
 
 [[package]]
 name = "something-dev-tools"
@@ -298,10 +301,6 @@ dependencies = [
  "colored",
  "something-ast",
 ]
-
-[[package]]
-name = "something-slib"
-version = "0.1.0"
 
 [[package]]
 name = "something-typecheck"

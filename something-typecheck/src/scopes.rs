@@ -62,6 +62,7 @@ impl<'a> CheckType<'a> for Expression {
                     Err(TypeError::IncompatibleBinaryOperation(
                         (*binary.left.to_owned(), left),
                         (*binary.right.to_owned(), right),
+                        binary.operator.clone(),
                         TokenStream::new(),
                     ))
                 }
