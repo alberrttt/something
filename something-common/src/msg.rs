@@ -37,16 +37,16 @@ impl Msg {
             ..Default::default()
         }
     }
-    pub fn header(mut self, header: ColoredString) -> Self {
-        self.header = header;
+    pub fn header(mut self, header: impl Into<ColoredString>) -> Self {
+        self.header = header.into();
         self
     }
     pub fn subheader(mut self, subheader: Vec<ColoredString>) -> Self {
         self.subheader = subheader;
         self
     }
-    pub fn push_body(mut self, body: ColoredString) -> Self {
-        self.body.push((None, body));
+    pub fn push_body(mut self, body: impl Into<ColoredString>) -> Self {
+        self.body.push((None, body.into()));
         self
     }
     pub fn push_body_w_margin(
@@ -85,15 +85,17 @@ impl Display for Msg {
             writeln!(f, "{}{subheader}", "--> note: ".bright_cyan().bold())?;
         }
         // TODO
+        writeln!(f);
         for (margin, body) in &self.body {
             let red_bar = "|".red().to_string();
             let margin_text = match margin {
-                Some(margin) => margin.pad_to_width(self.body_margin as usize + 1),
+                Some(margin) => margin
+                    .pad_to_width_with_alignment(self.body_margin as usize + 1, Alignment::Right),
                 None => "".pad_to_width(self.body_margin as usize + 1),
             }
             .red()
             .to_string();
-            writeln!(f, "{margin_text} {}\t{body}", red_bar, body = body,)?;
+            writeln!(f, " {margin_text} {}\t{body}", red_bar, body = body,)?;
         }
         Ok(())
     }
@@ -102,10 +104,11 @@ impl Display for Msg {
 #[test]
 fn test() {
     let msg = Msg::error()
-        .header("Deprecation".into())
-        .push_body("...".into())
+        .header("Deprecation")
+        .push_body("...")
         .push_body_w_margin("let var = 134".into(), "1".into())
         .push_body_w_margin("print(hello world)".into(), "12".into())
-        .push_body("...".into());
+        .push_body_w_margin("print(hello world)".into(), "1233".into())
+        .push_body("...");
     println!("{}", msg);
 }

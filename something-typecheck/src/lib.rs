@@ -112,7 +112,7 @@ fn test() {
     let (decls, _): (List<Declaration>, _) = something_ast::ast!(
         "
     fn x(number x, number y) { 
-        let a: bool = 1;
+        let a: bool = 133;
         let b = true;
         let z: number = y + x + a + b;
     } -> void

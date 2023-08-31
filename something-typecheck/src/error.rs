@@ -1,4 +1,4 @@
-use colored::Colorize;
+use colored::{ColoredString, Colorize};
 use something_common::msg::Msg;
 
 use crate::ast::prelude::*;
@@ -180,7 +180,6 @@ impl std::fmt::Display for TypeError {
         if let Some(backtrace) = self.backtrace.as_ref() {
             writeln!(f, "{}", backtrace)?;
         }
-        write!(f, "{}", "error ".red().bold())?;
         let surrounding = self.surrounding.as_ref().unwrap();
         match &self.backtrace {
             Some(b) => {
@@ -199,7 +198,7 @@ impl std::fmt::Display for TypeError {
         match &self.kind {
             UndefinedIdentifier(ident) => {
                 let msg = Msg::error();
-                let msg = msg.header("undefined identifier".into());
+                let msg = msg.header("undefined identifier");
 
                 writeln!(
                     f,
@@ -236,20 +235,55 @@ impl std::fmt::Display for TypeError {
                 right,
                 operator,
             }) => {
-                writeln!(
-                    f,
-                    "cannot apply operator to operands of type `{}` and `{}`",
-                    left.1, right.1,
-                )?;
-                let line_number = surrounding.0.first().unwrap().span().line;
+                let right_tkns = right.0.to_tokens();
+                let right_start = right_tkns.first().unwrap().span().start;
+                let right_end = right_tkns.last().unwrap().span().end;
 
-                writeln!(
-                    f,
-                    "{}\t...\n{x}\t{}",
-                    "   |".red(),
-                    surrounding.to_source_string(),
-                    x = format!(" {} |", line_number).red()
-                )?;
+                let left_tkns = left.0.to_tokens();
+                let left_start = left_tkns.first().unwrap().span().start;
+                let left_end = left_tkns.last().unwrap().span().end;
+
+                let surrounding = self.surrounding.as_ref().unwrap();
+                let line_number = surrounding.0.first().unwrap().span().line;
+                let before_offset = left_start - (surrounding.first().unwrap().span().start + 4);
+                let msg = Msg::error()
+                    .header(
+                        format!(
+                            "cannot apply operator to operands of type `{}` and `{}`",
+                            left.1, right.1
+                        )
+                        .yellow(),
+                    )
+                    .push_body("...")
+                    .push_body_w_margin(
+                        ColoredString::from(surrounding.to_source_string().as_ref()),
+                        ColoredString::from(line_number.to_string().as_ref()),
+                    )
+                    .push_body(ColoredString::from(
+                        format!(
+                            "\t{:before_offset$}{}{:offset$}{arrow} {msg}",
+                            "",
+                            "|".red(),
+                            "",
+                            before_offset = before_offset,
+                            offset = right_end - (left_end + 1),
+                            arrow = "^".repeat(right_end - (right_start)).bright_red().bold(),
+                            msg = format!(" has type `{}`", right.1).bright_red().bold(),
+                        )
+                        .as_ref(),
+                    ))
+                    .push_body(
+                        format!(
+                            "\t{:before_offset$}{} has type `{}`",
+                            "",
+                            "|".red(),
+                            left.1,
+                            before_offset = before_offset
+                        )
+                        .red()
+                        ,
+                    );
+                write!(f, "{}", msg)?;
             }
             Mismatch(mismatch) => match mismatch {
                 TypeMismatch::ExpressionTypeMismatch((expression, infered_type), expected_type) => {
@@ -257,27 +291,39 @@ impl std::fmt::Display for TypeError {
                     let expr_start = expr_tkns.first().unwrap().span().start;
                     let expr_end = expr_tkns.last().unwrap().span().end;
                     let surrounding = self.surrounding.as_ref().unwrap();
-                    writeln!(
-                        f,
-                        "{}: {}",
-                        "type mismatch".bright_red().bold(),
-                        format!("expected `{expected_type}` but got `{infered_type}`").yellow(),
-                    )?;
-                    writeln!(
-                        f,
-                        "{}\t...\n{x}\t{}",
-                        "   |".red(),
-                        surrounding.to_source_string(),
-                        x = format!(" {} |", expr_tkns.first().unwrap().span().line).red()
-                    )?;
-                    writeln!(
-                        f,
-                        "\t{:offset$}{arrow} {}",
-                        "",
-                        format!(" has type {}", infered_type).bright_red().bold(),
-                        offset = expr_start - surrounding.first().unwrap().span().start,
-                        arrow = "^".repeat(expr_end - expr_start).bright_red().bold(),
-                    )?;
+                    let msg = Msg::error()
+                        .header(
+                            format!(
+                                "{} expected `{expected_type}` but got `{infered_type}`",
+                                "type mismatch".bright_red().bold()
+                            )
+                            .yellow(),
+                        )
+                        .push_body("...")
+                        .push_body_w_margin(
+                            surrounding.to_source_string().white().clear(),
+                            expr_tkns
+                                .first()
+                                .unwrap()
+                                .span()
+                                .line_start
+                                .to_string()
+                                .white()
+                                .clear(),
+                        )
+                        .push_body(
+                            format!(
+                                "\t{:offset$}{arrow} {}",
+                                "",
+                                format!(" has type {}", infered_type).bright_red().bold(),
+                                offset =
+                                    expr_start - (surrounding.first().unwrap().span().start + 8),
+                                arrow = "^".repeat(expr_end - expr_start).bright_red().bold()
+                            )
+                            .white(),
+                        );
+
+                    write!(f, "{}", msg)?;
                 }
             },
         }
