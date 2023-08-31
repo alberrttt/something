@@ -114,7 +114,7 @@ fn test() {
     fn x(number x, number y) { 
         let a: bool = 133;
         let b = true;
-        let z: number = y + x + a + b;
+        let z: number = y + b;
     } -> void
 
     "

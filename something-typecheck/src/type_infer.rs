@@ -41,8 +41,9 @@ impl InferLiteralType for Literal {
     fn infer_literal_type(&self) -> Self::Output {
         match self.inner {
             something_ast::tokenizer::prelude::lit_impl::Inner::String(_) => todo!(),
-            lit_impl::Inner::Number(n) => Ok(Type::Number),
+            lit_impl::Inner::Float(n) => Ok(Type::Number),
             lit_impl::Inner::Boolean(_) => Ok(Type::Bool),
+            lit_impl::Inner::Integer(i) => Ok(Type::Number),
         }
     }
 }

@@ -178,7 +178,7 @@ macro_rules! err_write {
 impl std::fmt::Display for TypeError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if let Some(backtrace) = self.backtrace.as_ref() {
-            writeln!(f, "{}", backtrace)?;
+            // writeln!(f, "{}", backtrace)?;
         }
         let surrounding = self.surrounding.as_ref().unwrap();
         match &self.backtrace {
@@ -235,6 +235,7 @@ impl std::fmt::Display for TypeError {
                 right,
                 operator,
             }) => {
+                dbg!(left, right, operator);
                 let right_tkns = right.0.to_tokens();
                 let right_start = right_tkns.first().unwrap().span().start;
                 let right_end = right_tkns.last().unwrap().span().end;
@@ -245,7 +246,7 @@ impl std::fmt::Display for TypeError {
 
                 let surrounding = self.surrounding.as_ref().unwrap();
                 let line_number = surrounding.0.first().unwrap().span().line;
-                let before_offset = left_start - (surrounding.first().unwrap().span().start + 4);
+                let before_offset = left_start - (surrounding.first().unwrap().span().start);
                 let msg = Msg::error()
                     .header(
                         format!(
@@ -261,7 +262,7 @@ impl std::fmt::Display for TypeError {
                     )
                     .push_body(ColoredString::from(
                         format!(
-                            "\t{:before_offset$}{}{:offset$}{arrow} {msg}",
+                            "{:before_offset$}{}{:offset$}{arrow} {msg}",
                             "",
                             "|".red(),
                             "",
@@ -274,14 +275,13 @@ impl std::fmt::Display for TypeError {
                     ))
                     .push_body(
                         format!(
-                            "\t{:before_offset$}{} has type `{}`",
+                            "{:before_offset$}{} has type `{}`",
                             "",
                             "|".red(),
                             left.1,
                             before_offset = before_offset
                         )
-                        .red()
-                        ,
+                        .red(),
                     );
                 write!(f, "{}", msg)?;
             }

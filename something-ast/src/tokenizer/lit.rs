@@ -29,9 +29,11 @@ impl ParsingDisplay for Literal {
         let mut f = String::new();
         match &self.inner {
             lit_impl::Inner::String(s) => write!(f, "\"{}\"", s),
-            lit_impl::Inner::Number(n) => write!(f, "{}", n),
+            lit_impl::Inner::Float(n) => write!(f, "{}", n),
             lit_impl::Inner::Boolean(b) => write!(f, "{}", b),
-        };
+            lit_impl::Inner::Integer(i) => write!(f, "{}", i),
+        }
+        .expect("failed");
         f
     }
 
@@ -65,7 +67,7 @@ impl Literal {
     pub fn new_num(span: Span, num: f64) -> Self {
         Literal {
             span,
-            inner: lit_impl::Inner::Number(num),
+            inner: lit_impl::Inner::Float(num),
         }
     }
     pub fn new_bool(span: Span, bool: bool) -> Self {
@@ -80,8 +82,9 @@ impl Display for Literal {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match &self.inner {
             lit_impl::Inner::String(s) => write!(f, "{}", s),
-            lit_impl::Inner::Number(n) => write!(f, "{}", n),
+            lit_impl::Inner::Float(n) => write!(f, "{}", n),
             lit_impl::Inner::Boolean(b) => write!(f, "{}", b),
+            lit_impl::Inner::Integer(i) => write!(f, "{}", i),
         }
     }
 }
@@ -89,7 +92,8 @@ pub mod lit_impl {
     #[derive(Debug, Clone, PartialEq, PartialOrd)]
     pub enum Inner {
         String(String),
-        Number(f64),
+        Float(f64),
+        Integer(i64),
         Boolean(bool),
     }
     impl Default for Inner {
