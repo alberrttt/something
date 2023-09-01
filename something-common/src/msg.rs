@@ -82,18 +82,19 @@ impl Display for Msg {
         )?;
         writeln!(f, "{tmp}")?;
         for subheader in &self.subheader {
-            writeln!(f, "{}{subheader}", "--> note: ".bright_cyan().bold())?;
+            writeln!(f, "{}{subheader}", "--> note: ".bright_blue().bold())?;
         }
         // TODO
         writeln!(f);
         for (margin, body) in &self.body {
-            let red_bar = "|".red().to_string();
+            let red_bar = "|".bright_blue().to_string();
             let margin_text = match margin {
                 Some(margin) => margin
                     .pad_to_width_with_alignment(self.body_margin as usize + 1, Alignment::Right),
                 None => "".pad_to_width(self.body_margin as usize + 1),
             }
-            .red()
+            .bright_blue()
+            .bold()
             .to_string();
             writeln!(f, " {margin_text} {}\t{body}", red_bar, body = body,)?;
         }

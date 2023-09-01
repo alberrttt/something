@@ -1,17 +1,14 @@
 use std::{backtrace::Backtrace, cell::RefCell, rc::Rc};
 
 use crate::{
-    error::TypeError,
+    error::{TypeError, TypeErrorKind, TypeMismatch},
     scopes::CheckType,
     symbol::{Symbol, Type},
     type_check::TypeCheck,
     type_infer::InferLiteralType,
 };
 use something_ast::{
-    ast::{
-        prelude::{Declaration, VariableDeclaration},
-        Node,
-    },
+    ast::{expression, prelude::Declaration, Node},
     tokenizer::traits::AppendTokens,
 };
 use something_common::Result::{self, *};
@@ -46,8 +43,8 @@ impl TypeCheck for Node {
                                         }));
                                         return Some(TypeError {
                                         surrounding: Some(something_ast::tokenizer::traits::ToTokens::to_tokens(var)),
-                                        kind: crate::error::TypeErrorKind::Mismatch(
-                                            crate::error::TypeMismatch::ExpressionTypeMismatch(
+                                        kind: TypeErrorKind::Mismatch(
+TypeMismatch::ExpressionTypeMismatch(
                                                 (var.expression.clone(), expr),
                                                 ty,
                                             ),
@@ -81,7 +78,10 @@ impl TypeCheck for Node {
                     Declaration::Function(_) => todo!(),
                 }
             }
-            Node::Statement(_) => todo!(),
+            Node::Statement(stmt) => match stmt {
+                something_ast::ast::statement::Statement::Expression(expression) => todo!(),
+                something_ast::ast::statement::Statement::Return(_) => todo!(),
+            },
         }
     }
 }

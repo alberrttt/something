@@ -16,7 +16,7 @@ mod typecheck_node;
 #[derive(Clone)]
 pub struct Module<'a> {
     pub declarations: &'a [Declaration],
-    pub module_symbols: Vec<Symbol>,
+    pub module_symbols: Vec<Rc<Symbol>>,
     pub fn_scopes: Vec<Scope>,
 }
 #[allow(non_camel_case_types)]
@@ -70,27 +70,27 @@ impl<'a> Module<'a> {
     }
 
     fn add_function_to_symbol_table(&mut self, function: FunctionDeclaration) {
-        let params = function
-            .params
-            .iter()
-            .map(|((ty, ident), _)| {
-                Rc::new(Symbol {
-                    symbol_type: ty.infer_literal_type().unwrap(),
-                    name: ident.to_string(),
-                })
-            })
-            .collect();
+        let mut params: Vec<Rc<Symbol>> = Vec::new();
+        function.params.iter().for_each(|((ty, ident), _)| {
+            params.push(Rc::new(Symbol {
+                symbol_type: ty.infer_literal_type().unwrap(),
+                name: ident.to_string(),
+            }))
+        });
 
         let fn_type = FnSig {
             params,
             return_type: function.return_type.ty.infer_literal_type().unwrap(),
         };
 
-        self.module_symbols.push(Symbol {
-            symbol_type: Type::Function(Box::new(fn_type.clone())),
-            name: function.name.to_string(),
-        });
-        let (scope, errs) = Scope::create_scope_from_function(function, fn_type);
+        self.module_symbols.push(
+            Symbol {
+                symbol_type: Type::Function(Box::new(fn_type.clone())),
+                name: function.name.to_string(),
+            }
+            .into(),
+        );
+        let (scope, errs) = Scope::create_scope_from_function(self, function, fn_type);
         errs.iter().for_each(|f| {
             println!("{}", f);
         });
@@ -101,10 +101,13 @@ impl<'a> Module<'a> {
         // we need to add literal type inference or make use explicit type annotation
         let symbol_type = todo!();
 
-        self.module_symbols.push(Symbol {
-            name: variable.name.to_string(),
-            symbol_type,
-        });
+        self.module_symbols.push(
+            Symbol {
+                name: variable.name.to_string(),
+                symbol_type,
+            }
+            .into(),
+        );
     }
 }
 #[test]
@@ -133,3 +136,4 @@ impl FindSymbolHack for Vec<Symbol> {
         self.iter().find(|s| s.name == name)
     }
 }
+mod tests;

@@ -198,34 +198,35 @@ impl std::fmt::Display for TypeError {
         match &self.kind {
             UndefinedIdentifier(ident) => {
                 let msg = Msg::error();
-                let msg = msg.header("undefined identifier");
-
-                writeln!(
-                    f,
-                    "{}: {}",
-                    "undefined identifier".bright_red().bold(),
-                    format!("`{}`", ident.name).yellow(),
-                )?;
-                writeln!(
-                    f,
-                    "{}\t...\n{x}\t{}",
-                    "   |".red(),
-                    surrounding.to_source_string(),
-                    x = format!(" {} |", ident.span.line).red()
-                )?;
-                writeln!(
-                    f,
-                    "\t{:offset$}{arrow} {}",
-                    "",
-                    format!(" undefined identifier `{}`", ident.name)
-                        .bright_red()
-                        .bold(),
-                    offset = ident.span.start - surrounding.first().unwrap().span().start,
-                    arrow = "^"
-                        .repeat(ident.span.end - ident.span.start)
-                        .bright_red()
-                        .bold(),
-                )?;
+                let msg = msg
+                    .header(
+                        format!(
+                            "undefined identifier: {}",
+                            format!("`{}`", ident.name).yellow()
+                        )
+                        .as_ref(),
+                    )
+                    .push_body("...")
+                    .push_body_w_margin(
+                        ColoredString::from(surrounding.to_source_string().as_ref()),
+                        ColoredString::from(ident.span.line.to_string().as_ref()),
+                    )
+                    .push_body(ColoredString::from(
+                        format!(
+                            "{:offset$}{arrow} {}",
+                            "",
+                            format!(" undefined identifier `{}`", ident.name)
+                                .bright_red()
+                                .bold(),
+                            offset = ident.span.start - surrounding.first().unwrap().span().start,
+                            arrow = "^"
+                                .repeat(ident.span.end - ident.span.start)
+                                .bright_red()
+                                .bold(),
+                        )
+                        .as_ref(),
+                    ));
+                write!(f, "{msg}").unwrap();
             }
             Generic(string) => {
                 write!(f, "{}", string)?;
@@ -235,7 +236,6 @@ impl std::fmt::Display for TypeError {
                 right,
                 operator,
             }) => {
-                dbg!(left, right, operator);
                 let right_tkns = right.0.to_tokens();
                 let right_start = right_tkns.first().unwrap().span().start;
                 let right_end = right_tkns.last().unwrap().span().end;
@@ -283,6 +283,7 @@ impl std::fmt::Display for TypeError {
                         )
                         .red(),
                     );
+
                 write!(f, "{}", msg)?;
             }
             Mismatch(mismatch) => match mismatch {

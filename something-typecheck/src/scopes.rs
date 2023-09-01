@@ -24,6 +24,7 @@ use crate::{
     symbol::{FnSig, Symbol, Type},
     type_check::TypeCheck,
     type_infer::{InferLiteralType, InferType},
+    Module,
 };
 use something_common::{
     devprintln,
@@ -100,11 +101,22 @@ impl Scope {
             .cloned()
     }
     pub fn create_scope_from_function(
+        module: &mut Module,
         function: FunctionDeclaration,
         fn_sig: FnSig,
     ) -> (Self, Vec<TypeError>) {
+        let mut symbols = fn_sig.params.to_vec();
+        // todo: there might be functions beneath this one, which we are unaware of
+        // solution: first iterate and get the fn sig for every function, withotu checking its body
+        // then we can add it to the module symbols,
+        // and when we finaly get to it, we can check the body.
+
+        for symbol in &module.module_symbols {
+            dbg!(symbol);
+            symbols.push(symbol.clone());
+        }
         let scope = Rc::new(RefCell::new(Self {
-            symbols: fn_sig.params.to_vec(),
+            symbols,
             parent: None,
         }));
         let mut errors = vec![];
