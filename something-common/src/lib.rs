@@ -86,6 +86,13 @@ where
 }
 
 impl<T, E> Result<T, E> {
+    pub fn unwrap_or(self, default: T) -> T {
+        match self {
+            Result::Ok(ok) => ok,
+            Result::Recoverable => default,
+            Result::Err(_) => default,
+        }
+    }
     #[track_caller]
     pub fn unwrap(self) -> T
     where

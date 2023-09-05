@@ -38,6 +38,7 @@ impl Display for Type {
 pub struct FnSig {
     pub params: Vec<Rc<Symbol>>,
     pub return_type: Type,
+    
 }
 impl Debug for FnSig {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {

@@ -90,7 +90,7 @@ impl<'a> Module<'a> {
             }
             .into(),
         );
-        let (scope, errs) = Scope::create_scope_from_function(self, function, fn_type);
+        let (scope, errs) = Scope::create_scope_from_function(self, function, Rc::new(fn_type));
         errs.iter().for_each(|f| {
             println!("{}", f);
         });
@@ -118,7 +118,8 @@ fn test() {
         let a: bool = 133;
         let b = true;
         let z: number = y + b;
-    } -> void
+
+    } -> number
 
     "
     );
@@ -126,8 +127,8 @@ fn test() {
     module.populate_symbol_table();
     devprintln!("{:#?}", module);
 }
+mod control_flow;
 mod type_check;
-
 trait FindSymbolHack {
     fn find_symbol(&self, name: &str) -> Option<&Symbol>;
 }

@@ -103,7 +103,7 @@ impl Scope {
     pub fn create_scope_from_function(
         module: &mut Module,
         function: FunctionDeclaration,
-        fn_sig: FnSig,
+        fn_sig: Rc<FnSig>,
     ) -> (Self, Vec<TypeError>) {
         let mut symbols = fn_sig.params.to_vec();
         // todo: there might be functions beneath this one, which we are unaware of
@@ -121,7 +121,7 @@ impl Scope {
         }));
         let mut errors = vec![];
         for stmt in function.body.iter() {
-            if let Some(err) = stmt.type_check(scope.clone(), None) {
+            if let Some(err) = stmt.type_check(scope.clone(), Some(fn_sig.clone())) {
                 errors.push(err);
             }
         }

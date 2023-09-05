@@ -55,6 +55,18 @@ impl TypeError {
         }
     }
     #[track_caller]
+    pub fn InvalidReturnType(
+        expected: Type,
+        got: (Type, TokenStream),
+        surrounding: TokenStream,
+    ) -> Self {
+        Self {
+            surrounding: Some(surrounding),
+            kind: TypeErrorKind::InvalidReturnType { expected, got },
+            backtrace: Some(Backtrace::capture()),
+        }
+    }
+    #[track_caller]
     pub fn IncompatibleBinaryOperation(
         left: (Expression, Type),
         right: (Expression, Type),
@@ -118,6 +130,10 @@ pub enum TypeErrorKind {
     Mismatch(TypeMismatch),
     UndefinedIdentifier(Ident),
     IncompatibleBinaryOperation(IncompatibleBinOp),
+    InvalidReturnType {
+        expected: Type,
+        got: (Type, TokenStream),
+    },
 }
 #[derive(Debug, Clone)]
 pub struct IncompatibleBinOp {
@@ -327,6 +343,43 @@ impl std::fmt::Display for TypeError {
                     write!(f, "{}", msg)?;
                 }
             },
+            InvalidReturnType { expected, got } => {
+                let arrow_start = got.1.first().unwrap().span().start;
+                let arrow_end = got.1.last().unwrap().span().end;
+
+                let surrounding_start = surrounding.first().unwrap().span().start;
+                let offset = arrow_start - surrounding_start;
+
+                let msg = Msg::error()
+                    .header(
+                        format!("expected return type `{}` but got `{}`", expected, got.0).yellow(),
+                    )
+                    .push_body("...")
+                    .push_body_w_margin(
+                        ColoredString::from(surrounding.to_source_string().as_ref()),
+                        ColoredString::from(
+                            surrounding
+                                .first()
+                                .unwrap()
+                                .span()
+                                .line
+                                .to_string()
+                                .as_ref(),
+                        ),
+                    )
+                    .push_body(
+                        format!(
+                            "{:offset$}{arrow} has type `{}`",
+                            "",
+                            got.0,
+                            offset = offset,
+                            arrow = "^".repeat(arrow_end - arrow_start).bright_red(),
+                        )
+                        .red(),
+                    );
+
+                write!(f, "{msg}")?;
+            }
         }
         writeln!(f)
     }
