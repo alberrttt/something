@@ -11,8 +11,8 @@ use type_infer::{InferLiteralType, InferType};
 mod error;
 mod scopes;
 mod symbol;
+mod type_check;
 mod type_infer;
-mod typecheck_node;
 #[derive(Clone)]
 pub struct Module<'a> {
     pub declarations: &'a [Declaration],
@@ -114,11 +114,10 @@ impl<'a> Module<'a> {
 fn test() {
     let (decls, _): (List<Declaration>, _) = something_ast::ast!(
         "
-    fn x(number x, number y) { 
+    fn x( number y) { 
         let a: bool = 133;
         let b = true;
-        let z: number = y + b;
-
+        let zzz: number = x;
     } -> number
 
     "
@@ -128,7 +127,6 @@ fn test() {
     devprintln!("{:#?}", module);
 }
 mod control_flow;
-mod type_check;
 trait FindSymbolHack {
     fn find_symbol(&self, name: &str) -> Option<&Symbol>;
 }

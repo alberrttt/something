@@ -97,6 +97,7 @@ impl Scope {
     pub fn resolve_symbol(&self, name: &str) -> Option<Rc<Symbol>> {
         self.symbols
             .iter()
+            .rev()
             .find(|symbol| symbol.name == name)
             .cloned()
     }
@@ -105,13 +106,13 @@ impl Scope {
         function: FunctionDeclaration,
         fn_sig: Rc<FnSig>,
     ) -> (Self, Vec<TypeError>) {
-        let mut symbols = fn_sig.params.to_vec();
+        let mut symbols = Vec::new();
         // todo: there might be functions beneath this one, which we are unaware of
         // solution: first iterate and get the fn sig for every function, withotu checking its body
         // then we can add it to the module symbols,
         // and when we finaly get to it, we can check the body.
 
-        for symbol in &module.module_symbols {
+        for symbol in module.module_symbols.iter().chain(fn_sig.params.iter()) {
             dbg!(symbol);
             symbols.push(symbol.clone());
         }

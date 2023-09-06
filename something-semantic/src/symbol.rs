@@ -30,7 +30,15 @@ impl Display for Type {
             Type::Number => write!(f, "number"),
             Type::Bool => write!(f, "bool"),
             Type::Void => write!(f, "void"),
-            Type::Function(sig) => write!(f, "fn({:?}) -> {:?}", sig.params, sig.return_type),
+            Type::Function(sig) => {
+                let params = sig
+                    .params
+                    .iter()
+                    .map(|s| s.symbol_type.to_string())
+                    .collect::<Vec<String>>()
+                    .join(" ");
+                write!(f, "fn({}) -> {}", params, sig.return_type)
+            }
         }
     }
 }
@@ -38,7 +46,6 @@ impl Display for Type {
 pub struct FnSig {
     pub params: Vec<Rc<Symbol>>,
     pub return_type: Type,
-    
 }
 impl Debug for FnSig {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {

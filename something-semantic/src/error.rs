@@ -330,11 +330,11 @@ impl std::fmt::Display for TypeError {
                         )
                         .push_body(
                             format!(
-                                "\t{:offset$}{arrow} {}",
+                                "{:offset$}{arrow} {}",
                                 "",
                                 format!(" has type {}", infered_type).bright_red().bold(),
                                 offset =
-                                    expr_start - (surrounding.first().unwrap().span().start + 8),
+                                    expr_start - (surrounding.first().unwrap().span().start ),
                                 arrow = "^".repeat(expr_end - expr_start).bright_red().bold()
                             )
                             .white(),
