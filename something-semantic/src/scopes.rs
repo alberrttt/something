@@ -113,7 +113,6 @@ impl Scope {
         // and when we finaly get to it, we can check the body.
 
         for symbol in module.module_symbols.iter().chain(fn_sig.params.iter()) {
-            dbg!(symbol);
             symbols.push(symbol.clone());
         }
         let scope = Rc::new(RefCell::new(Self {

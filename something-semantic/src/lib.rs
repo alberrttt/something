@@ -114,12 +114,12 @@ impl<'a> Module<'a> {
 fn test() {
     let (decls, _): (List<Declaration>, _) = something_ast::ast!(
         "
-    fn x( number y) { 
-        let a: bool = 133;
-        let b = true;
-        let zzz: number = x;
+    fn x(number y) { 
+        let x = true;
+        let a: bool = 1231231 + alse;
+        
+        let a: number = x;
     } -> number
-
     "
     );
     let mut module = Module::new(&decls);

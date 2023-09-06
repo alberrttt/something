@@ -473,6 +473,9 @@ pub struct Span {
     pub line_start: usize,
 }
 impl Span {
+    pub fn length(&self) -> usize {
+        self.end - self.start
+    }
     pub fn new(start: usize, end: usize, line: usize, line_start: usize) -> Self {
         Self {
             start,

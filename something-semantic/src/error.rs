@@ -252,7 +252,7 @@ impl std::fmt::Display for TypeError {
                 right,
                 operator,
             }) => {
-                let right_tkns = right.0.to_tokens();
+                let mut right_tkns = right.0.to_tokens();
                 let right_start = right_tkns.first().unwrap().span().start;
                 let right_end = right_tkns.last().unwrap().span().end;
 
@@ -263,6 +263,7 @@ impl std::fmt::Display for TypeError {
                 let surrounding = self.surrounding.as_ref().unwrap();
                 let line_number = surrounding.0.first().unwrap().span().line;
                 let before_offset = left_start - (surrounding.first().unwrap().span().start);
+                let operator_len = operator.token.span().length();
                 let msg = Msg::error()
                     .header(
                         format!(
@@ -283,8 +284,11 @@ impl std::fmt::Display for TypeError {
                             "|".red(),
                             "",
                             before_offset = before_offset,
-                            offset = right_end - (left_end + 1),
-                            arrow = "^".repeat(right_end - (right_start)).bright_red().bold(),
+                            offset = (right_end + operator.token.span().length() + 1) - left_end,
+                            arrow = "^"
+                                .repeat(right_tkns.last().unwrap().span().length())
+                                .bright_red()
+                                .bold(),
                             msg = format!(" has type `{}`", right.1).bright_red().bold(),
                         )
                         .as_ref(),
@@ -319,22 +323,22 @@ impl std::fmt::Display for TypeError {
                         .push_body("...")
                         .push_body_w_margin(
                             surrounding.to_source_string().white().clear(),
-                            expr_tkns
-                                .first()
-                                .unwrap()
-                                .span()
-                                .line_start
-                                .to_string()
-                                .white()
-                                .clear(),
+                            ColoredString::from(
+                                surrounding
+                                    .first()
+                                    .unwrap()
+                                    .span()
+                                    .line_start
+                                    .to_string()
+                                    .as_ref(),
+                            ),
                         )
                         .push_body(
                             format!(
                                 "{:offset$}{arrow} {}",
                                 "",
                                 format!(" has type {}", infered_type).bright_red().bold(),
-                                offset =
-                                    expr_start - (surrounding.first().unwrap().span().start ),
+                                offset = expr_start - (surrounding.first().unwrap().span().start),
                                 arrow = "^".repeat(expr_end - expr_start).bright_red().bold()
                             )
                             .white(),
