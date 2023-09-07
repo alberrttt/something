@@ -23,10 +23,14 @@ pub enum Type {
     Void,
     /// TODO, IT PROLLS NEEDS A SUB SYMBOL TABLE
     Function(Box<FnSig>),
+    /// This should never be a finalized type
+    /// Meaning, if this type exists in the finalized symbol table, it's an error
+    Unknown,
 }
 impl Display for Type {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
+            Type::Unknown => write!(f, "!!unknown!!"),
             Type::Number => write!(f, "number"),
             Type::Bool => write!(f, "bool"),
             Type::Void => write!(f, "void"),

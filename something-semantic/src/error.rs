@@ -261,7 +261,15 @@ impl std::fmt::Display for TypeError {
                 let left_end = left_tkns.last().unwrap().span().end;
 
                 let surrounding = self.surrounding.as_ref().unwrap();
-                let line_number = surrounding.0.first().unwrap().span().line;
+                let line_number = match surrounding.0.first() {
+                    Some(some) => some,
+                    None => {
+                        dbg!(surrounding);
+                        panic!()
+                    }
+                }
+                .span()
+                .line;
                 let before_offset = left_start - (surrounding.first().unwrap().span().start);
                 let operator_len = operator.token.span().length();
                 let msg = Msg::error()

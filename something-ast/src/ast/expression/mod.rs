@@ -77,25 +77,21 @@ impl Parser<'_> {
                 Ok(Expression::Ident(ident))
             }
 
-            _ => {
+            x => {
                 if can_recover {
                     Recoverable
                 } else {
-                    Err(ParseError::Generic(
-                        concat!(
-                            "
-        Expected literal, got something else
-    
-        Error originated from: 
-    
-    ",
-                            file!(),
-                            ":",
-                            line!(),
-                            "\nFix this later pls"
-                        )
-                        .into(),
-                    ))
+                    Err(ParseError::Generic(format!(
+                        "
+                                Expected literal, got `{:?}`
+                            
+                                Error originated from: 
+                            
+                                {}:{}\nFix this later pls",
+                        x,
+                        file!(),
+                        line!()
+                    )))
                 }
             }
         }

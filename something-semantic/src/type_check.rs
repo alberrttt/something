@@ -119,18 +119,35 @@ impl TypeCheck for VariableDeclaration {
             }
         }
 
-        let symbol = Rc::new(Symbol {
-            name: self.name.to_string(),
-            symbol_type: match expr_result {
-                Ok(expr_type) => expr_type,
-                _ => self
-                    .expression
-                    .resolve_type(Some(scope.clone()), None)
-                    .unwrap(),
-            },
-        });
-        scope.borrow_mut().symbols.push(symbol);
-        None
+        match expr_result {
+            Ok(expr_type) => {
+                let symbol = Rc::new(Symbol {
+                    name: self.name.to_string(),
+                    symbol_type: expr_type,
+                });
+                scope.borrow_mut().symbols.push(symbol);
+                None
+            }
+            _ => {
+                let tmp: Result<Type, TypeError> =
+                    self.expression.resolve_type(Some(scope.clone()), None);
+                match tmp {
+                    Ok(ok) => {
+                        let symbol = Rc::new(Symbol {
+                            name: self.name.to_string(),
+                            symbol_type: ok,
+                        });
+                        scope.borrow_mut().symbols.push(symbol);
+                        None
+                    }
+                    Recoverable => todo!(),
+                    Err(mut err) => {
+                        self.append_tokens(err.surrounding.as_mut().unwrap());
+                        Some(err)
+                    }
+                }
+            }
+        }
     }
 }
 fn handle_type_mismatch(
