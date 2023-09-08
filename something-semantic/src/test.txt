@@ -1,3 +1,9 @@
+fn print() {
+    return 3;
+} -> number
+
 fn x() {
-    let y = true + 1;
+    let y = 3 + 1;
+
+    print(y);
 } -> number

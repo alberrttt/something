@@ -70,22 +70,41 @@ impl<'a> CheckType<'a> for Expression {
                     ))
                 }
             }
-            Expression::Call(_) => todo!(),
-            Expression::Ident(ident) => {
+            Expression::Call(call) => {
                 if let Some(scope) = with {
-                    let scope = scope.borrow();
-                    match scope
-                        .resolve_symbol(ident.name.as_str())
-                        .map(|symbol| symbol.symbol_type.clone())
-                        .ok_or(TypeError::UndefinedIdentifier(
-                            ident.clone(),
+                    let Type::Function(fn_sig) =
+                        scope.borrow_mut().resolve_ident(call.ident.clone())?
+                    else {
+                        return Err(TypeError::UndefinedIdentifier(
+                            call.ident.clone(),
                             TokenStream::new(),
-                        )) {
-                        std::result::Result::Ok(ok) => Ok(ok),
-                        std::result::Result::Err(err) => Err(err),
+                        ));
+                    };
+                    let fn_sig = *fn_sig.to_owned();
+                    for ((param, _), arg) in call.args.iter().zip(fn_sig.params.iter()) {
+                        let param_ty: Type =
+                            param.resolve_type(Some(scope.clone()), against.clone())?;
+                        let arg_ty = &arg.as_ref().symbol_type;
+
+                        if param_ty != *arg_ty {
+                            panic!();
+                            return Err(TypeError::MismatchExpressionType(
+                                param.clone(),
+                                Some(param_ty),
+                                arg_ty.clone(),
+                            ));
+                        }
                     }
+                    Ok(fn_sig.return_type.clone())
                 } else {
                     panic!()
+                }
+            }
+            Expression::Ident(ident) => {
+                if let Some(scope) = with {
+                    scope.borrow().resolve_ident(ident.clone())
+                } else {
+                    todo!()
                 }
             }
             Expression::Grouping(_) => todo!(),
@@ -96,6 +115,18 @@ impl<'a> CheckType<'a> for Expression {
     }
 }
 impl Scope {
+    pub fn resolve_ident(&self, ident: Ident) -> Result<Type, TypeError> {
+        match self
+            .resolve_symbol(ident.name.as_str())
+            .map(|symbol| symbol.symbol_type.clone())
+            .ok_or(TypeError::UndefinedIdentifier(
+                ident.clone(),
+                TokenStream::new(),
+            )) {
+            std::result::Result::Ok(ok) => Ok(ok),
+            std::result::Result::Err(err) => Err(err),
+        }
+    }
     pub fn resolve_symbol(&self, name: &str) -> Option<Rc<Symbol>> {
         self.symbols
             .iter()
@@ -133,9 +164,12 @@ impl Scope {
             }
         }
         if !resolved {
-            errors.push(TypeError::MissingReturnStatement(
-                fn_sig.as_ref().return_type.clone(),
-            ))
+            errors.push({
+                let mut tmp =
+                    TypeError::MissingReturnStatement(fn_sig.as_ref().return_type.clone());
+                function.append_tokens(tmp.surrounding.as_mut().unwrap());
+                tmp
+            })
         }
         (Rc::into_inner(scope).unwrap().into_inner(), errors)
     }

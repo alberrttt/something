@@ -73,7 +73,10 @@ impl AppendTokens for Node {
     where
         Self: Sized,
     {
-        todo!();
+        match self {
+            Node::Statement(stmt) => stmt.append_tokens(_tokens),
+            Node::Declaration(decl) => decl.append_tokens(_tokens),
+        }
     }
 }
 pub mod attribute;
@@ -83,7 +86,7 @@ pub mod error {
     pub use crate::error::*;
 }
 #[derive(Debug, Clone, ParseTokens, ParseTokensDisplay)]
-pub enum   TopLevelNode {
+pub enum TopLevelNode {
     FunctionDeclaration(FunctionDeclaration),
 }
 #[derive(Debug, Clone, ParseTokens, ParseTokensDisplay, Default)]

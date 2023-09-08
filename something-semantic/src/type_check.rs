@@ -41,7 +41,13 @@ impl TypeCheck for Node {
             Node::Statement(stmt) => match stmt {
                 something_ast::ast::statement::Statement::Expression(expression) => {
                     let tmp: Result<Type, TypeError> = expression.0.resolve_type(Some(scope), None);
-                    tmp.err()
+                    match tmp.err() {
+                        Some(mut some) => {
+                            stmt.append_tokens(some.surrounding.as_mut().unwrap());
+                            Some(some)
+                        }
+                        None => None,
+                    }
                 }
                 something_ast::ast::statement::Statement::Return(return_stmt) => {
                     let tmp: Type = match return_stmt.1.resolve_type(Some(scope), None) {

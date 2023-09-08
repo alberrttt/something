@@ -25,7 +25,7 @@ impl AppendTokens for Expression {
         match self {
             Expression::Lit(lit) => lit.append_tokens(tokens),
             Expression::Binary(binary) => binary.append_tokens(tokens),
-            Expression::Call(_) => todo!(),
+            Expression::Call(call) => call.append_tokens(tokens),
             Expression::Ident(ident) => ident.append_tokens(tokens),
             Expression::Grouping(_) => todo!(),
             Expression::If(_) => todo!(),

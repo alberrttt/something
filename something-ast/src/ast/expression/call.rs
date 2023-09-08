@@ -11,7 +11,12 @@ pub struct Call {
     pub ident: Ident,
     pub args: Paren<Punctuated<Expression, Tkn![,]>>,
 }
-
+impl AppendTokens for Call {
+    fn append_tokens(&self, tokens: &mut TokenStream) {
+        self.ident.append_tokens(tokens);
+        self.args.append_tokens(tokens);
+    }
+}
 impl Call {
     pub fn parse_with_ident(ident: Ident, parser: &mut crate::parser::Parser) -> ParseResult<Self> {
         let args: Paren<Punctuated<Expression, Comma>> = Paren::parse(parser)?;
