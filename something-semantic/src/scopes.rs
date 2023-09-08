@@ -10,6 +10,7 @@ use std::{
 use something_ast::{
     ast::{
         prelude::{Declaration, Expression, FunctionDeclaration},
+        statement::Statement,
         Node,
     },
     tokenizer::{
@@ -34,6 +35,7 @@ use something_common::{
 pub struct Scope {
     pub symbols: Vec<Rc<Symbol>>,
     pub parent: Option<Rc<Scope>>,
+    pub resolveto: Option<Type>,
 }
 pub trait CheckType<'a> {
     type With = ();
@@ -118,12 +120,22 @@ impl Scope {
         let scope = Rc::new(RefCell::new(Self {
             symbols,
             parent: None,
+            resolveto: fn_sig.as_ref().return_type.clone().into(),
         }));
         let mut errors = vec![];
+        let mut resolved = false;
         for stmt in function.body.iter() {
             if let Some(err) = stmt.type_check(scope.clone(), Some(fn_sig.clone())) {
                 errors.push(err);
+            } else if let Node::Statement(Statement::Return(retur)) = stmt {
+                // the typechecking for the return statement succeeded
+                resolved = true
             }
+        }
+        if !resolved {
+            errors.push(TypeError::MissingReturnStatement(
+                fn_sig.as_ref().return_type.clone(),
+            ))
         }
         (Rc::into_inner(scope).unwrap().into_inner(), errors)
     }

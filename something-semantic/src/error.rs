@@ -47,6 +47,14 @@ impl Clone for TypeError {
 #[allow(non_snake_case)]
 impl TypeError {
     #[track_caller]
+    pub fn MissingReturnStatement(expected: Type) -> Self {
+        Self {
+            surrounding: Some(TokenStream::default()),
+            kind: TypeErrorKind::MissingReturnStatement(expected),
+            backtrace: Some(Backtrace::capture()),
+        }
+    }
+    #[track_caller]
     pub fn UndefinedIdentifier(ident: Ident, surrounding: TokenStream) -> Self {
         Self {
             surrounding: Some(surrounding),
@@ -134,6 +142,7 @@ pub enum TypeErrorKind {
         expected: Type,
         got: (Type, TokenStream),
     },
+    MissingReturnStatement(Type),
 }
 #[derive(Debug, Clone)]
 pub struct IncompatibleBinOp {
@@ -390,6 +399,10 @@ impl std::fmt::Display for TypeError {
                         .red(),
                     );
 
+                write!(f, "{msg}")?;
+            }
+            MissingReturnStatement(missing) => {
+                let msg = Msg::error().header("missing return statement".yellow());
                 write!(f, "{msg}")?;
             }
         }
