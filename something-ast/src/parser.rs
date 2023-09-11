@@ -47,16 +47,11 @@ impl<'a> Parser<'a> {
     pub fn step<R>(&mut self, F: impl FnOnce(&mut Self) -> ParseResult<R>) -> ParseResult<R> {
         let starting = self.1;
         let stepped = F(self);
-        use something_common::Result::*;
         match stepped {
             Ok(ok) => Ok(ok),
             Err(e) => {
                 self.1 = starting;
                 Err(e)
-            }
-            Recoverable => {
-                self.1 = starting;
-                Recoverable
             }
         }
     }

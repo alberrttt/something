@@ -27,10 +27,7 @@ use crate::{
     type_infer::{InferLiteralType, InferType},
     Module,
 };
-use something_common::{
-    devprintln,
-    Result::{self, *},
-};
+use something_common::devprintln;
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Scope {
     pub symbols: Vec<Rc<Symbol>>,

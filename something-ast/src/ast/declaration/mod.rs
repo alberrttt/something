@@ -63,7 +63,6 @@ impl Parse for Declaration {
                     Err(ParseError::Generic("Expected function or variable".into()))
                 }
             }
-            Recoverable => Recoverable,
         }
     }
 }

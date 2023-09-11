@@ -4,7 +4,7 @@ use crate::tokenizer::list::List;
 
 use super::prelude::*;
 
-#[derive(Debug, Clone, ParseTokensDisplay,)]
+#[derive(Debug, Clone, ParseTokensDisplay)]
 pub struct Attribute {
     pub dollar: Tkn![$],
     pub brackets: Bracket<List<Ident>>,
@@ -27,7 +27,6 @@ mod __attribute {
                     colon: Parse::parse(parser)?,
                 }),
                 Err(err) => Err(err),
-                Recoverable => Recoverable,
             }
         }
     }

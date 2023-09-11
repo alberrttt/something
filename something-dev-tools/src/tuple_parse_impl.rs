@@ -97,7 +97,7 @@ pub fn tuple_parse_impl(input: TokenStream) -> TokenStream {
             fn parse(parser: &mut crate::parser::Parser) -> ParseResult<Self> where Self: Sized {
                 let tmp =  match A::parse(parser) {
                     Ok(ok) => ok,
-                    Err(_) | Recoverable => return Recoverable,
+                    Err(err) => return Err(err),
                 };
 
                 Ok((tmp, #(#tokens_parsing::parse(parser).unwrap()),*))
@@ -110,10 +110,10 @@ pub fn tuple_parse_impl(input: TokenStream) -> TokenStream {
             fn parse(parser: &mut crate::parser::Parser) -> ParseResult<Self> where Self: Sized {
                 let tmp = match parser.step(|parser| match A::parse(parser) {
                     Ok(ok) => Ok(ok),
-                    Err(_) | Recoverable => return Recoverable,
+                    Err(err) => return Err(err),
                 }) {
                     Ok(ok) => ok,
-                    Err(_) | Recoverable => return Ok(None),
+                    Err(err) => return Err(err),
                 };
 
                 Ok(Some((tmp, #(#tokens_parsing::parse(parser).unwrap()),*)))

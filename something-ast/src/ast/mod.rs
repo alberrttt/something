@@ -58,9 +58,7 @@ impl Parse for Node {
             Err(err) => {
                 return Err(err);
             }
-            Recoverable => {}
         }
-        Recoverable
     }
 }
 impl Parse for Box<Node> {

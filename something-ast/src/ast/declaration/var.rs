@@ -42,7 +42,6 @@ impl Parse for VariableDeclaration {
 
                         return Err(err);
                     }
-                    Recoverable => return Recoverable,
                 };
                 let (name, type_annotation, equal, expression, semicolon) = fields;
                 Ok(Self {
@@ -55,7 +54,6 @@ impl Parse for VariableDeclaration {
                 })
             }
             Err(err) => Err(err),
-            Recoverable => Recoverable,
         }
     }
 }

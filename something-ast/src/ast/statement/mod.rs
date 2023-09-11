@@ -38,16 +38,14 @@ impl Parse for Statement {
                 };
                 return Ok(Statement::Expression((variant, semicolon)));
             }
-            Err(_) | Recoverable => {}
+            Err(err) => {}
         }
         match parser.step(|parser| Parse::parse(parser)) {
             Ok(variant) => return Ok(Statement::Return(variant)),
             Err(err) => {
                 return Err(err);
             }
-            Recoverable => {}
         }
-        Recoverable
     }
 }
 impl Parse for Box<Statement> {

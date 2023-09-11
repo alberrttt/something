@@ -25,7 +25,6 @@ use something_ast::{
         TokenStream,
     },
 };
-use something_common::Result::{self, *};
 
 impl TypeCheck for Node {
     type Output = Option<TypeError>;

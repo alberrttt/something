@@ -62,10 +62,7 @@ impl Parse for Box<Expression> {
 }
 
 impl Parser<'_> {
-    pub(in crate::ast::expression) fn expr_unit(
-        &mut self,
-        can_recover: bool,
-    ) -> ParseResult<Expression> {
+    pub(in crate::ast::expression) fn expr_unit(&mut self) -> ParseResult<Expression> {
         match self.advance()?.clone() {
             Token::Lit(literal) => Ok(Expression::Lit(literal)),
             Token::Ident(ident) => {
@@ -77,43 +74,34 @@ impl Parser<'_> {
                 Ok(Expression::Ident(ident))
             }
 
-            x => {
-                if can_recover {
-                    Recoverable
-                } else {
-                    Err(ParseError::Generic(format!(
-                        "
+            x => Err(ParseError::Generic(format!(
+                "
                                 Expected literal, got `{:?}`
                             
                                 Error originated from: 
                             
                                 {}:{}\nFix this later pls",
-                        x,
-                        file!(),
-                        line!()
-                    )))
-                }
-            }
+                x,
+                file!(),
+                line!()
+            ))),
         }
     }
-    pub(in crate::ast::expression) fn term(
-        &mut self,
-        can_recover: bool,
-    ) -> ParseResult<Expression> {
-        let mut result = self.expr_unit(can_recover)?;
+    pub(in crate::ast::expression) fn term(&mut self) -> ParseResult<Expression> {
+        let mut result = self.expr_unit()?;
         while peek_matches!(self, Token::Star(_) | Token::Slash(_)) {
             let op = self.advance()?.clone();
-            let right = self.expr_unit(false)?;
+            let right = self.expr_unit()?;
             result = Expression::Binary(Binary::from_token(result, op, right));
         }
         Ok(result)
     }
 }
 fn parse_expr(parser: &mut crate::parser::Parser) -> ParseResult<Expression> {
-    let mut result: Expression = parser.term(false)?;
+    let mut result: Expression = parser.term()?;
     while peek_matches!(parser, Token::Plus(_) | Token::Minus(_)) {
         let op = parser.advance()?.clone();
-        let right = parser.term(false)?;
+        let right = parser.term()?;
 
         result = Expression::Binary(Binary::from_token(result, op, right));
     }
