@@ -10,7 +10,11 @@ macro_rules! gen_tests {
             fn $name() {
                 let source = include_str!(concat!("../cases/",$file, ".txt"));
                 let mut tokens = something_ast::Parser::new($file, source);
-                let node = Node::parse(&mut tokens).unwrap();
+                let parse_res = Node::parse(&mut tokens);
+                let something_ast::prelude::ParseResult::<Node>::Ok(node) = parse_res else {
+                        devprintln!("{}",parse_res.err().unwrap());
+                        panic!()
+                    };
                 devprintln!("{:#?}",&node);
                 devprintln!("{}",node.display());
             }

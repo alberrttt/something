@@ -5,6 +5,7 @@ use crate::error::ExpectedToken;
 use crate::error::ParseError;
 use crate::error::ParseErrorKind;
 use crate::prelude::*;
+use crate::tokenizer::traits::AppendTokens;
 use crate::tokenizer::Parse;
 mod function;
 pub use self::function::*;
@@ -16,7 +17,14 @@ pub enum Declaration {
 
     Function(FunctionDeclaration),
 }
-
+impl AppendTokens for Declaration {
+    fn append_tokens(&self, tokens: &mut TokenStream) {
+        match self {
+            Declaration::Var(var) => var.append_tokens(tokens),
+            Declaration::Function(fnc) => fnc.append_tokens(tokens),
+        }
+    }
+}
 impl Parse for Declaration {
     fn parse(parser: &mut crate::parser::Parser) -> crate::prelude::ParseResult<Self>
     where
@@ -55,7 +63,6 @@ impl Parse for Declaration {
                     Err(ParseError::Generic("Expected function or variable".into()))
                 }
             }
-            Recoverable => Recoverable,
         }
     }
 }

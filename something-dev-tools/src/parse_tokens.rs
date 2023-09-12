@@ -24,13 +24,7 @@ pub fn parse_tokens(parser: TokenStream) -> TokenStream {
                                     return Err(err);
                                 }
 
-                                Recoverable => {
-                                }
-                                // since we are parsing the first field/node (or token)
-                                // we CAN recover from this error
-                                // because other nodes might be valid because of the first node
-                                // but if we are parsing the second node (or any constituent node)
-                                // we can't recover from this error
+
                             }
                         }
                     }
@@ -50,7 +44,7 @@ pub fn parse_tokens(parser: TokenStream) -> TokenStream {
                     impl Parse for #name {
                         fn parse(parser: &mut crate::parser::Parser) -> ParseResult<Self> {
                             #(#variants)*
-                            Recoverable
+                            panic!()
                         }
                     }
 
@@ -137,9 +131,7 @@ fn for_struct_w_named_fields(struct_data: &DataStruct, name: &Ident) -> proc_mac
                             })
                         }
                         Err(err) => Err(err),
-                        Recoverable => {
-                            Recoverable
-                        }
+
                     }
                 }
             }
@@ -161,9 +153,7 @@ fn for_struct_w_unamed_fields(struct_data: &DataStruct, name: &Ident) -> proc_ma
                             Ok(Self(tmp, #(#fields),*))
                         }
                         Err(err) => Err(err),
-                        Recoverable => {
-                            Recoverable
-                        }
+
                     }
                 }
             }

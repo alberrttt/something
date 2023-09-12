@@ -18,7 +18,6 @@ impl Parse for Repl {
     fn parse(parser: &mut something_ast::Parser) -> ParseResult<Self> {
         match parser.step(|parser| match parser.parse() {
             Ok(ok) => Ok(Repl::Expr(ok)),
-            Recoverable => Recoverable,
             Err(err) => Err(err),
         }) {
             Ok(ok) => return Ok(ok),
@@ -28,21 +27,17 @@ impl Parse for Repl {
         devprintln!("parsing fn now");
         match parser.step(|parser| match FunctionDeclaration::parse(parser) {
             Ok(ok) => Ok(Repl::Fn(ok)),
-            Recoverable => Recoverable,
             Err(err) => Err(err),
         }) {
             Ok(ok) => return Ok(ok),
-            Recoverable => {}
             Err(err) => return Err(err),
         };
         devprintln!("parsing node now");
         match parser.step(|parser| match parser.parse() {
             Ok(ok) => Ok(Repl::Node(ok)),
-            Recoverable => Recoverable,
             Err(err) => Err(err),
         }) {
             Ok(ok) => return Ok(ok),
-            Recoverable => {}
             Err(err) => return Err(err),
         };
         panic!()

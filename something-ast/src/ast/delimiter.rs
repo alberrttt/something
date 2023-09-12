@@ -13,30 +13,28 @@ macro_rules! gen_impl {
             {
                 if let Ok(Token::$variant(_)) = parser.peek() {
                     let Token::$variant(tmp) = parser.advance()?.clone() else {
-                                                        unsafe {
-                                                            std::hint::unreachable_unchecked();
-                                                        }
-                                                    };
-                    let inner = Parse::parse(parser).unwrap();
+                        unsafe {
+                            std::hint::unreachable_unchecked();
+                        }
+                    };
+                    let inner = Parse::parse(parser)?;
                     return Ok(Self {
                         opening: tmp,
                         inner,
                         closing: {
-
-
                             match Parse::parse(parser) {
-                            Ok(ok) => ok,
-                            Err(err) => {
-
-                                return Err(err);
+                                Ok(ok) => ok,
+                                Err(err) => {
+                                    return Err(err);
+                                }
+                                Recoverable => {
+                                    todo!()
+                                }
                             }
-                            Recoverable => {
-                               todo!()
-                            }
-                        }},
+                        },
                     });
                 } else {
-                    Recoverable
+                    panic!()
                 }
             }
         }

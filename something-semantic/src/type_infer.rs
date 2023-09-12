@@ -2,7 +2,6 @@ use something_ast::{
     ast::prelude::{Expression, VariableDeclaration},
     tokenizer::prelude::{lit_impl, Ident, Literal},
 };
-use something_common::Result::{self, *};
 
 use crate::{error::TypeError, symbol::Type};
 pub trait InferType {
@@ -31,7 +30,7 @@ impl InferLiteralType for Expression {
         match self {
             Expression::Lit(literal) => literal.infer_literal_type(),
 
-            _ => Recoverable,
+            _ => todo!(),
         }
     }
 }

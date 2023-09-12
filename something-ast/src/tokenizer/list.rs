@@ -63,10 +63,7 @@ where
                 Ok(item) => list.push(item),
                 Err(err) => {
                     devprintln!("{}", err);
-                }
-                // dangerous because it can just fall into a loop that never ends cuz peek() doesn't advance
-                Recoverable => {
-                    todo!()
+                    parser.advance();
                 }
             }
         }

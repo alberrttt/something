@@ -4,7 +4,6 @@ use clap::{Parser, Subcommand};
 use something_ast::ast::{Ast, TopLevelNode};
 use something_ast::prelude::*;
 use something_ast::tokenizer::{Parse, ParsingDisplay, TokenStream};
-use something_common::Result::Recoverable;
 mod repl;
 #[derive(Parser)]
 #[command(author, about, version)]

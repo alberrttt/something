@@ -26,7 +26,6 @@ impl Parse for Block {
         match Parse::parse(parser) {
             Ok(tmp) => Ok(Self(tmp)),
             Err(err) => Err(err),
-            Recoverable => Recoverable,
         }
     }
 }

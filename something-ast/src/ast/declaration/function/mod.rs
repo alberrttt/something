@@ -18,7 +18,7 @@ pub struct FunctionDeclaration {
     pub return_type: ReturnType,
 }
 // write a test
-#[test ]
+#[test]
 fn test() {
     let (function_declaration, _): (Declaration, _) = ast!(
         "fn x(number x, number y) { 
@@ -55,7 +55,7 @@ mod __functiondeclaration {
                     body: Parse::parse(parser)?,
                     return_type: Parse::parse(parser)?,
                 }),
-                Err(_) | Recoverable => Recoverable,
+                Err(err) => Err(err),
             }
         }
     }

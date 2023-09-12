@@ -71,8 +71,8 @@ impl TokenStream {
                     return Err(ParseError::ExpectedToken(target, token.clone()));
                 }
             }
-            Recoverable | Err(_) => return Recoverable, // idk if recoverable is the right thing to do here
-                                                        // but, if the self.peek() errors, it usually means that we're at the end of the tokens
+            Err(err) => return Err(err), // idk if recoverable is the right thing to do here
+                                         // but, if the self.peek() errors, it usually means that we're at the end of the tokens
         }
         todo!()
     }
