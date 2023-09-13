@@ -5,48 +5,14 @@ use super::prelude::*;
 #[derive(Clone, PartialEq)]
 pub struct List<T>
 where
-    T: Parse,
+    T: Node,
 {
     pub(super) items: Vec<T>,
 }
-impl<T> AppendTokens for List<T>
-where
-    T: Parse + AppendTokens,
-{
-    fn append_tokens(&self, tokens: &mut TokenStream)
-    where
-        Self: Sized,
-    {
-        for item in &self.items {
-            item.append_tokens(tokens);
-        }
-    }
-}
-impl<T> ParsingDisplay for List<T>
-where
-    T: Parse,
-{
-    fn display(&self) -> String
-    where
-        Self: Sized,
-    {
-        self.items
-            .iter()
-            .map(|item| item.display())
-            .collect::<Vec<_>>()
-            .join("")
-    }
 
-    fn placeholder() -> String
-    where
-        Self: Sized,
-    {
-        format!("[...<{}>...]", T::placeholder())
-    }
-}
-impl<T> Parse for List<T>
+impl<T> Node for List<T>
 where
-    T: Parse + Clone + std::fmt::Debug,
+    T: Node + Clone + std::fmt::Debug,
 {
     #[track_caller]
     fn parse(parser: &mut crate::parser::Parser) -> ParseResult<Self>
@@ -72,7 +38,7 @@ where
 }
 impl<T> List<T>
 where
-    T: Parse,
+    T: Node,
 {
     pub fn new() -> Self {
         Self { items: Vec::new() }
@@ -90,7 +56,7 @@ where
 
 impl<T> Default for List<T>
 where
-    T: Parse,
+    T: Node,
 {
     fn default() -> Self {
         Self::new()
@@ -98,7 +64,7 @@ where
 }
 impl<T> IntoIterator for List<T>
 where
-    T: Parse,
+    T: Node,
 {
     type Item = T;
     type IntoIter = std::vec::IntoIter<Self::Item>;
@@ -108,7 +74,7 @@ where
 }
 impl<T> std::ops::Index<usize> for List<T>
 where
-    T: Parse,
+    T: Node,
 {
     type Output = T;
     fn index(&self, index: usize) -> &Self::Output {
@@ -117,7 +83,7 @@ where
 }
 impl<T> std::ops::IndexMut<usize> for List<T>
 where
-    T: Parse,
+    T: Node,
 {
     fn index_mut(&mut self, index: usize) -> &mut Self::Output {
         &mut self.items[index]
@@ -125,7 +91,7 @@ where
 }
 impl<T> std::ops::Deref for List<T>
 where
-    T: Parse,
+    T: Node,
 {
     type Target = Vec<T>;
     fn deref(&self) -> &Self::Target {
@@ -134,7 +100,7 @@ where
 }
 impl<T> std::ops::DerefMut for List<T>
 where
-    T: Parse,
+    T: Node,
 {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.items
@@ -142,7 +108,7 @@ where
 }
 impl<T> std::fmt::Debug for List<T>
 where
-    T: Parse + std::fmt::Debug,
+    T: Node + std::fmt::Debug,
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_list().entries(self.items.iter()).finish()

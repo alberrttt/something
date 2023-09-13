@@ -24,10 +24,9 @@ use ident::*;
 use lit::*;
 pub use token::TokenStream;
 use token::*;
-pub use traits::{Parse, ParsingDisplay};
+
 pub mod prelude {
     pub use super::super::prelude::*;
-    pub use super::TokenStream;
     pub use super::{
         super::error::{self, *},
         ident::{self, *},
@@ -168,7 +167,10 @@ impl<'a> Tokenizer<'a> {
                 Ok(create_token!(self, Whitespace))
             }
             x if x.is_whitespace() => Ok(create_token!(self, Whitespace)),
-            x => Err(ParseError::Generic(format!("Error with `{}`", x.to_string())).into()),
+            x => {
+                todo!();
+                // Err(ParseError::Generic(format!("Error with `{}`", x.to_string())).into())
+            }
         }
     }
     /// if it matches, it will consume, if not it will return Err
@@ -177,9 +179,10 @@ impl<'a> Tokenizer<'a> {
             let got = self.advance().unwrap();
             Ok(got)
         } else {
-            Err(ParseError::Generic(
-                format!("Expected {}, got {:?}", expected, self.peek()).into(),
-            ))
+            todo!();
+            // Err(ParseError::Generic(
+            //     format!("Expected {}, got {:?}", expected, self.peek()).into(),
+            // ))
         }
     }
     fn string(&mut self) -> ParseResult<Literal> {
@@ -205,7 +208,10 @@ impl<'a> Tokenizer<'a> {
         let span = span![self.starting, self.current, self.line, self.line_current];
         let lexeme = match self.parser[self.starting..self.current].parse::<f64>() {
             std::result::Result::Ok(ok) => ok,
-            std::result::Result::Err(err) => return Err(ParseError::ParseFloatError(err)),
+            std::result::Result::Err(err) => {
+                todo!();
+                // return Err(ParseError::ParseFloatError(err))
+            }
         };
 
         Ok(Literal::new_num(span, lexeme))

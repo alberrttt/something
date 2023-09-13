@@ -6,7 +6,7 @@ use std::{
 use crate::{
     ast::Ast,
     prelude::ParseResult,
-    tokenizer::{Parse, TokenStream},
+    tokenizer::{traits::Node, TokenStream},
 };
 
 #[derive(Debug)]
@@ -39,7 +39,7 @@ impl<'a> Parser<'a> {
     }
     pub fn parse<T>(&mut self) -> ParseResult<T>
     where
-        T: Parse,
+        T: Node,
         T: Clone + std::fmt::Debug + Clone,
     {
         T::parse(self)

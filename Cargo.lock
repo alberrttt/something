@@ -305,14 +305,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "something-frontend"
-version = "0.1.0"
-dependencies = [
- "colored",
- "something-ast",
-]
-
-[[package]]
 name = "something-typecheck"
 version = "0.1.0"
 dependencies = [

@@ -1,28 +1,31 @@
-use crate::tokenizer::prelude::*;
+use crate::{
+    prelude::{token, Node},
+    Span,
+};
 
-use super::super::prelude::*;
-#[derive(Debug, Clone, ParseTokensDisplay)]
-pub struct If {
-    if_token: Tkn![If],
-    predicate: Box<Expression>,
-    then_branch: Box<Expression>,
+use super::Expression;
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct IfExpr {
+    pub if_: token::If,
+    pub condition: Box<Expression>,
+    pub then_branch: Box<Expression>,
+    pub else_branch: Option<(token::Else, Box<Expression>)>,
 }
-pub enum ThenBlock {
-    Statement(Statement),
-    Block(Brace<List<Node>>),
-}
-impl Parse for If {
-    fn parse(parser: &mut crate::parser::Parser) -> ParseResult<Self> {
-        let if_token = parser.parse()?;
-        let predicate = parser.parse().unwrap();
-        let then_branch = parser.parse().unwrap();
-        Ok(Self {
-            if_token,
-            predicate,
-            then_branch,
-        })
+impl Node for IfExpr {
+    fn parse(parser: &mut crate::Parser) -> crate::ParseResult<Self> {
+        todo!()
+    }
+    fn span(&self) -> crate::Span {
+        Span {
+            start: self.if_.span.start,
+            end: self
+                .else_branch
+                .as_ref()
+                .map(|(_, expr)| expr.span().end)
+                .unwrap_or_else(|| self.then_branch.span().end),
+            line: self.if_.span.line,
+            line_start: self.if_.span.line_start,
+        }
     }
 }
-use something_dev_tools::item_name;
-use Macros::Tkn;
-item_name!(If, "if");

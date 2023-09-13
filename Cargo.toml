@@ -1,6 +1,5 @@
 [workspace]
 members = [
-    "something-frontend",
     "something-dev-tools",
     "something-ast",
     "something-semantic",

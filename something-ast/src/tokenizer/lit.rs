@@ -7,54 +7,27 @@ pub struct Literal {
     pub span: Span,
     pub inner: lit_impl::Inner,
 }
-impl AppendTokens for Literal {
-    fn append_tokens(&self, tokens: &mut TokenStream)
-    where
-        Self: Sized,
-    {
-        tokens.push(Token::Lit(self.clone()));
-    }
-}
+
 impl std::fmt::Debug for Literal {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:?}", self.inner)
     }
 }
-impl ParsingDisplay for Literal {
-    fn display(&self) -> String
-    where
-        Self: Sized,
-    {
-        use std::fmt::Write;
-        let mut f = String::new();
-        match &self.inner {
-            lit_impl::Inner::String(s) => write!(f, "\"{}\"", s),
-            lit_impl::Inner::Float(n) => write!(f, "{}", n),
-            lit_impl::Inner::Boolean(b) => write!(f, "{}", b),
-            lit_impl::Inner::Integer(i) => write!(f, "{}", i),
-        }
-        .expect("failed");
-        f
-    }
 
-    fn placeholder() -> String
-    where
-        Self: Sized,
-    {
-        "<literal>".into()
-    }
-}
-impl Parse for Literal {
+impl Node for Literal {
     fn parse(parser: &mut crate::parser::Parser) -> ParseResult<Self> {
         let token = parser.advance()?;
         if let Token::Lit(token) = token {
             Ok(token.clone())
         } else {
-            Err(ParseError::ExpectedToken(
+            Err(ParseError::expected_token(
                 Token::Lit(Literal::default()),
                 token.clone(),
             ))
         }
+    }
+    fn span(&self) -> Span {
+        self.span
     }
 }
 impl Literal {

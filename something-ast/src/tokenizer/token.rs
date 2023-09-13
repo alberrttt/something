@@ -2,11 +2,11 @@ use super::{prelude::*, Tokenizer};
 use crate::prelude::*;
 use casey::lower;
 
+use super::traits::Node;
 use std::backtrace::Backtrace;
 use std::fmt::Display;
 use std::fmt::Formatter;
 use std::ops::{Deref, DerefMut, Index};
-
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TokenStream(pub Vec<Token>, pub usize);
 
@@ -68,7 +68,7 @@ impl TokenStream {
                     self.advance();
                     return Ok(token);
                 } else {
-                    return Err(ParseError::ExpectedToken(target, token.clone()));
+                    return Err(ParseError::expected_token(target, token.clone()));
                 }
             }
             Err(err) => return Err(err), // idk if recoverable is the right thing to do here
@@ -127,20 +127,20 @@ impl TokenStream {
         self.1 += 1;
         match self.0.get(self.1 - 1) {
             Some(some) => Ok(some),
-            None => Err(ParseError::EndOfTokens(Backtrace::capture())),
+            None => Err(ParseError::end_of_tokens()),
         }
     }
     pub fn peek(&self) -> ParseResult<&Token> {
         match self.0.get(self.1) {
             Some(token) => Ok(token),
-            None => Err(ParseError::EndOfTokens(Backtrace::capture())),
+            None => Err(ParseError::end_of_tokens()),
         }
     }
 
     pub fn peek_n(&self, n: usize) -> ParseResult<&Token> {
         match self.0.get(self.1 + n) {
             Some(token) => Ok(token),
-            None => Err(ParseError::EndOfTokens(Backtrace::capture())),
+            None => Err(ParseError::end_of_tokens()),
         }
     }
 
@@ -167,52 +167,28 @@ macro_rules! define_token {
         pub struct $name {
             pub span: Span,
         }
-        impl AppendTokens for $name {
-            fn append_tokens(&self, tokens: &mut TokenStream)
-            where
-                Self: Sized,
-            {
-                let tmp = Token::$name(self.clone());
-                tokens.push(tmp);
-            }
-        }
-        impl ParsingDisplay for $name {
-            fn display(&self) -> String
-            where
-                Self: Sized,
-            {
-                format!("{}", self)
-            }
 
-            fn placeholder() -> String
-            where
-                Self: Sized,
-            {
-                stringify!($name).into()
-            }
-        }
-        impl Parse for $name {
+        impl Node for $name {
             fn parse(parser: &mut crate::parser::Parser) -> ParseResult<Self> {
                 let token = parser.advance()?;
                 if let Token::$name(token) = token {
                     Ok(token.clone())
                 } else {
-                    Err((ParseError::ExpectedToken(Token::$name(Self::default()), token.clone())))
+                    Err((ParseError::expected_token(Token::$name(Self::default()), token.clone())))
                 }
             }
         }
     };
 }
 use super::ident::*;
-use something_dev_tools::Span;
-#[derive(Debug, Clone, PartialEq, Eq, Span)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SpanShell {
     pub span: Span,
 }
 
 macro_rules! DefineTokens {
     ([$($keyword:ident),+],[$([$t:tt] => $token:ident),+],[$($misc:ident),+]) => {
-        #[derive( Clone, PartialEq, Eq, Span)]
+        #[derive( Clone, PartialEq, Eq)]
         pub enum Token{
             Ident(Ident),
             Lit(Literal),
@@ -232,12 +208,8 @@ macro_rules! DefineTokens {
             /// you dont have a token to report the error on, so you use this
             Error(SpanShell),
         }
-        impl AppendTokens for Token {
-            fn append_tokens(&self, token_stream: &mut TokenStream)
-
-            {
-               token_stream.push(self.clone());
-            }
+        impl Node for Token {
+           fn parse(_: &mut crate::Parser<'_>) -> std::result::Result<Self, error::ParseError> { todo!() }
         }
         pub mod Macros {
             /// Macro for constructing tokens from their actualy syntatic representation
@@ -254,37 +226,7 @@ macro_rules! DefineTokens {
             }
             pub(crate) use Tkn;
         }
-        impl ParsingDisplay for Token {
-            fn display(&self) -> String
-            where
-                Self: Sized,
-            {
 
-                match self {
-                    Token::Ident(i) => i.display(),
-                    Token::Lit(l) => l.display(),
-                    $(Token::$keyword(k) => k.display()),+,
-                    $(Token::$token(t) => t.display()),+,
-                    $(Token::$misc(m) => ParsingDisplay::display(m)),+,
-                    Token::LeftParen {..} => "(".to_string(),
-                    Token::LeftBrace {..} => "{".to_string(),
-                    Token::LeftBracket {..} => "[".to_string(),
-                    Token::RightParen {..} => ")".to_string(),
-                    Token::RightBrace {..} => "}".to_string(),
-                    Token::RightBracket {..} => "]".to_string(),
-                    Token::Error(_) => "Error".to_string(),
-                }
-
-
-            }
-
-            fn placeholder() -> String
-            where
-                Self: Sized,
-            {
-                stringify!($name).into()
-            }
-        }
         impl std::fmt::Display for Token {
             fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
                 match self {
@@ -392,21 +334,7 @@ macro_rules! DefineTokens {
                     write!(f, "{}", lower!(stringify!($misc)))
                 }
             }
-            impl ParsingDisplay for $misc {
-                fn display(&self) -> String
-                where
-                    Self: Sized,
-                {
-                    lower!(stringify!($misc)).into()
-                }
 
-                fn placeholder() -> String
-                where
-                    Self: Sized,
-                {
-                    stringify!($misc).into()
-                }
-            }
         )+
 
     };
@@ -425,7 +353,7 @@ macro_rules! create_token {
 }
 
 DefineTokens!(
-    [If, Fn, Let, Return, While, For, Use],
+    [If, Fn, Let, Return, While, For, Use, Else],
     [
         [==]  => EqualEqual,
         [=]  => Equal,
@@ -495,20 +423,4 @@ macro_rules! span {
             line_start: $line_start,
         }
     };
-}
-
-impl ParsingDisplay for () {
-    fn display(&self) -> String
-    where
-        Self: Sized,
-    {
-        "".to_string()
-    }
-
-    fn placeholder() -> std::string::String
-    where
-        Self: Sized,
-    {
-        "<empty>".into()
-    }
 }
