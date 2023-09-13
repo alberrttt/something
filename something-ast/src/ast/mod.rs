@@ -1,8 +1,7 @@
-
 pub mod declaration;
+pub mod expression;
 pub mod prelude;
 pub mod statement;
-pub mod expression;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Ast {

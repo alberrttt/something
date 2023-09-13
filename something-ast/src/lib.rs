@@ -9,7 +9,7 @@ pub use parser::Parser;
 pub mod prelude {
     pub type ParseResult<T> = Result<T, ParseError>;
     pub use super::tokenizer::prelude::*;
-    use crate::error::ParseError;
+    pub use crate::error::ParseError;
     pub use something_common::devprintln;
 }
 pub mod macros;

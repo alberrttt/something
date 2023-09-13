@@ -1,6 +1,6 @@
 use super::TokenStream;
-use crate::Parser;
 use crate::prelude::*;
+use crate::Parser;
 
 use crate::ast;
 use crate::ast::prelude::*;
@@ -10,6 +10,9 @@ pub trait Node {
     where
         Self: Sized;
     fn span(&self) -> Span {
+        todo!()
+    }
+    fn into_tokens(&self) -> Vec<Token> {
         todo!()
     }
 }

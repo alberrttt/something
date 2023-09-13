@@ -24,6 +24,7 @@ use ident::*;
 use lit::*;
 pub use token::TokenStream;
 use token::*;
+pub use traits::Node;
 
 pub mod prelude {
     pub use super::super::prelude::*;
