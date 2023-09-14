@@ -27,7 +27,7 @@ pub fn node(stream: TokenStream) -> TokenStream {
     let output = quote! {
         mod #tmp_name {
             use crate::prelude::*;
-
+            use super::#name;
             impl Node for #name {
                 fn parse(parser: &mut Parser) -> ParseResult<Self>
                 where
@@ -43,7 +43,7 @@ pub fn node(stream: TokenStream) -> TokenStream {
                 }
             }
         }
-        use tmp_name::*;
+        use #tmp_name::*;
 
     };
 
@@ -69,6 +69,8 @@ fn struct_gen_span(
     fields: &syn::punctuated::Iter<Field>,
     first: &Field,
 ) -> proc_macro2::TokenStream {
+    let last = fields.clone().last().unwrap();
+    let last_ident = last.ident.as_ref().unwrap();
     quote! {}
 }
 fn struct_gen_into_tokens(
@@ -92,14 +94,14 @@ fn struct_gen_parse(
             let name = &field.ident;
             let ty = &field.ty;
             quote! {
-                let #name = <#ty as Node>::parse()?;
+                let #name = <#ty as Node>::parse(parser)?;
             }
         })
         .collect();
     let final_line = {
         let name = &first.ident;
-        let fields = data.fields.iter().map(|field| &field.ident);
-        let ty = &first.ty;
+        let fields = fields.clone().map(|field| &field.ident);
+
         quote! {
             Ok(Self {
                 #name: first,
@@ -111,7 +113,7 @@ fn struct_gen_parse(
     let parse = {
         let ty = &first.ty;
         quote! {
-            let Ok(first) = <#ty as Node>::parse() else {
+            let Ok(first) = <#ty as Node>::parse(parser) else {
                 panic!("parse error")
             };
             #( #parse_lines )*
