@@ -28,4 +28,8 @@ impl Node for IfExpr {
             line_start: self.if_.span.line_start,
         }
     }
+
+    fn append_tokens(&self, to: &mut Vec<crate::Token>) {
+        todo!()
+    }
 }

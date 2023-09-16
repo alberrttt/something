@@ -6,6 +6,7 @@ use super::traits::Node;
 use std::backtrace::Backtrace;
 use std::fmt::Display;
 use std::fmt::Formatter;
+use std::ops::Sub;
 use std::ops::{Deref, DerefMut, Index};
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TokenStream(pub Vec<Token>, pub usize);
@@ -48,17 +49,61 @@ impl From<&str> for TokenStream {
         tokenizer.tokens().unwrap()
     }
 }
+impl TokenStream {
+    pub fn separate_tokens_by_line(&self) -> Vec<Vec<Token>> {
+        let mut lines: Vec<Vec<Token>> = Vec::new();
+        let mut current_line: Vec<Token> = Vec::new();
+
+        for token in &self.0 {
+            let line = token.span().line;
+
+            if current_line.is_empty() || line == current_line[0].span().line {
+                current_line.push(token.clone());
+            } else {
+                lines.push(current_line.clone());
+                current_line.clear();
+                current_line.push(token.clone());
+            }
+        }
+
+        if !current_line.is_empty() {
+            lines.push(current_line);
+        }
+
+        lines
+    }
+}
 impl Display for TokenStream {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "[")?;
-        for token in &self.0 {
-            write!(f, "{:?}, ", token)?;
+        let lines = self.separate_tokens_by_line();
+        for (line_num, line) in lines.iter().enumerate() {
+            let mut index = 0;
+            while index < line.len() {
+                let whitespace = " ".repeat({
+                    if index == 0 && line_num != 0 {
+                        let prev = lines[line_num - 1].last().unwrap();
+                        let current = &line[0];
+                        (current.span().start - prev.span().end).sub(1)
+                    } else if index == line.len() - 1 || index == 0 {
+                        0
+                    } else {
+                        let end = line[index - 1].span().end;
+                        line[index].span().start - end
+                    }
+                });
+                write!(f, "{whitespace}{}", line[index])?;
+                index += 1;
+            }
+            writeln!(f)?;
         }
-        write!(f, "]")?;
         std::result::Result::Ok(())
     }
 }
-
+#[test]
+fn test_token_stream_display() {
+    let tokens = TokenStream::from("fn main()\n{\n let x = 5;\n}");
+    println!("{}", tokens);
+}
 impl TokenStream {
     pub fn try_advance(&mut self, target: Token) -> ParseResult<Token> {
         match self.peek() {
@@ -177,6 +222,12 @@ macro_rules! define_token {
                     Err((ParseError::expected_token(Token::$name(Self::default()), token.clone())))
                 }
             }
+            fn span(&self) -> Span {
+                self.span
+            }
+            fn append_tokens(&self, to: &mut Vec<Token>) {
+                to.push(Token::$name(self.clone()));
+            }
         }
     };
 }
@@ -188,7 +239,7 @@ pub struct SpanShell {
 
 macro_rules! DefineTokens {
     ([$($keyword:ident),+],[$([$t:tt] => $token:ident),+],[$($misc:ident),+]) => {
-        #[derive( Clone, PartialEq, Eq)]
+        #[derive( Clone, PartialEq, Eq, Debug)]
         pub enum Token{
             Ident(Ident),
             Lit(Literal),
@@ -210,6 +261,23 @@ macro_rules! DefineTokens {
         }
         impl Node for Token {
            fn parse(_: &mut crate::Parser<'_>) -> std::result::Result<Self, error::ParseError> { todo!() }
+           fn span(&self) -> Span {
+                match self {
+                    Token::LeftParen(tmp) => tmp.span(),
+                    Token::LeftBrace(tmp) => tmp.span(),
+                    Token::LeftBracket(tmp) => tmp.span(),
+                    Token::RightParen(tmp) => tmp.span(),
+                    Token::RightBrace(tmp) => tmp.span(),
+                    Token::RightBracket(tmp) => tmp.span(),
+                    Token::Ident(tmp) => tmp.span(),
+                    Token::Lit(tmp) => tmp.span(),
+                    $(Token::$keyword(tmp) => tmp.span(),)+
+                    $(Token::$token(tmp) => tmp.span(),)+
+                    $(Token::$misc(tmp) => todo!(),)+
+                    Token::Error(tmp) => tmp.span,
+                }
+            }
+            fn append_tokens(&self, _: &mut Vec<Token>) { todo!() }
         }
         pub mod Macros {
             /// Macro for constructing tokens from their actualy syntatic representation
@@ -246,24 +314,7 @@ macro_rules! DefineTokens {
                 }
             }
         }
-        impl std::fmt::Debug for Token {
-            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                match self {
-                    Token::Ident(i) => write!(f, "{:?}", i),
-                    Token::Lit(l) => write!(f, "{:?}", l),
-                    $(Token::$keyword(k) => write!(f, "{:?}", k),)+
-                    $(Token::$token(t) => write!(f, "{:?}", t),)+
-                    $(Token::$misc(m) => write!(f, "{:?}", m),)+
-                    Token::LeftParen {..} => write!(f, "("),
-                    Token::LeftBrace {..} => write!(f, "{{"),
-                    Token::LeftBracket {..} => write!(f, "["),
-                    Token::RightParen {..} => write!(f, ")"),
-                    Token::RightBrace {..} => write!(f, "}}"),
-                    Token::RightBracket {..} => write!(f, "]"),
-                    Token::Error(_) => write!(f, "Error"),
-                }
-            }
-        }
+
 
         $(
             define_token!($keyword);

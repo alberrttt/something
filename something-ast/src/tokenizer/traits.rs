@@ -9,10 +9,6 @@ pub trait Node {
     fn parse(parser: &mut Parser) -> ParseResult<Self>
     where
         Self: Sized;
-    fn span(&self) -> Span {
-        todo!()
-    }
-    fn into_tokens(&self) -> Vec<Token> {
-        todo!()
-    }
+    fn span(&self) -> Span;
+    fn append_tokens(&self, to: &mut Vec<Token>);
 }

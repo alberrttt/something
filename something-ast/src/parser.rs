@@ -16,6 +16,16 @@ pub struct Parser<'a> {
     pub file_name: &'a str,
     pub token_stream: TokenStream,
 }
+impl<'a> From<TokenStream> for Parser<'a> {
+    fn from(token_stream: TokenStream) -> Self {
+        Self {
+            ast: None,
+            source: "",
+            file_name: "",
+            token_stream,
+        }
+    }
+}
 impl Deref for Parser<'_> {
     type Target = TokenStream;
 

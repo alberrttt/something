@@ -16,4 +16,12 @@ impl Node for Expression {
     {
         todo!()
     }
+
+    fn span(&self) -> Span {
+        todo!()
+    }
+
+    fn append_tokens(&self, to: &mut Vec<Token>) {
+        todo!()
+    }
 }

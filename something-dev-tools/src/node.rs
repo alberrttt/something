@@ -24,11 +24,24 @@ pub fn node(stream: TokenStream) -> TokenStream {
     let span = &gen.span;
     let into_tokens = &gen.into_tokens;
     let tmp_name = format_ident!("tmp{}", name);
+    let generic_params = derive_input.generics;
+    let generic_as_part_of_types = {
+        let params = generic_params.type_params().map(|param| {
+            let ident = &param.ident;
+            quote! {#ident}
+        });
+        let lt = generic_params.lt_token;
+        let gt = generic_params.gt_token;
+        quote! {
+            #lt #( #params ),* #gt
+        }
+    };
     let output = quote! {
+        #[allow(non_snake_case)]
         mod #tmp_name {
             use crate::prelude::*;
             use super::#name;
-            impl Node for #name {
+            impl #generic_params Node for #name #generic_as_part_of_types{
                 fn parse(parser: &mut Parser) -> ParseResult<Self>
                 where
                     Self: Sized
@@ -38,7 +51,7 @@ pub fn node(stream: TokenStream) -> TokenStream {
                 fn span(&self) -> Span {
                     #span
                 }
-                fn into_tokens(&self) -> Vec<Token> {
+                fn append_tokens(&self, to: &mut Vec<Token>) {
                     #into_tokens
                 }
             }
@@ -54,7 +67,7 @@ fn gen_struct(ident: Ident, data: &DataStruct) -> Gen {
     let first = fields.next().unwrap();
     let parse = struct_gen_parse(&ident, data, &fields, first);
     let span = struct_gen_span(&ident, data, &fields, first);
-    let into_tokens = struct_gen_into_tokens(&ident, data, &fields, first);
+    let into_tokens = struct_gen_append_tokens(&ident, data, &fields, first);
     Gen {
         parse,
 
@@ -69,17 +82,35 @@ fn struct_gen_span(
     fields: &syn::punctuated::Iter<Field>,
     first: &Field,
 ) -> proc_macro2::TokenStream {
-    let last = fields.clone().last().unwrap();
+    let last = fields.clone().last().unwrap_or(first);
     let last_ident = last.ident.as_ref().unwrap();
-    quote! {}
+    let first_ident = first.ident.as_ref().unwrap();
+    quote! {
+        Span {
+            start: self.#first_ident.span().start,
+            end: self.#first_ident.span().end,
+            line: self.#first_ident.span().line,
+            line_start: self.#last_ident.span().line_start,
+        }
+    }
 }
-fn struct_gen_into_tokens(
+fn struct_gen_append_tokens(
     ident: &Ident,
     data: &DataStruct,
     fields: &syn::punctuated::Iter<Field>,
     first: &Field,
 ) -> proc_macro2::TokenStream {
-    quote! {}
+    let lines = fields.clone().map(|field| {
+        let name = &field.ident;
+        quote! {
+            self.#name.append_tokens(to);
+        }
+    });
+    let first_ident = first.ident.as_ref().unwrap();
+    quote! {
+        self.#first_ident.append_tokens(to);
+        #( #lines )*
+    }
 }
 
 fn struct_gen_parse(

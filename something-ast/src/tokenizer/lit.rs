@@ -29,6 +29,10 @@ impl Node for Literal {
     fn span(&self) -> Span {
         self.span
     }
+
+    fn append_tokens(&self, to: &mut Vec<Token>) {
+        todo!()
+    }
 }
 impl Literal {
     pub fn new_str(span: Span, str: String) -> Self {

@@ -36,6 +36,7 @@ pub mod prelude {
         to_string::{self, *},
         traits::{self, *},
     };
+
     #[macro_use]
     pub use super::token::{*, self};
 }
@@ -180,7 +181,7 @@ impl<'a> Tokenizer<'a> {
             let got = self.advance().unwrap();
             Ok(got)
         } else {
-            todo!();
+            Err(ParseError::default())
             // Err(ParseError::Generic(
             //     format!("Expected {}, got {:?}", expected, self.peek()).into(),
             // ))

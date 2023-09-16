@@ -24,6 +24,10 @@ impl Node for Ident {
     fn span(&self) -> Span {
         self.span
     }
+
+    fn append_tokens(&self, to: &mut Vec<Token>) {
+        todo!()
+    }
 }
 impl Display for Ident {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {

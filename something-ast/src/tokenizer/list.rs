@@ -35,6 +35,14 @@ where
         }
         Ok(list)
     }
+
+    fn span(&self) -> Span {
+        todo!()
+    }
+
+    fn append_tokens(&self, to: &mut Vec<Token>) {
+        todo!()
+    }
 }
 impl<T> List<T>
 where

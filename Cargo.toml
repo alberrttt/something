@@ -4,4 +4,6 @@ members = [
     "something-ast",
     "something-semantic",
     "something-common",
+    "log"
 ]
+resolver = "2"
