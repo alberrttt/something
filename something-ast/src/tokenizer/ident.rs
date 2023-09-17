@@ -21,11 +21,19 @@ impl Node for Ident {
             ))
         }
     }
+
     fn span(&self) -> Span {
         self.span
     }
 
     fn append_tokens(&self, to: &mut Vec<Token>) {
+        todo!()
+    }
+
+    fn recover(parser: &mut Parser)
+    where
+        Self: Sized,
+    {
         todo!()
     }
 }

@@ -9,30 +9,39 @@ use std::fmt::Formatter;
 use std::ops::Sub;
 use std::ops::{Deref, DerefMut, Index};
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct TokenStream(pub Vec<Token>, pub usize);
+pub struct TokenStream {
+    pub tokens: Vec<Token>,
+    pub idx: usize,
+    // the amount of tokens that is able to be seen
+    pub window: usize,
+}
 
 impl Deref for TokenStream {
     type Target = Vec<Token>;
 
     fn deref(&self) -> &Self::Target {
-        &self.0
+        &self.tokens
     }
 }
 impl DerefMut for TokenStream {
     fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
+        &mut self.tokens
     }
 }
 impl Index<usize> for TokenStream {
     type Output = Token;
 
     fn index(&self, index: usize) -> &Self::Output {
-        &self.0[index]
+        &self.tokens[index]
     }
 }
 impl From<Vec<Token>> for TokenStream {
     fn from(tokens: Vec<Token>) -> Self {
-        Self(tokens, 0)
+        Self {
+            tokens,
+            idx: 0,
+            window: usize::MAX,
+        }
     }
 }
 impl IntoIterator for TokenStream {
@@ -40,7 +49,7 @@ impl IntoIterator for TokenStream {
     type IntoIter = std::vec::IntoIter<Self::Item>;
 
     fn into_iter(self) -> Self::IntoIter {
-        self.0.into_iter()
+        self.tokens.into_iter()
     }
 }
 impl From<&str> for TokenStream {
@@ -54,7 +63,7 @@ impl TokenStream {
         let mut lines: Vec<Vec<Token>> = Vec::new();
         let mut current_line: Vec<Token> = Vec::new();
 
-        for token in &self.0 {
+        for token in &self.tokens {
             let line = token.span().line;
 
             if current_line.is_empty() || line == current_line[0].span().line {
@@ -122,68 +131,73 @@ impl TokenStream {
         todo!()
     }
     pub fn new() -> Self {
-        Self(Vec::new(), 0)
+        Self {
+            tokens: Vec::new(),
+            idx: 0,
+            window: 0,
+        }
     }
 
     pub fn previous(&self) -> Option<&Token> {
-        self.0.get(self.1 - 1)
+        self.tokens.get(self.idx - 1)
     }
     pub fn previous1(&self) -> Option<&Token> {
-        self.0.get(self.1 - 2)
+        self.tokens.get(self.idx - 2)
     }
     pub fn previous2(&self) -> Option<&Token> {
-        self.0.get(self.1 - 3)
+        self.tokens.get(self.idx - 3)
     }
     pub fn previous3(&self) -> Option<&Token> {
-        self.0.get(self.1 - 4)
+        self.tokens.get(self.idx - 4)
     }
     pub fn at_end(&self) -> bool {
-        self.1 >= self.0.len()
+        self.idx >= self.tokens.len()
     }
     pub fn distance_from_end(&self) -> usize {
-        self.0.len() - self.1
+        self.tokens.len() - self.idx
     }
     pub fn is_empty(&self) -> bool {
-        self.0.is_empty()
+        self.tokens.is_empty()
     }
     pub fn len(&self) -> usize {
-        self.0.len()
+        self.tokens.len()
     }
     pub fn get(&self, i: usize) -> Option<&Token> {
-        self.0.get(i)
+        self.tokens.get(i)
     }
     pub fn get_mut(&mut self, i: usize) -> Option<&mut Token> {
-        self.0.get_mut(i)
+        self.tokens.get_mut(i)
     }
     pub fn first(&self) -> Option<&Token> {
-        self.0.first()
+        self.tokens.first()
     }
     pub fn last(&self) -> Option<&Token> {
-        self.0.last()
+        self.tokens.last()
     }
     pub fn iter_mut(&mut self) -> std::slice::IterMut<'_, Token> {
-        self.0.iter_mut()
+        self.tokens.iter_mut()
     }
 
     pub fn iter(&self) -> std::slice::Iter<'_, Token> {
-        self.0.iter()
+        self.tokens.iter()
     }
     pub fn advance(&mut self) -> ParseResult<&Token> {
-        self.1 += 1;
-        match self.0.get(self.1 - 1) {
+        self.idx += 1;
+        self.window -= 1;
+        match self.tokens.get(self.idx - 1) {
             Some(some) => Ok(some),
             None => Err(ParseError::end_of_tokens()),
         }
     }
     pub fn peek(&self) -> ParseResult<&Token> {
-        match self.0.get(self.1) {
+        match self.tokens.get(self.idx) {
             Some(token) => Ok(token),
             None => Err(ParseError::end_of_tokens()),
         }
     }
 
     pub fn peek_n(&self, n: usize) -> ParseResult<&Token> {
-        match self.0.get(self.1 + n) {
+        match self.tokens.get(self.idx + n) {
             Some(token) => Ok(token),
             None => Err(ParseError::end_of_tokens()),
         }
@@ -221,6 +235,9 @@ macro_rules! define_token {
                 } else {
                     Err((ParseError::expected_token(Token::$name(Self::default()), token.clone())))
                 }
+            }
+            fn recover(parser: &mut crate::parser::Parser) {
+                todo!()
             }
             fn span(&self) -> Span {
                 self.span
@@ -278,6 +295,7 @@ macro_rules! DefineTokens {
                 }
             }
             fn append_tokens(&self, _: &mut Vec<Token>) { todo!() }
+            fn recover(_: &mut crate::Parser<'_>) { todo!() }
         }
         pub mod Macros {
             /// Macro for constructing tokens from their actualy syntatic representation
@@ -294,7 +312,19 @@ macro_rules! DefineTokens {
             }
             pub(crate) use Tkn;
         }
-
+        impl Token {
+            pub fn is_delimiter(&self) -> bool {
+                matches!(
+                    self,
+                    Token::LeftParen { .. }
+                        | Token::LeftBrace { .. }
+                        | Token::LeftBracket { .. }
+                        | Token::RightParen { .. }
+                        | Token::RightBrace { .. }
+                        | Token::RightBracket { .. }
+                )
+            }
+        }
         impl std::fmt::Display for Token {
             fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
                 match self {

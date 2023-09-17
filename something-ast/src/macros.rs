@@ -20,3 +20,12 @@ macro_rules! peek_matches {
         }
     };
 }
+#[macro_export]
+macro_rules! node {
+    ($typ:ty, $string:literal) => {{
+        let tokens = TokenStream::from($string);
+        let mut parser = Parser::from(tokens);
+        let node = <$typ as Node>::parse(&mut parser).unwrap();
+        node
+    }};
+}

@@ -11,7 +11,6 @@ pub struct Tokenizer<'a> {
 }
 use super::error;
 pub mod ident;
-pub mod list;
 pub mod lit;
 pub mod program_file;
 pub mod to_string;
@@ -31,7 +30,6 @@ pub mod prelude {
     pub use super::{
         super::error::{self, *},
         ident::{self, *},
-        list::{self, *},
         lit::{self, *},
         to_string::{self, *},
         traits::{self, *},
@@ -55,7 +53,11 @@ impl Tokenizer<'_> {
                 return Err(e);
             }
         }
-        Ok(TokenStream(tokens, 0))
+        Ok(TokenStream {
+            tokens,
+            idx: 0,
+            window: usize::MAX,
+        })
     }
 }
 impl<'a> Tokenizer<'a> {

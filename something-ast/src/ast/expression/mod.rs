@@ -24,4 +24,9 @@ impl Node for Expression {
     fn append_tokens(&self, to: &mut Vec<Token>) {
         todo!()
     }
+    fn recover(parser: &mut Parser)
+    where
+        Self: Sized,
+    {
+    }
 }

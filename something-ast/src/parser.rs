@@ -15,6 +15,7 @@ pub struct Parser<'a> {
     pub source: &'a str,
     pub file_name: &'a str,
     pub token_stream: TokenStream,
+    pub in_delimiter: bool,
 }
 impl<'a> From<TokenStream> for Parser<'a> {
     fn from(token_stream: TokenStream) -> Self {
@@ -23,6 +24,7 @@ impl<'a> From<TokenStream> for Parser<'a> {
             source: "",
             file_name: "",
             token_stream,
+            in_delimiter: false,
         }
     }
 }
@@ -45,6 +47,7 @@ impl<'a> Parser<'a> {
             source,
             file_name,
             token_stream: TokenStream::from(source),
+            in_delimiter: false,
         }
     }
     pub fn parse<T>(&mut self) -> ParseResult<T>
@@ -55,12 +58,15 @@ impl<'a> Parser<'a> {
         T::parse(self)
     }
     pub fn step<R>(&mut self, F: impl FnOnce(&mut Self) -> ParseResult<R>) -> ParseResult<R> {
-        let starting = self.1;
+        let starting = self.idx;
+        let window = self.window;
         let stepped = F(self);
+
         match stepped {
             Ok(ok) => Ok(ok),
             Err(e) => {
-                self.1 = starting;
+                self.idx = starting;
+                self.window = window;
                 Err(e)
             }
         }

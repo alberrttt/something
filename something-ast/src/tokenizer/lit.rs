@@ -33,6 +33,13 @@ impl Node for Literal {
     fn append_tokens(&self, to: &mut Vec<Token>) {
         todo!()
     }
+
+    fn recover(parser: &mut Parser)
+    where
+        Self: Sized,
+    {
+        todo!()
+    }
 }
 impl Literal {
     pub fn new_str(span: Span, str: String) -> Self {

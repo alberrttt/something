@@ -3,6 +3,6 @@ pub mod var;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Declaration {
-    Function(fnc::Function),
+    Function(Box<fnc::Function>),
     Variable(var::Variable),
 }

@@ -1,9 +1,10 @@
 use std::backtrace::Backtrace;
+use std::f32::consts::E;
 use std::fmt::Display;
 use std::rc::Rc;
 
 use colored::Colorize;
-use log::Log;
+use log::{BodyLine, Header, Log, LogBody};
 
 use crate::ast::prelude::*;
 use crate::tokenizer::prelude::*;
@@ -15,18 +16,34 @@ pub struct ParseError {
 }
 impl Display for ParseError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match &self.backtrace {
+            None => {}
+            Some(backtrace) => {
+                println!("{backtrace}");
+            }
+        }
         match &self.kind {
-            ParseErrorKind::ExpectedToken(expected) => {
-                let log = Log::default();
+            ParseErrorKind::ExpectedToken(expected, got) => {
+                dbg!(expected);
+                let log = Log {
+                    header: Header::default().err().push("expected token"),
+                    body: LogBody::default()
+                        .push(format!("expected: {}", expected).as_ref())
+                        .push(format!("got: {}", got).red().bold()),
+                };
                 write!(f, "{}", log)
             }
-            ParseErrorKind::Todo => todo!(),
+            ParseErrorKind::InRecovery => todo!(),
         }
     }
 }
 impl ParseError {
     pub fn expected_token(expected: Token, got: Token) -> Self {
-        todo!()
+        Self {
+            surrounding: None,
+            kind: ParseErrorKind::ExpectedToken(expected, got),
+            backtrace: Some(Rc::new(Backtrace::capture())),
+        }
     }
     pub fn end_of_tokens() -> Self {
         todo!()
@@ -37,7 +54,7 @@ impl ParseError {
 }
 #[derive(Debug, Clone, Default)]
 pub enum ParseErrorKind {
-    ExpectedToken(Token),
+    ExpectedToken(Token, Token),
     #[default]
-    Todo,
+    InRecovery,
 }

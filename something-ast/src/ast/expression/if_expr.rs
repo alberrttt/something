@@ -28,7 +28,11 @@ impl Node for IfExpr {
             line_start: self.if_.span.line_start,
         }
     }
-
+    fn recover(parser: &mut crate::Parser)
+    where
+        Self: Sized,
+    {
+    }
     fn append_tokens(&self, to: &mut Vec<crate::Token>) {
         todo!()
     }
