@@ -6,13 +6,16 @@ use crate::Parser;
 use crate::ast;
 use crate::ast::prelude::*;
 use crate::tokenizer::prelude::*;
-pub trait Node {
-    fn parse(parser: &mut Parser) -> ParseResult<Self>
+pub trait Node<Output = ParseResult<Self>> {
+    fn parse(parser: &mut Parser) -> Output
     where
         Self: Sized;
     fn recover(parser: &mut Parser)
     where
-        Self: Sized;
+        Self: Sized,
+    {
+        todo!()
+    }
     fn span(&self) -> Span;
     fn append_tokens(&self, to: &mut Vec<Token>);
 }

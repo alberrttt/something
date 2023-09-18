@@ -28,4 +28,13 @@ macro_rules! node {
         let node = <$typ as Node>::parse(&mut parser).unwrap();
         node
     }};
+    ($typ:ty, $parser:expr) => {{
+        let node = <$typ as Node>::parse($parser).unwrap();
+        node
+    }};
+    (tokens $typ:ty, $tokenstream:expr) => {{
+        let mut parser = Parser::from($tokenstream);
+        let node = <$typ as Node>::parse(&mut parser).unwrap();
+        node
+    }};
 }

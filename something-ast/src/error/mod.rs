@@ -23,6 +23,15 @@ impl Display for ParseError {
             }
         }
         match &self.kind {
+            ParseErrorKind::EndOfTokens => {
+                let log = Log {
+                    header: Header::default().err().push("end of tokens"),
+                    body: LogBody::default()
+                        .push("expected more tokens")
+                        .push("reached end of tokens"),
+                };
+                write!(f, "{}", log)
+            }
             ParseErrorKind::ExpectedToken(expected, got) => {
                 dbg!(expected);
                 let log = Log {
@@ -46,7 +55,11 @@ impl ParseError {
         }
     }
     pub fn end_of_tokens() -> Self {
-        todo!()
+        Self {
+            surrounding: None,
+            kind: ParseErrorKind::EndOfTokens,
+            backtrace: Some(Rc::new(Backtrace::capture())),
+        }
     }
     pub fn expected_token_stream(expected: TokenStream, got: TokenStream) -> Self {
         todo!()
@@ -55,6 +68,7 @@ impl ParseError {
 #[derive(Debug, Clone, Default)]
 pub enum ParseErrorKind {
     ExpectedToken(Token, Token),
+    EndOfTokens,
     #[default]
     InRecovery,
 }

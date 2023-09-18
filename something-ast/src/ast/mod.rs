@@ -2,6 +2,7 @@ pub mod declaration;
 pub mod delimiters;
 pub mod expression;
 pub mod prelude;
+pub mod punctuated;
 pub mod statement;
 pub mod nodes {
     pub use super::declaration::{fnc::Function, var::Variable, Declaration};
