@@ -1,9 +1,7 @@
 [workspace]
 members = [
-    "something-dev-tools",
-    "something-ast",
-    "something-semantic",
-    "something-common",
-    "log"
+    "parmesan-ast",
+    "parmesan-dev-macros",
+    "parmesan-common"
 ]
 resolver = "2"
