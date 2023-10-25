@@ -41,3 +41,8 @@ mod gen_token;
 pub fn gen_token(input: TokenStream) -> TokenStream {
     gen_token::gen_token(input)
 }
+mod parse_derive;
+#[proc_macro_derive(Parse)]
+pub fn parse(input: TokenStream) -> TokenStream {
+    parse_derive::parse_derive(input)
+}

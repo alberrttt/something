@@ -1,5 +1,5 @@
 use parmesan_common::Spanned;
-use parmesan_dev_macros::Spanned;
+use parmesan_dev_macros::{Parse, Spanned};
 
 use crate::{lexer::token::BinaryOperator, parser::nodes::Node};
 
