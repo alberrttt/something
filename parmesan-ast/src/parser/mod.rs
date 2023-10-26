@@ -1,4 +1,7 @@
-use crate::lexer::token::Token;
+use crate::{
+    error::{EndOfTokens, ParseError},
+    lexer::token::Token,
+};
 pub mod nodes;
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct Parser<'a> {
@@ -8,4 +11,13 @@ pub struct Parser<'a> {
     current: usize,
 }
 
-impl<'a> Parser<'a> {}
+impl<'a> Parser<'a> {
+    pub fn peek<'b: 'a>(&mut self) -> Result<&'b Token<'a>, ParseError<'b>> {
+        if self.current > self.tokens.len() {
+            Err(ParseError::EndOfTokens(EndOfTokens {}))
+        } else {
+            Ok(unsafe { self.tokens.get_unchecked(self.current) })
+        }
+    }
+
+}

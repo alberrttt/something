@@ -62,12 +62,16 @@ fn test_error_message() {
     };
     assert_eq!(msg.to_string(), "line1 item2\nline2\nline3")
 }
-pub trait ParseError {
-    fn error(&self) -> String;
-    fn tokens(&self) -> Vec<Token>;
+pub enum ParseError<'a> {
+    EndOfTokens(EndOfTokens),
+    ExpectedToken(ExpectedToken<'a>),
 }
 
 #[derive(Debug, Clone, PartialEq, Default)]
-pub struct EndOfTokens<'a> {
-    pub tokens: Vec<Token<'a>>,
+pub struct EndOfTokens {}
+#[derive(Debug, Clone, PartialEq, Default)]
+
+pub struct ExpectedToken<'a> {
+    expected: Token<'a>,
+    got: Token<'a>,
 }

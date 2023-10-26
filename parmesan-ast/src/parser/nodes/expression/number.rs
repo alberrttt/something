@@ -1,6 +1,6 @@
 use parmesan_common::Spanned;
 
-use crate::lexer::token::Token;
+use crate::{lexer::token::Token, traits::Node};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Number<'a> {
@@ -24,5 +24,12 @@ impl<'a> From<&'a Token<'a>> for Number<'a> {
 impl Spanned for Number<'_> {
     fn span(&self) -> parmesan_common::Span {
         self.token.span()
+    }
+}
+impl<'a> Node<'a> for Number<'a> {
+    fn parse(parser: &mut crate::parser::Parser<'a>) -> Result<Self, crate::error::ParseError<'a>>
+    where
+        Self: Sized,
+    {
     }
 }

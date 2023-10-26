@@ -1,10 +1,8 @@
 use parmesan_common::Spanned;
 
-use crate::traits::Parse;
+use crate::traits::Node;
 
 use self::{ident::Identifier, number::Number};
-
-use super::Node;
 
 pub mod binary;
 pub mod ident;
@@ -24,15 +22,5 @@ impl Spanned for Expression<'_> {
             Number(number) => number.span(),
             BinaryExpression(binary) => binary.span(),
         }
-    }
-}
-impl Parse for Expression<'_> {
-    fn parse<'src>(
-        parser: &mut crate::parser::Parser<'src>,
-    ) -> Result<Self, Box<dyn crate::error::ParseError>>
-    where
-        Self: Sized,
-    {
-        todo!()
     }
 }
