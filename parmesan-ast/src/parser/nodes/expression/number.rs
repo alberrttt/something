@@ -1,6 +1,10 @@
 use parmesan_common::Spanned;
 
-use crate::{lexer::token::Token, traits::Node};
+use crate::{
+    error::ExpectedToken,
+    lexer::token::{Integer, Token},
+    traits::Node,
+};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Number<'a> {
@@ -31,5 +35,26 @@ impl<'a> Node<'a> for Number<'a> {
     where
         Self: Sized,
     {
+        let num = parser.peek()?;
+        match num {
+            Token::Integer(int) => {
+                parser.advance()?;
+                Ok(Number {
+                    token: num,
+                    value: int.lexeme.parse::<f64>().unwrap(),
+                })
+            }
+            Token::Float(float) => {
+                parser.advance()?;
+                Ok(Number {
+                    token: num,
+                    value: float.lexeme.parse::<f64>().unwrap(),
+                })
+            }
+            token => Err(crate::error::ParseError::ExpectedToken(ExpectedToken {
+                expected: Token::Integer(Integer::default()),
+                got: token.clone(),
+            })),
+        }
     }
 }

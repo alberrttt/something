@@ -1,4 +1,4 @@
-use std::{cmp::Ordering, fmt::Display, slice, vec};
+use std::{cmp::Ordering, error::Error, fmt::Display, slice, vec};
 
 use parmesan_common::{Span, Spanned};
 
@@ -62,16 +62,22 @@ fn test_error_message() {
     };
     assert_eq!(msg.to_string(), "line1 item2\nline2\nline3")
 }
+#[derive(Debug)]
 pub enum ParseError<'a> {
     EndOfTokens(EndOfTokens),
     ExpectedToken(ExpectedToken<'a>),
 }
-
+impl Error for ParseError<'_> {}
+impl Display for ParseError<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        todo!()
+    }
+}
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct EndOfTokens {}
 #[derive(Debug, Clone, PartialEq, Default)]
 
 pub struct ExpectedToken<'a> {
-    expected: Token<'a>,
-    got: Token<'a>,
+    pub expected: Token<'a>,
+    pub got: Token<'a>,
 }

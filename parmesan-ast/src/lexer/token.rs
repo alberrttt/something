@@ -127,6 +127,21 @@ gen_token!(
     Let,
     Mut
 );
+impl<'a> Node<'a> for BinaryOperator<'a> {
+    fn parse(parser: &mut crate::parser::Parser<'a>) -> Result<Self, crate::error::ParseError<'a>>
+    where
+        Self: Sized,
+    {
+        let peek = parser.peek()?;
+        match peek {
+            Token::Plus(plus) => {
+                parser.advance()?;
+                Ok(BinaryOperator::Plus(*plus))
+            }
+            tkn => panic!("unexpected {tkn:?}"),
+        }
+    }
+}
 #[test]
 fn test() {
     let mut lexer = Lexer::from(")( ][, || ||= && != !! &&= &= |= **= * ** %= += +");
@@ -318,7 +333,7 @@ fn test() {
 }
 use parmesan_dev_macros::gen_token;
 
-use crate::lexer::Lexer;
+use crate::{lexer::Lexer, traits::Node};
 pub fn tokens_by_line<'a>(tokens: &Vec<Token<'a>>) -> Vec<&'a [Token<'a>]> {
     let mut lines: Vec<&[Token<'a>]> = Vec::new();
     let mut line_start: *const Token<'a> = tokens.get(0).unwrap();

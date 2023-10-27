@@ -12,12 +12,19 @@ pub struct Parser<'a> {
 }
 
 impl<'a> Parser<'a> {
+    pub fn advance<'b: 'a>(&mut self) -> Result<&'b Token<'a>, ParseError<'b>> {
+        if self.current > self.tokens.len() {
+            Err(ParseError::EndOfTokens(EndOfTokens {}))
+        } else {
+            self.current += 1;
+            Ok(unsafe { self.tokens.get_unchecked(self.current) })
+        }
+    }
     pub fn peek<'b: 'a>(&mut self) -> Result<&'b Token<'a>, ParseError<'b>> {
         if self.current > self.tokens.len() {
             Err(ParseError::EndOfTokens(EndOfTokens {}))
         } else {
-            Ok(unsafe { self.tokens.get_unchecked(self.current) })
+            Ok(unsafe { self.tokens.get_unchecked(self.current + 1) })
         }
     }
-
 }
