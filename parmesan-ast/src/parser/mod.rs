@@ -24,7 +24,7 @@ impl<'a> Parser<'a> {
         if self.current > self.tokens.len() {
             Err(ParseError::EndOfTokens(EndOfTokens {}))
         } else {
-            Ok(unsafe { self.tokens.get_unchecked(self.current + 1) })
+            Ok(unsafe { self.tokens.get_unchecked(self.current) })
         }
     }
 }

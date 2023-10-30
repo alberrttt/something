@@ -135,7 +135,7 @@ impl<'a> Node<'a> for BinaryOperator<'a> {
         let peek = parser.peek()?;
         match peek {
             Token::Plus(plus) => {
-                parser.advance()?;
+                dbg!(parser.advance()?);
                 Ok(BinaryOperator::Plus(*plus))
             }
             tkn => panic!("unexpected {tkn:?}"),

@@ -38,7 +38,7 @@ impl<'a> Node<'a> for Number<'a> {
         let num = parser.peek()?;
         match num {
             Token::Integer(int) => {
-                parser.advance()?;
+                dbg!(parser.advance()?);
                 Ok(Number {
                     token: num,
                     value: int.lexeme.parse::<f64>().unwrap(),
@@ -51,10 +51,13 @@ impl<'a> Node<'a> for Number<'a> {
                     value: float.lexeme.parse::<f64>().unwrap(),
                 })
             }
-            token => Err(crate::error::ParseError::ExpectedToken(ExpectedToken {
-                expected: Token::Integer(Integer::default()),
-                got: token.clone(),
-            })),
+            token => {
+                dbg!(token);
+                Err(crate::error::ParseError::ExpectedToken(ExpectedToken {
+                    expected: Token::Integer(Integer::default()),
+                    got: token.clone(),
+                }))
+            }
         }
     }
 }

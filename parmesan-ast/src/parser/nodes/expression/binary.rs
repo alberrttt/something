@@ -16,9 +16,9 @@ use super::{number::Number, Expression};
 
 #[derive(Debug, Clone, PartialEq, Spanned)]
 pub struct BinaryExpression<'a> {
-    left: Box<Number<'a>>,
+    left: Box<Expression<'a>>,
     operator: BinaryOperator<'a>,
-    right: Box<Number<'a>>,
+    right: Box<Expression<'a>>,
 }
 
 impl<'a> Node<'a> for BinaryExpression<'a> {
@@ -28,9 +28,9 @@ impl<'a> Node<'a> for BinaryExpression<'a> {
     where
         Self: Sized,
     {
-        let left: Number = Node::parse(parser)?;
+        let left: Expression = Node::parse(parser)?;
         let operator: BinaryOperator = Node::parse(parser)?;
-        let right: Number = Node::parse(parser)?;
+        let right: Expression = Node::parse(parser)?;
         Ok(BinaryExpression {
             left: Box::new(left),
             operator,
@@ -38,17 +38,33 @@ impl<'a> Node<'a> for BinaryExpression<'a> {
         })
     }
 }
+pub fn parse_binary_expression<'a>(
+    parser: &mut Parser<'a>,
+    expr: Option<Expression<'a>>,
+) -> Result<BinaryExpression<'a>, crate::error::ParseError<'a>> {
+    let left: Expression = match expr {
+        Some(expr) => expr,
+        None => Expression::parse(parser)?,
+    };
+    let operator: BinaryOperator = Node::parse(parser)?;
+    let right: Expression = Node::parse(parser)?;
+    Ok(BinaryExpression {
+        left: Box::new(left),
+        operator,
+        right: Box::new(right),
+    })
+}
 #[test]
-fn test_bin() ->  Result<(), Box<dyn Error>> {
+fn test_bin() -> Result<(), Box<dyn Error>> {
     let mut lexer = Lexer::from("1+2");
     let tokens = lexer.lex();
     let mut parser = Parser {
-        src: "1+2",
+        src: "1+2*3+4",
         tokens: &tokens,
         current: 0,
     };
 
-    let bin: BinaryExpression = Node::parse(&mut parser).unwrap();
+    let bin: BinaryExpression = <BinaryExpression as Node>::parse(&mut parser).unwrap();
     dbg!(bin);
     Ok(())
 }
