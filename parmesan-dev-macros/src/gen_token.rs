@@ -147,10 +147,29 @@ pub fn gen_token(input: TokenStream) -> TokenStream {
                 .iter()
                 .map(|member| quote! {#ident::#member(token) => token.span,})
                 .collect::<Vec<_>>();
+            let node_arms = items
+                .iter()
+                .map(|member| quote! {Token::#member(token) => {
+                    parser.advance()?;
+                    Ok(#ident::#member(token.to_owned()))
+                },})
+                .collect::<Vec<_>>();
             quote! {
-                #[derive(Debug, Clone, PartialEq)]
+                #[derive(Debug, Clone, PartialEq,Eq)]
                 pub enum #ident<'a> {
                     #(#members)*
+                }
+                impl<'a> Node<'a> for #ident<'a> {
+                    fn parse(parser: &mut crate::parser::Parser<'a>) -> Result<Self, crate::error::ParseError<'a>>
+                    where
+                        Self: Sized,
+                    {
+                        let peek = parser.peek()?;
+                        match peek {
+                            #(#node_arms)*
+                            _ => todo!("groups")
+                        }
+                    }
                 }
                 impl<'a> #ident<'a> {
                     pub fn lexeme(&self) -> &'a str {
@@ -235,7 +254,7 @@ pub fn gen_token(input: TokenStream) -> TokenStream {
     quote! {
         #(#struct_defs)*
         #groups
-        #[derive(Debug, Clone, PartialEq, Default)]
+        #[derive(Debug, Clone, PartialEq, Eq, Default)]
         pub enum Token<'a> {
             #[default]
             None,

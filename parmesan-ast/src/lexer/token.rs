@@ -127,21 +127,7 @@ gen_token!(
     Let,
     Mut
 );
-impl<'a> Node<'a> for BinaryOperator<'a> {
-    fn parse(parser: &mut crate::parser::Parser<'a>) -> Result<Self, crate::error::ParseError<'a>>
-    where
-        Self: Sized,
-    {
-        let peek = parser.peek()?;
-        match peek {
-            Token::Plus(plus) => {
-                dbg!(parser.advance()?);
-                Ok(BinaryOperator::Plus(*plus))
-            }
-            tkn => panic!("unexpected {tkn:?}"),
-        }
-    }
-}
+
 #[test]
 fn test() {
     let mut lexer = Lexer::from(")( ][, || ||= && != !! &&= &= |= **= * ** %= += +");

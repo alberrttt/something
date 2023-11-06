@@ -16,9 +16,9 @@ use super::{number::Number, Expression};
 
 #[derive(Debug, Clone, PartialEq, Spanned)]
 pub struct BinaryExpression<'a> {
-    left: Box<Expression<'a>>,
-    operator: BinaryOperator<'a>,
-    right: Box<Expression<'a>>,
+    pub(crate) left: Box<Expression<'a>>,
+    pub(crate) operator: BinaryOperator<'a>,
+    pub(crate) right: Box<Expression<'a>>,
 }
 
 impl<'a> Node<'a> for BinaryExpression<'a> {

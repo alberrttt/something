@@ -2,7 +2,7 @@ use parmesan_common::{Span, Spanned};
 
 use crate::lexer::token::Token;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq,Eq)]
 pub struct Identifier<'a> {
     token: &'a Token<'a>,
 }
