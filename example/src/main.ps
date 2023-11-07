@@ -1,0 +1,17 @@
+use libc::malloc;
+use std::io::println;
+fn main() {
+    // 4 bytes
+    let mut count = unsafe &mut *malloc<u32>(4);
+    inc(count);
+    println!("Hello, world! {count}");
+    unsafe free(count);
+} -> ()
+
+fn inc(value: &mut u32) *value += 1 -> i32
+
+// function syntax:
+// fn <ident>(<args>) <body: expression> -> <return type>
+
+// unsafe expression:
+// unsafe <expression>

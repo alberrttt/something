@@ -1,11 +1,26 @@
+use std::error::Error;
+
 use parmesan_common::Spanned;
+mod precedence;
+use crate::{
+    error::{EndOfTokens, ParseError},
+    lexer::{
+        token::{self, BinaryOperator, Token},
+        Lexer,
+    },
+    parser::{self, Parser},
+    traits::Node,
+};
 
-use crate::{error::EndOfTokens, lexer::token, parser, traits::Node};
-
-use self::{binary::parse_binary_expression, ident::Identifier, number::Number};
+use self::{
+    binary::{parse_binary_expression, BinaryExpression},
+    ident::Identifier,
+    number::Number,
+};
 
 pub mod binary;
 pub mod ident;
+pub mod literal;
 pub mod number;
 #[derive(Debug, Clone, PartialEq)]
 pub enum Expression<'a> {
@@ -18,35 +33,57 @@ impl<'a> Node<'a> for Expression<'a> {
     where
         Self: Sized,
     {
-        parse_term(parser, None)
+        parse_expression(parser)
     }
 }
-fn parse_term<'a>(
+fn parse_unit<'a>(
     parser: &mut crate::parser::Parser<'a>,
-    expr: Option<Expression<'a>>,
 ) -> Result<Expression<'a>, crate::error::ParseError<'a>> {
-    let peek = parser.peek();
-    let expr = match expr {
-        Some(expr) => Ok(expr),
-        None => Err(crate::error::ParseError::EndOfTokens(
-            crate::error::EndOfTokens {},
-        )),
-    };
-    let Ok(peeked) = peek else {
-        return expr;
-    };
+    let peeked = parser.peek()?;
 
     match peeked {
-        token::Token::Plus(plus) => match expr {
-            Ok(expr) => Ok(Expression::BinaryExpression(parse_binary_expression(
-                parser,
-                Some(expr),
-            )?)),
-            Err(err) => Err(err),
-        },
-        _ => expr,
+        Token::Integer(_) | Token::Float(_) => {
+            parser.advance()?;
+            Ok(Expression::Number(Number::from(peeked)))
+        }
+        _ => Err(crate::error::ParseError::EndOfTokens(EndOfTokens {})),
     }
 }
+fn parse_expression<'a>(parser: &mut Parser<'a>) -> Result<Expression<'a>, ParseError<'a>> {
+    let mut left = parse_unit(parser)?;
+    while match dbg!(parser.peek()) {
+        Err(_) => false,
+        Ok(token) => matches!(token, Token::Plus(_) | Token::Minus(_)),
+    } {
+        let operator: BinaryOperator = BinaryOperator::parse(parser)?;
+        let right = parse_term(parser)?;
+        left = Expression::BinaryExpression(BinaryExpression {
+            left: Box::new(left),
+            operator,
+            right: Box::new(right),
+        });
+    }
+
+    Ok(left)
+}
+fn parse_term<'a>(parser: &mut Parser<'a>) -> Result<Expression<'a>, ParseError<'a>> {
+    let mut left: Expression<'_> = parse_unit(parser)?;
+    while match parser.peek() {
+        Err(_) => false,
+        Ok(token) => matches!(token, Token::Star(_) | Token::Slash(_)),
+    } {
+        let operator: BinaryOperator = BinaryOperator::parse(parser)?;
+        let right = parse_unit(parser)?;
+        left = Expression::BinaryExpression(BinaryExpression {
+            left: Box::new(left),
+            operator,
+            right: Box::new(right),
+        });
+    }
+
+    Ok(left)
+}
+
 impl Spanned for Expression<'_> {
     fn span(&self) -> parmesan_common::Span {
         use Expression::*;
@@ -56,4 +93,19 @@ impl Spanned for Expression<'_> {
             BinaryExpression(binary) => binary.span(),
         }
     }
+}
+#[test]
+fn test_expr() -> Result<(), Box<dyn Error>> {
+    let src = "1+2*3+4";
+    let mut lexer = Lexer::from(src);
+    let tokens = lexer.lex();
+    let mut parser = Parser {
+        src,
+        tokens: &tokens,
+        current: 0,
+    };
+
+    let bin = <Expression as Node>::parse(&mut parser).unwrap();
+    dbg!(bin);
+    Ok(())
 }

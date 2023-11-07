@@ -37,6 +37,7 @@ impl<'a> Parser<'a> {
         }
     }
     pub fn advance<'b: 'a>(&mut self) -> Result<&'b Token<'a>, ParseError<'b>> {
+        
         if self.current > self.tokens.len() {
             Err(ParseError::EndOfTokens(EndOfTokens {}))
         } else {
