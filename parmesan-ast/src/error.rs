@@ -62,7 +62,7 @@ fn test_error_message() {
     };
     assert_eq!(msg.to_string(), "line1 item2\nline2\nline3")
 }
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum ParseError<'a> {
     EndOfTokens(EndOfTokens),
     ExpectedToken(ExpectedToken<'a>),
