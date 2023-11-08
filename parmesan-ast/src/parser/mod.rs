@@ -1,8 +1,9 @@
 use crate::{
     error::{EndOfTokens, ParseError},
     lexer::token::Token,
-    result::PResult,
+    prelude::ParseResult,
 };
+pub mod item;
 pub mod nodes;
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct Parser<'a> {
@@ -13,31 +14,21 @@ pub struct Parser<'a> {
 }
 
 impl<'a> Parser<'a> {
-    pub fn advance_1<'b: 'a>(&mut self) -> PResult<'b, &'b Token<'a>> {
-        use PResult::*;
-        if self.current > self.tokens.len() {
-            Err(ParseError::EndOfTokens(EndOfTokens {}))
-        } else {
-            self.current += 1;
-            Ok(unsafe { self.tokens.get_unchecked(self.current) })
-        }
-    }
-    pub fn step<'b: 'a, T, F>(&mut self, F: F) -> PResult<'b, T>
+    pub fn step<'b: 'a, T, F>(&mut self, F: F) -> ParseResult<'b, T>
     where
-        F: FnOnce(&mut Parser) -> PResult<'b, T>,
+        F: FnOnce(&mut Parser) -> ParseResult<'b, T>,
     {
         let start = self.current;
         let tmp = F(self);
         match tmp {
-            PResult::Err(err) => {
+            ParseResult::Err(err) => {
                 self.current = start;
-                PResult::Err(err)
+                ParseResult::Err(err)
             }
-            PResult::Ok(ok) => PResult::Ok(ok),
+            ParseResult::Ok(ok) => ParseResult::Ok(ok),
         }
     }
     pub fn advance<'b: 'a>(&mut self) -> Result<&'b Token<'a>, ParseError<'b>> {
-        
         if self.current > self.tokens.len() {
             Err(ParseError::EndOfTokens(EndOfTokens {}))
         } else {

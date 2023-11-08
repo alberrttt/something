@@ -51,10 +51,11 @@ fn parse_unit<'a>(
 }
 fn parse_expression<'a>(parser: &mut Parser<'a>) -> Result<Expression<'a>, ParseError<'a>> {
     let mut left = parse_unit(parser)?;
-    while match dbg!(parser.peek()) {
+    while match parser.peek() {
         Err(_) => false,
         Ok(token) => matches!(token, Token::Plus(_) | Token::Minus(_)),
     } {
+        dbg!(parser.peek()?);
         let operator: BinaryOperator = BinaryOperator::parse(parser)?;
         let right = parse_term(parser)?;
         left = Expression::BinaryExpression(BinaryExpression {
@@ -63,7 +64,7 @@ fn parse_expression<'a>(parser: &mut Parser<'a>) -> Result<Expression<'a>, Parse
             right: Box::new(right),
         });
     }
-
+    dbg!(&left);
     Ok(left)
 }
 fn parse_term<'a>(parser: &mut Parser<'a>) -> Result<Expression<'a>, ParseError<'a>> {
@@ -72,6 +73,7 @@ fn parse_term<'a>(parser: &mut Parser<'a>) -> Result<Expression<'a>, ParseError<
         Err(_) => false,
         Ok(token) => matches!(token, Token::Star(_) | Token::Slash(_)),
     } {
+        dbg!(parser.peek()?);
         let operator: BinaryOperator = BinaryOperator::parse(parser)?;
         let right = parse_unit(parser)?;
         left = Expression::BinaryExpression(BinaryExpression {

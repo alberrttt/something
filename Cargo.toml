@@ -5,5 +5,5 @@ members = [
     "parmesan-common",
     "parmesan-compiler",
     "alfredo"
-]
+, "parmesan-ir"]
 resolver = "2"

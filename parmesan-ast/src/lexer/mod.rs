@@ -1,13 +1,12 @@
 pub mod token;
 
-use std::char;
-
 use parmesan_common::Span;
+use std::char;
 use token::Token;
 
 use self::token::{Float, Ident, If, Integer};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone,PartialEq)]
 pub struct Lexer<'src> {
     pub src: &'src str,
     /// position in the entire file

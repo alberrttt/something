@@ -66,6 +66,7 @@ fn test_error_message() {
 pub enum ParseError<'a> {
     EndOfTokens(EndOfTokens),
     ExpectedToken(ExpectedToken<'a>),
+    ExpectedNode(ExpectedNode<'a>),
 }
 impl Error for ParseError<'_> {}
 impl Display for ParseError<'_> {
@@ -80,4 +81,10 @@ pub struct EndOfTokens {}
 pub struct ExpectedToken<'a> {
     pub expected: Token<'a>,
     pub got: Token<'a>,
+}
+
+#[derive(Debug, Clone, PartialEq, Default)]
+pub struct ExpectedNode<'a> {
+    pub expected: &'static str,
+    pub got: &'a str,
 }

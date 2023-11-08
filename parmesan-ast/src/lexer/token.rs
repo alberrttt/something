@@ -1,6 +1,8 @@
 use std::slice;
 
+use crate::error::{ExpectedNode, ParseError};
 use casey::upper;
+
 use parmesan_common::{Span, Spanned};
 gen_token!(
     Integer,

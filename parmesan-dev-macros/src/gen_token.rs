@@ -167,7 +167,16 @@ pub fn gen_token(input: TokenStream) -> TokenStream {
                         let peek = parser.peek()?;
                         match peek {
                             #(#node_arms)*
-                            _ => todo!("groups")
+                            peek => {
+                                Err(
+                                    ParseError::ExpectedNode(
+                                        ExpectedNode {
+                                            got: peek.lexeme(),
+                                            expected: stringify!(#ident)
+                                        }
+                                    )
+                                )
+                            }
                         }
                     }
                 }
@@ -175,7 +184,7 @@ pub fn gen_token(input: TokenStream) -> TokenStream {
                     pub fn lexeme(&self) -> &'a str {
                         match self {
                             #(#lexeme_arms)*
-                            _ => todo!()
+                            _ => todo!("187")
                         }
                     }
                 }
@@ -183,7 +192,7 @@ pub fn gen_token(input: TokenStream) -> TokenStream {
                      fn span(&self) -> Span {
                         match self {
                             #(#spanned_arms)*
-                            _ => todo!()
+                            _ => todo!("195")
                         }
                     }
                 }
@@ -265,7 +274,7 @@ pub fn gen_token(input: TokenStream) -> TokenStream {
             pub fn lexeme(&self) -> &'a str {
                 match &self {
                     #(#matches)*
-                    _ => todo!()
+                    x => "None"
                 }
             }
         }
@@ -274,7 +283,7 @@ pub fn gen_token(input: TokenStream) -> TokenStream {
                 let char = self.peek().unwrap();
                 match char {
                     #(#lexemes)*
-                    _ => todo!(),
+                    _ => todo!("286"),
                 }
             }
         }
