@@ -1,6 +1,10 @@
-use crate::lexer::token::Let;
+use parmesan_common::Spanned;
+use parmesan_dev_macros::Spanned;
 
-#[derive(Debug, Clone, PartialEq)]
+use crate::lexer::token::{Ident, Let};
+
+#[derive(Debug, Clone, PartialEq, Spanned)]
 pub struct Variable<'a> {
     pub let_tkn: Let<'a>,
+    pub ident: Ident<'a>,
 }

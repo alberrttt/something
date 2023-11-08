@@ -4,6 +4,7 @@ use parmesan_common::Spanned;
 use parmesan_dev_macros::{Parse, Spanned};
 
 use crate::{
+    error::ExpectedNode,
     lexer::{
         token::{Amper, BinaryOperator},
         Lexer,
@@ -22,44 +23,28 @@ pub struct BinaryExpression<'a> {
 }
 
 impl<'a> Node<'a> for BinaryExpression<'a> {
-    fn parse<'b>(
-        parser: &mut crate::parser::Parser<'a>,
+    fn parse<'b: 'a>(
+        parser: &'a mut crate::parser::Parser<'a>,
     ) -> Result<Self, crate::error::ParseError<'a>>
     where
         Self: Sized,
     {
-        let left: Expression = Node::parse(parser)?;
-        let operator: BinaryOperator = Node::parse(parser)?;
-        let right: Expression = Node::parse(parser)?;
-        Ok(BinaryExpression {
-            left: Box::new(left),
-            operator,
-            right: Box::new(right),
-        })
+        match Expression::parse(parser)? {
+            Expression::BinaryExpression(bin) => Ok(bin),
+            _ => Err(crate::error::ParseError::ExpectedNode(ExpectedNode {
+                got: "Expression",
+                expected: "BinaryExpression",
+            })),
+        }
     }
 }
-pub fn parse_binary_expression<'a>(
-    parser: &mut Parser<'a>,
-    expr: Option<Expression<'a>>,
-) -> Result<BinaryExpression<'a>, crate::error::ParseError<'a>> {
-    let left: Expression = match expr {
-        Some(expr) => expr,
-        None => Expression::parse(parser)?,
-    };
-    let operator: BinaryOperator = Node::parse(parser)?;
-    let right: Expression = Node::parse(parser)?;
-    Ok(BinaryExpression {
-        left: Box::new(left),
-        operator,
-        right: Box::new(right),
-    })
-}
+
 #[test]
 fn test_bin() -> Result<(), Box<dyn Error>> {
     let mut lexer = Lexer::from("1+2");
     let tokens = lexer.lex();
     let mut parser = Parser {
-        src: "1+2*3+4",
+        src: "1+2",
         tokens: &tokens,
         current: 0,
     };

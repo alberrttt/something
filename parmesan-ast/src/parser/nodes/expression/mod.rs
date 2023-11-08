@@ -5,31 +5,28 @@ mod precedence;
 use crate::{
     error::{EndOfTokens, ParseError},
     lexer::{
-        token::{self, BinaryOperator, Token},
+        token::{self, BinaryOperator, Ident, Token},
         Lexer,
     },
     parser::{self, Parser},
     traits::Node,
 };
 
-use self::{
-    binary::{parse_binary_expression, BinaryExpression},
-    ident::Identifier,
-    number::Number,
-};
+use self::{binary::BinaryExpression, number::Number};
 
 pub mod binary;
-pub mod ident;
 pub mod literal;
 pub mod number;
 #[derive(Debug, Clone, PartialEq)]
 pub enum Expression<'a> {
-    Identifier(ident::Identifier<'a>),
+    Identifier(Ident<'a>),
     Number(number::Number<'a>),
     BinaryExpression(binary::BinaryExpression<'a>),
 }
 impl<'a> Node<'a> for Expression<'a> {
-    fn parse(parser: &mut crate::parser::Parser<'a>) -> Result<Self, crate::error::ParseError<'a>>
+    fn parse<'b: 'a>(
+        parser: &'b mut crate::parser::Parser<'a>,
+    ) -> Result<Self, crate::error::ParseError<'a>>
     where
         Self: Sized,
     {

@@ -18,3 +18,10 @@ impl From<(Span, Span)> for Span {
 pub trait Spanned {
     fn span(&self) -> Span;
 }
+impl<T: Spanned> Spanned for Vec<T> {
+    fn span(&self) -> Span {
+        let first = self.first().unwrap();
+        let last = self.last().unwrap();
+        (first.span(), last.span()).into()
+    }
+}

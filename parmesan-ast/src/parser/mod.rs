@@ -14,15 +14,18 @@ pub struct Parser<'a> {
 }
 
 impl<'a> Parser<'a> {
-    pub fn step<'b: 'a, T, F>(&mut self, F: F) -> ParseResult<'b, T>
+    pub fn step<'b: 'a, T: 'b, F>(&'b mut self, F: F) -> ParseResult<'b, T>
     where
-        F: FnOnce(&mut Parser) -> ParseResult<'b, T>,
+        F: FnOnce(&'b mut Parser) -> ParseResult<'b, T>,
     {
+        let _self = &self as *const _ as *mut Parser;
         let start = self.current;
         let tmp = F(self);
         match tmp {
             ParseResult::Err(err) => {
-                self.current = start;
+                unsafe {
+                    (*_self).current = start;
+                }
                 ParseResult::Err(err)
             }
             ParseResult::Ok(ok) => ParseResult::Ok(ok),

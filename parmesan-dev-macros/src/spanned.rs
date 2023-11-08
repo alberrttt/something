@@ -1,7 +1,10 @@
 use proc_macro::TokenStream;
 use proc_macro2::TokenStream as TokenStream2;
 use quote::{format_ident, quote};
-use syn::{parse_macro_input, Data, DeriveInput, Error, Fields};
+use syn::{
+    parse_macro_input, punctuated::Punctuated, Data, DeriveInput, Error, ExprParen, ExprPath,
+    Fields, Path,
+};
 pub fn spanned_derive(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
     let name = &input.ident;
@@ -23,6 +26,21 @@ pub fn spanned_derive(input: TokenStream) -> TokenStream {
                 (self.#first_ident.span(),self.#last_ident.span()).into()
             };
         }
+        Data::Enum(data) => {
+            let mut arms = Vec::new();
+            for variant in data.variants.iter() {
+                let ident = &variant.ident;
+                arms.push(quote! {
+                    Self::#ident(inner) => inner.span(),
+                });
+            }
+
+            impls = quote! {
+                match self {
+                    #(#arms)*
+                }
+            };
+        }
         _ => panic!("This macro only supports structs with named fields."),
     }
     let mut generics = quote! {};
@@ -31,7 +49,7 @@ pub fn spanned_derive(input: TokenStream) -> TokenStream {
             syn::GenericParam::Lifetime(_) => {
                 generics = quote! {#generics '_,};
             }
-            syn::GenericParam::Type(_) => generics = quote! {#generics, _},
+            syn::GenericParam::Type(_) => generics = quote! {#generics _,},
             syn::GenericParam::Const(_) => todo!(),
         }
     }

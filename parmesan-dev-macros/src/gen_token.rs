@@ -57,7 +57,34 @@ fn generate_struct_defs_token_items(punctuation: &List) -> StructDefsTokenItems 
                 pub lexeme: &'a str,
                 pub span: Span
             }
-
+            impl<'a> Spanned for #ident<'a> {
+                fn span(&self) -> Span {
+                    self.span
+                }
+            }
+            impl<'a> Node<'a> for #ident<'a> {
+                fn parse<'b:'a>(
+                    parser: &'b mut crate::parser::Parser<'a>,
+                ) -> Result<Self, crate::error::ParseError<'a>>
+                where
+                    Self: Sized,
+                {
+                    let peeked = parser.peek()?;
+                    if let Token::#ident(peeked) = peeked {
+                        parser.advance()?;
+                        Ok(peeked.clone())
+                    } else {
+                        Err(
+                            ParseError::ExpectedNode(
+                                ExpectedNode {
+                                    got: peeked.lexeme(),
+                                    expected: stringify!(#ident)
+                                }
+                            )
+                        )
+                    }
+                }
+            }
             impl <'a> From<#ident<'a>> for Token<'a> {
                 fn from(value: #ident<'a>) -> Token<'a> {
                     Token::#ident(value)
@@ -160,7 +187,7 @@ pub fn gen_token(input: TokenStream) -> TokenStream {
                     #(#members)*
                 }
                 impl<'a> Node<'a> for #ident<'a> {
-                    fn parse(parser: &mut crate::parser::Parser<'a>) -> Result<Self, crate::error::ParseError<'a>>
+                    fn parse<'b:'a>(parser: &'b mut crate::parser::Parser<'a>) -> Result<Self, crate::error::ParseError<'a>>
                     where
                         Self: Sized,
                     {
