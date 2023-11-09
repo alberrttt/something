@@ -94,13 +94,7 @@ impl Spanned for Expression<'_> {
 #[test]
 fn test_expr() -> Result<(), Box<dyn Error>> {
     let src = "1+2*3+4";
-    let mut lexer = Lexer::from(src);
-    let tokens = lexer.lex();
-    let mut parser = Parser {
-        src,
-        tokens,
-        current: 0,
-    };
+    let mut parser = Parser::new(src);
 
     let bin = <Expression as Node>::parse(&mut parser).unwrap();
     dbg!(bin);

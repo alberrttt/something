@@ -3,23 +3,35 @@ use crate::{
     lexer::token::Token,
     prelude::ParseResult,
 };
+
+use self::parse_stream::ParseStream;
 pub mod item;
 pub mod nodes;
-#[derive(Debug, Clone, PartialEq, Default)]
+pub mod parse_stream;
+#[derive(Debug, Clone, PartialEq)]
 pub struct Parser<'a> {
     pub src: &'a str,
     pub tokens: Vec<Token<'a>>,
+    pub stream: ParseStream<'a>,
     /// The index of the current token
     pub current: usize,
 }
 
 impl<'a> Parser<'a> {
+    pub fn at_end(&self) -> bool {
+        self.current >= self.tokens.len()
+    }
     pub fn new(src: &'a str) -> Self {
         let tokens = crate::lexer::Lexer::from(src).lex();
-
+        let reference =
+            unsafe { std::mem::transmute::<&[Token<'a>], &'a [Token<'a>]>(tokens.as_ref()) };
         Self {
             src,
             tokens,
+            stream: ParseStream {
+                tokens: reference,
+                current: 0,
+            },
             current: 0,
         }
     }

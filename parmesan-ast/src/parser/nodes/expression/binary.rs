@@ -39,13 +39,7 @@ impl<'a> Node<'a> for BinaryExpression<'a> {
 
 #[test]
 fn test_bin() -> Result<(), Box<dyn Error>> {
-    let mut lexer = Lexer::from("1+2");
-    let tokens = lexer.lex();
-    let mut parser = Parser {
-        src: "1+2",
-        tokens: tokens,
-        current: 0,
-    };
+    let mut parser = Parser::new("1+2");
 
     let bin: BinaryExpression = <BinaryExpression as Node>::parse(&mut parser).unwrap();
     dbg!(bin);

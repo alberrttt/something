@@ -1,6 +1,3 @@
 use crate::error::ParseError;
 
-pub type ParseResult<'a, T>
-where
-    T: 'a,
-= Result<T, ParseError<'a>>;
+pub type ParseResult<'a, T> = Result<T, ParseError<'a>>;
