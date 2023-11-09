@@ -63,16 +63,17 @@ fn generate_struct_defs_token_items(punctuation: &List) -> StructDefsTokenItems 
                 }
             }
             impl<'a> Node<'a> for #ident<'a> {
-                fn parse<'b:'a>(
-                    parser: &'b mut crate::parser::Parser<'a>,
+                fn parse(
+                    parser: &mut crate::parser::Parser<'a>,
                 ) -> Result<Self, crate::error::ParseError<'a>>
                 where
                     Self: Sized,
                 {
                     let peeked = parser.peek()?;
                     if let Token::#ident(peeked) = peeked {
+                        let tmp = Ok(peeked.clone());
                         parser.advance()?;
-                        Ok(peeked.clone())
+                        tmp
                     } else {
                         Err(
                             ParseError::ExpectedNode(
@@ -177,8 +178,9 @@ pub fn gen_token(input: TokenStream) -> TokenStream {
             let node_arms = items
                 .iter()
                 .map(|member| quote! {Token::#member(token) => {
+                    let tmp = Ok(#ident::#member(token.to_owned()));
                     parser.advance()?;
-                    Ok(#ident::#member(token.to_owned()))
+                    tmp
                 },})
                 .collect::<Vec<_>>();
             quote! {
@@ -187,7 +189,7 @@ pub fn gen_token(input: TokenStream) -> TokenStream {
                     #(#members)*
                 }
                 impl<'a> Node<'a> for #ident<'a> {
-                    fn parse<'b:'a>(parser: &'b mut crate::parser::Parser<'a>) -> Result<Self, crate::error::ParseError<'a>>
+                    fn parse(parser: &mut crate::parser::Parser<'a>) -> Result<Self, crate::error::ParseError<'a>>
                     where
                         Self: Sized,
                     {

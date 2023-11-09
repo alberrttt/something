@@ -6,7 +6,7 @@ use token::Token;
 
 use self::token::{Float, Ident, If, Integer};
 
-#[derive(Debug, Clone,PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Lexer<'src> {
     pub src: &'src str,
     /// position in the entire file
@@ -155,7 +155,17 @@ impl<'src> Lexer<'src> {
         }
         use crate::lexer::token::*;
 
-        keyword_match!(True, False, If, Else, FnKeyword, Return, Let, Mut)
+        match lexeme {
+            "true" => True { lexeme, span }.into(),
+            "false" => False { lexeme, span }.into(),
+            "if" => If { lexeme, span }.into(),
+            "else" => Else { lexeme, span }.into(),
+            "fn" => FnKeyword { lexeme, span }.into(),
+            "return" => Return { lexeme, span }.into(),
+            "let" => Let { lexeme, span }.into(),
+            "mut" => Mut { lexeme, span }.into(),
+            _ => Ident { lexeme, span }.into(),
+        }
     }
 }
 

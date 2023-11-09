@@ -8,30 +8,36 @@ pub mod nodes;
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct Parser<'a> {
     pub src: &'a str,
-    pub tokens: &'a [Token<'a>],
+    pub tokens: Vec<Token<'a>>,
     /// The index of the current token
     pub current: usize,
 }
 
 impl<'a> Parser<'a> {
-    pub fn step<'b: 'a, T: 'b, F>(&'b mut self, F: F) -> ParseResult<'b, T>
-    where
-        F: FnOnce(&'b mut Parser) -> ParseResult<'b, T>,
-    {
-        let _self = &self as *const _ as *mut Parser;
-        let start = self.current;
-        let tmp = F(self);
-        match tmp {
-            ParseResult::Err(err) => {
-                unsafe {
-                    (*_self).current = start;
-                }
-                ParseResult::Err(err)
-            }
-            ParseResult::Ok(ok) => ParseResult::Ok(ok),
+    pub fn new(src: &'a str) -> Self {
+        let tokens = crate::lexer::Lexer::from(src).lex();
+
+        Self {
+            src,
+            tokens,
+            current: 0,
         }
     }
-    pub fn advance<'b: 'a>(&mut self) -> Result<&'b Token<'a>, ParseError<'b>> {
+    pub fn step<T>(
+        &mut self,
+        closure: fn(&mut Parser<'a>) -> ParseResult<'a, T>,
+    ) -> ParseResult<'a, T> {
+        let start = self.current;
+        let result = closure(self);
+        match result {
+            Ok(ok) => Ok(ok),
+            Err(err) => {
+                self.current = start;
+                Err(err)
+            }
+        }
+    }
+    pub fn advance<'b>(&mut self) -> Result<&Token<'a>, ParseError<'b>> {
         if self.current > self.tokens.len() {
             Err(ParseError::EndOfTokens(EndOfTokens {}))
         } else {
@@ -39,11 +45,12 @@ impl<'a> Parser<'a> {
             Ok(unsafe { self.tokens.get_unchecked(self.current) })
         }
     }
-    pub fn peek<'b: 'a>(&mut self) -> Result<&'b Token<'a>, ParseError<'b>> {
+    pub fn peek<'b: 'a>(&self) -> Result<&'b Token<'a>, ParseError<'b>> {
         if self.current > self.tokens.len() {
             Err(ParseError::EndOfTokens(EndOfTokens {}))
         } else {
-            Ok(unsafe { self.tokens.get_unchecked(self.current) })
+            // as long as it compiles 🙂😀
+            Ok(unsafe { ::std::mem::transmute(self.tokens.get_unchecked(self.current)) })
         }
     }
 }

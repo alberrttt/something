@@ -8,7 +8,7 @@ fn test_file() {
 
     let mut parser = Parser {
         src,
-        tokens: &tokens,
+        tokens,
         current: 0,
     };
 }

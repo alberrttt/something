@@ -24,9 +24,7 @@ pub enum Expression<'a> {
     BinaryExpression(binary::BinaryExpression<'a>),
 }
 impl<'a> Node<'a> for Expression<'a> {
-    fn parse<'b: 'a>(
-        parser: &'b mut crate::parser::Parser<'a>,
-    ) -> Result<Self, crate::error::ParseError<'a>>
+    fn parse(parser: &mut crate::parser::Parser<'a>) -> Result<Self, crate::error::ParseError<'a>>
     where
         Self: Sized,
     {
@@ -100,7 +98,7 @@ fn test_expr() -> Result<(), Box<dyn Error>> {
     let tokens = lexer.lex();
     let mut parser = Parser {
         src,
-        tokens: &tokens,
+        tokens,
         current: 0,
     };
 

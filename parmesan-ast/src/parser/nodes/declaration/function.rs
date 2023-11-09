@@ -13,9 +13,7 @@ pub struct Function<'a> {
     pub body: Vec<Item<'a>>,
 }
 impl<'a> Node<'a> for Function<'a> {
-    fn parse<'b: 'a>(
-        parser: &'b mut crate::parser::Parser<'a>,
-    ) -> Result<Self, crate::error::ParseError<'a>>
+    fn parse(parser: &mut crate::parser::Parser<'a>) -> Result<Self, crate::error::ParseError<'a>>
     where
         Self: Sized,
     {

@@ -23,9 +23,7 @@ pub struct BinaryExpression<'a> {
 }
 
 impl<'a> Node<'a> for BinaryExpression<'a> {
-    fn parse<'b: 'a>(
-        parser: &'a mut crate::parser::Parser<'a>,
-    ) -> Result<Self, crate::error::ParseError<'a>>
+    fn parse(parser: &mut crate::parser::Parser<'a>) -> Result<Self, crate::error::ParseError<'a>>
     where
         Self: Sized,
     {
@@ -45,7 +43,7 @@ fn test_bin() -> Result<(), Box<dyn Error>> {
     let tokens = lexer.lex();
     let mut parser = Parser {
         src: "1+2",
-        tokens: &tokens,
+        tokens: tokens,
         current: 0,
     };
 
