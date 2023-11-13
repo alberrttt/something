@@ -1,6 +1,10 @@
 use std::ops::Range;
 
-use crate::{lexer::token::Token, prelude::ParseResult, error::{ParseError, EndOfTokens}};
+use crate::{
+    error::{EndOfTokens, ParseError},
+    lexer::token::Token,
+    prelude::ParseResult,
+};
 
 use super::Parser;
 
@@ -38,19 +42,18 @@ impl<'a> ParseStream<'a> {
         self.current >= self.tokens.len()
     }
     pub fn advance<'b>(&mut self) -> Result<&Token<'a>, ParseError<'b>> {
-        if self.current > self.tokens.len() {
-            Err(ParseError::EndOfTokens(EndOfTokens {}))
-        } else {
-            self.current += 1;
-            Ok(unsafe { self.tokens.get_unchecked(self.current) })
+        match self.tokens.get(self.current) {
+            Some(some) => {
+                self.current += 1;
+                Ok(some)
+            }
+            None => Err(ParseError::EndOfTokens(EndOfTokens {})),
         }
     }
     pub fn peek<'b: 'a>(&self) -> Result<&'b Token<'a>, ParseError<'b>> {
-        if self.current > self.tokens.len() {
-            Err(ParseError::EndOfTokens(EndOfTokens {}))
-        } else {
-            // as long as it compiles 🙂😀
-            Ok(unsafe { ::std::mem::transmute(self.tokens.get_unchecked(self.current)) })
+        match self.tokens.get(self.current) {
+            Some(some) => Ok(some),
+            None => Err(ParseError::EndOfTokens(EndOfTokens {})),
         }
     }
 }

@@ -288,7 +288,16 @@ pub fn gen_token(input: TokenStream) -> TokenStream {
             }
         })
         .collect();
-
+    let spanned = punctuation
+        .0
+        .iter()
+        .map(|item| {
+            let ident = &item.1;
+            quote! {
+                Token::#ident(token) => token.span(),
+            }
+        })
+        .collect::<Vec<_>>();
     quote! {
         #(#struct_defs)*
         #groups
@@ -304,6 +313,14 @@ pub fn gen_token(input: TokenStream) -> TokenStream {
                 match &self {
                     #(#matches)*
                     x => "None"
+                }
+            }
+        }
+        impl<'a> Spanned for Token<'a> {
+            fn span(&self) -> Span {
+                match &self {
+                    #(#spanned)*
+                    x => todo!("245")
                 }
             }
         }

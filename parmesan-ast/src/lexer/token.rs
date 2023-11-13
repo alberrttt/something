@@ -346,16 +346,16 @@ fn test() {
 use parmesan_dev_macros::{gen_token, Spanned};
 
 use crate::{lexer::Lexer, traits::Node};
-pub fn tokens_by_line<'a>(tokens: &Vec<Token<'a>>) -> Vec<&'a [Token<'a>]> {
+pub fn tokens_by_line<'a, 'b: 'a>(tokens: &'b [Token<'a>]) -> Vec<&'b [Token<'a>]> {
     let mut lines: Vec<&[Token<'a>]> = Vec::new();
-    let mut line_start: *const Token<'a> = tokens.get(0).unwrap();
+    let mut line_start = 0;
 
     let mut len = 0;
     let mut current_line = 0;
     let mut prev_start = 0;
     let mut prev_line = 0;
 
-    for token in tokens {
+    for (idx, token) in tokens.iter().enumerate() {
         let span = token.span();
         assert!(
             span.src_start >= prev_start && span.line >= prev_line,
@@ -364,10 +364,10 @@ pub fn tokens_by_line<'a>(tokens: &Vec<Token<'a>>) -> Vec<&'a [Token<'a>]> {
 
         if token.span().line != current_line {
             current_line = token.span().line;
-            lines.push(unsafe { slice::from_raw_parts(line_start, len) });
+            lines.push(&tokens[line_start..line_start + len]);
 
             len = 0;
-            line_start = token;
+            line_start = idx;
         }
 
         len += 1;
@@ -375,7 +375,7 @@ pub fn tokens_by_line<'a>(tokens: &Vec<Token<'a>>) -> Vec<&'a [Token<'a>]> {
         prev_line = span.line;
     }
 
-    lines.push(unsafe { slice::from_raw_parts(line_start, len) });
+    lines.push(&tokens[line_start..line_start + len]);
 
     lines
 }
@@ -389,14 +389,9 @@ fn test_tokens_by_line() {
     let line3 = tokens.get(3).unwrap();
 
     assert_eq!(
-        tokens_by_line(&tokens).get(0).unwrap(),
+        tokens_by_line(&tokens).first().unwrap(),
         &[line1.clone(), item2.clone()]
     );
     assert_eq!(tokens_by_line(&tokens).get(1).unwrap(), &[line2.clone()]);
-    assert_eq!(tokens_by_line(&tokens).get(2).unwrap(), &[line3.clone()])
-}
-impl Spanned for Token<'_> {
-    fn span(&self) -> Span {
-        self.span()
-    }
+    assert_eq!(tokens_by_line(&tokens).get(2).unwrap(), &[line3.clone()]);
 }

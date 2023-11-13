@@ -19,7 +19,7 @@ impl<'a> Display for ErrorMessage<'a> {
         let lines = tokens_by_line(&self.tokens);
 
         for (i, line) in lines.iter().enumerate() {
-            let mut prev_token: *const Token<'a> = std::ptr::null();
+            let mut prev_token: *const Token<'_> = std::ptr::null();
 
             for (i, token) in line.iter().enumerate() {
                 if i == 0 {
