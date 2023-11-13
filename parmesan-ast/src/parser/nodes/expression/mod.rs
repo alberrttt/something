@@ -24,7 +24,9 @@ pub enum Expression<'a> {
     BinaryExpression(binary::BinaryExpression<'a>),
 }
 impl<'a> Node<'a> for Expression<'a> {
-    fn parse(parser: &mut crate::parser::Parser<'a>) -> Result<Self, crate::error::ParseError<'a>>
+    fn parse(
+        parser: &mut crate::parser::ParseStream<'a>,
+    ) -> Result<Self, crate::error::ParseError<'a>>
     where
         Self: Sized,
     {
@@ -32,7 +34,7 @@ impl<'a> Node<'a> for Expression<'a> {
     }
 }
 fn parse_unit<'a>(
-    parser: &mut crate::parser::Parser<'a>,
+    parser: &mut crate::parser::ParseStream<'a>,
 ) -> Result<Expression<'a>, crate::error::ParseError<'a>> {
     let peeked = parser.peek()?;
 
@@ -44,7 +46,9 @@ fn parse_unit<'a>(
         _ => Err(crate::error::ParseError::EndOfTokens(EndOfTokens {})),
     }
 }
-fn parse_expression<'a>(parser: &mut Parser<'a>) -> Result<Expression<'a>, ParseError<'a>> {
+fn parse_expression<'a>(
+    parser: &mut crate::parser::ParseStream<'a>,
+) -> Result<Expression<'a>, ParseError<'a>> {
     let mut left = parse_unit(parser)?;
     while match parser.peek() {
         Err(_) => false,
@@ -62,7 +66,9 @@ fn parse_expression<'a>(parser: &mut Parser<'a>) -> Result<Expression<'a>, Parse
     dbg!(&left);
     Ok(left)
 }
-fn parse_term<'a>(parser: &mut Parser<'a>) -> Result<Expression<'a>, ParseError<'a>> {
+fn parse_term<'a>(
+    parser: &mut crate::parser::ParseStream<'a>,
+) -> Result<Expression<'a>, ParseError<'a>> {
     let mut left: Expression<'_> = parse_unit(parser)?;
     while match parser.peek() {
         Err(_) => false,
@@ -96,7 +102,7 @@ fn test_expr() -> Result<(), Box<dyn Error>> {
     let src = "1+2*3+4";
     let mut parser = Parser::new(src);
 
-    let bin = <Expression as Node>::parse(&mut parser).unwrap();
+    let bin = <Expression as Node>::parse(&mut parser.stream()).unwrap();
     dbg!(bin);
     Ok(())
 }

@@ -42,7 +42,7 @@ impl<'a, T: Node<'a>, P: Node<'a>> Punctuated<T, P> {
         self.inner.push((*last, punct));
     }
 
-    pub fn parse_terminated(parser: &mut Parser<'a>) -> ParseResult<'a, Self>
+    pub fn parse_terminated(parser: &mut crate::parser::ParseStream<'a>) -> ParseResult<'a, Self>
     where
         T: Default,
         P: Default,

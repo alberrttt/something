@@ -12,7 +12,9 @@ pub struct Variable<'a> {
     pub ident: Ident<'a>,
 }
 impl<'a> Node<'a> for Variable<'a> {
-    fn parse(parser: &mut crate::parser::Parser<'a>) -> Result<Self, crate::error::ParseError<'a>>
+    fn parse(
+        parser: &mut crate::parser::ParseStream<'a>,
+    ) -> Result<Self, crate::error::ParseError<'a>>
     where
         Self: Sized,
     {

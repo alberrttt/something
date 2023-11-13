@@ -23,7 +23,9 @@ pub struct BinaryExpression<'a> {
 }
 
 impl<'a> Node<'a> for BinaryExpression<'a> {
-    fn parse(parser: &mut crate::parser::Parser<'a>) -> Result<Self, crate::error::ParseError<'a>>
+    fn parse(
+        parser: &mut crate::parser::ParseStream<'a>,
+    ) -> Result<Self, crate::error::ParseError<'a>>
     where
         Self: Sized,
     {
@@ -41,7 +43,7 @@ impl<'a> Node<'a> for BinaryExpression<'a> {
 fn test_bin() -> Result<(), Box<dyn Error>> {
     let mut parser = Parser::new("1+2");
 
-    let bin: BinaryExpression = <BinaryExpression as Node>::parse(&mut parser).unwrap();
+    let bin: BinaryExpression = <BinaryExpression as Node>::parse(&mut parser.stream()).unwrap();
     dbg!(bin);
     Ok(())
 }

@@ -16,7 +16,7 @@ pub enum Item<'a> {
     Function(Function<'a>),
 }
 impl<'a> Node<'a> for Item<'a> {
-    fn parse(parser: &mut super::Parser<'a>) -> Result<Self, crate::error::ParseError<'a>>
+    fn parse(parser: &mut super::ParseStream<'a>) -> Result<Self, crate::error::ParseError<'a>>
     where
         Self: Sized,
     {
@@ -39,13 +39,13 @@ impl<'a> Node<'a> for Item<'a> {
 #[test]
 fn test_var() {
     let mut parser = Parser::new("let x = 1;");
-    let var: Item = <Item as Node>::parse(&mut parser).unwrap();
+    let var: Item = <Item as Node>::parse(&mut parser.stream()).unwrap();
     dbg!(var);
 }
 
 #[test]
 fn test_fn() {
     let mut parser = Parser::new("fn x() {}");
-    let var: Item = <Item as Node>::parse(&mut parser).unwrap();
+    let var: Item = <Item as Node>::parse(&mut parser.stream()).unwrap();
     dbg!(var);
 }

@@ -4,7 +4,8 @@ use crate::{
     prelude::ParseResult,
 };
 
-use self::parse_stream::ParseStream;
+pub use self::parse_stream::ParseStream;
+
 pub mod item;
 pub mod nodes;
 pub mod parse_stream;
@@ -18,6 +19,12 @@ pub struct Parser<'a> {
 }
 
 impl<'a> Parser<'a> {
+    pub fn stream<'b: 'a>(&'b self) -> ParseStream<'b> {
+        ParseStream {
+            tokens: &self.tokens,
+            current: self.current,
+        }
+    }
     pub fn at_end(&self) -> bool {
         self.current >= self.tokens.len()
     }

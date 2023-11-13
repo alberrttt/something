@@ -1,6 +1,6 @@
 use std::ops::Range;
 
-use crate::lexer::token::Token;
+use crate::{lexer::token::Token, prelude::ParseResult, error::{ParseError, EndOfTokens}};
 
 use super::Parser;
 
@@ -11,6 +11,17 @@ pub struct ParseStream<'a> {
 }
 
 impl<'a> ParseStream<'a> {
+    pub fn step<T>(&mut self, closure: fn(&mut Self) -> ParseResult<'a, T>) -> ParseResult<'a, T> {
+        let start = self.current;
+        let result = closure(self);
+        match result {
+            Ok(ok) => Ok(ok),
+            Err(err) => {
+                self.current = start;
+                Err(err)
+            }
+        }
+    }
     pub fn from_parse_stream(stream: &'a ParseStream<'a>, range: Range<usize>) -> Self {
         Self {
             tokens: &stream.tokens[range],
@@ -26,21 +37,20 @@ impl<'a> ParseStream<'a> {
     pub fn at_end(&self) -> bool {
         self.current >= self.tokens.len()
     }
-    pub fn advance(&mut self) -> Option<&'a Token<'a>> {
-        if self.current >= self.tokens.len() {
-            None
+    pub fn advance<'b>(&mut self) -> Result<&Token<'a>, ParseError<'b>> {
+        if self.current > self.tokens.len() {
+            Err(ParseError::EndOfTokens(EndOfTokens {}))
         } else {
-            let token = unsafe { self.tokens.get_unchecked(self.current) };
             self.current += 1;
-            Some(token)
+            Ok(unsafe { self.tokens.get_unchecked(self.current) })
         }
     }
-
-    pub fn peek(&self) -> Option<&'a Token<'a>> {
-        if self.current >= self.tokens.len() {
-            None
+    pub fn peek<'b: 'a>(&self) -> Result<&'b Token<'a>, ParseError<'b>> {
+        if self.current > self.tokens.len() {
+            Err(ParseError::EndOfTokens(EndOfTokens {}))
         } else {
-            Some(unsafe { self.tokens.get_unchecked(self.current) })
+            // as long as it compiles 🙂😀
+            Ok(unsafe { ::std::mem::transmute(self.tokens.get_unchecked(self.current)) })
         }
     }
 }

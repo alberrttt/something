@@ -64,7 +64,7 @@ fn generate_struct_defs_token_items(punctuation: &List) -> StructDefsTokenItems 
             }
             impl<'a> Node<'a> for #ident<'a> {
                 fn parse(
-                    parser: &mut crate::parser::Parser<'a>,
+                    parser: &mut crate::parser::parse_stream::ParseStream<'a>,
                 ) -> Result<Self, crate::error::ParseError<'a>>
                 where
                     Self: Sized,
@@ -189,7 +189,7 @@ pub fn gen_token(input: TokenStream) -> TokenStream {
                     #(#members)*
                 }
                 impl<'a> Node<'a> for #ident<'a> {
-                    fn parse(parser: &mut crate::parser::Parser<'a>) -> Result<Self, crate::error::ParseError<'a>>
+                    fn parse(parser: &mut crate::parser::parse_stream::ParseStream<'a>) -> Result<Self, crate::error::ParseError<'a>>
                     where
                         Self: Sized,
                     {

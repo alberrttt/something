@@ -31,7 +31,9 @@ impl Spanned for Number<'_> {
     }
 }
 impl<'a> Node<'a> for Number<'a> {
-    fn parse(parser: &mut crate::parser::Parser<'a>) -> Result<Self, crate::error::ParseError<'a>>
+    fn parse(
+        parser: &mut crate::parser::ParseStream<'a>,
+    ) -> Result<Self, crate::error::ParseError<'a>>
     where
         Self: Sized,
     {

@@ -1,9 +1,33 @@
-use std::slice;
-
 use crate::error::{ExpectedNode, ParseError};
 use casey::upper;
-
 use parmesan_common::{Span, Spanned};
+use std::{marker::PhantomData, slice};
+struct Dook<'a>(PhantomData<&'a ()>);
+impl<'a> Spanned for Dook<'a> {
+    fn span(&self) -> Span {
+        todo!()
+    }
+}
+impl<'a> Node<'a> for Dook<'a> {
+    fn parse(
+        parser: &mut crate::parser::ParseStream<'a>,
+    ) -> Result<Self, crate::error::ParseError<'a>>
+    where
+        Self: Sized,
+    {
+        let peeked = parser.peek()?;
+        if let Token::Integer(peeked) = peeked {
+            let tmp: Result<Integer<'a>, ParseError<'a>> = Ok(peeked.clone());
+            parser.advance()?;
+            Ok(Dook(PhantomData::default()))
+        } else {
+            Err(ParseError::ExpectedNode(ExpectedNode {
+                got: peeked.lexeme(),
+                expected: "Integer",
+            }))
+        }
+    }
+}
 gen_token!(
     Integer,
     Float,
@@ -319,7 +343,7 @@ fn test() {
         assert_eq!(input, against)
     }
 }
-use parmesan_dev_macros::gen_token;
+use parmesan_dev_macros::{gen_token, Spanned};
 
 use crate::{lexer::Lexer, traits::Node};
 pub fn tokens_by_line<'a>(tokens: &Vec<Token<'a>>) -> Vec<&'a [Token<'a>]> {

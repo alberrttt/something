@@ -21,7 +21,9 @@ impl<'a, T: Spanned + traits::Node<'a>> Spanned for Brace<'a, T> {
     }
 }
 impl<'a, T: Spanned + Node<'a>> Node<'a> for Brace<'a, T> {
-    fn parse(parser: &mut crate::parser::Parser<'a>) -> Result<Self, crate::error::ParseError<'a>>
+    fn parse(
+        parser: &mut crate::parser::ParseStream<'a>,
+    ) -> Result<Self, crate::error::ParseError<'a>>
     where
         Self: Sized,
     {
@@ -45,7 +47,9 @@ impl<'a, T: Spanned + Node<'a>> Spanned for Paren<'a, T> {
 }
 
 impl<'a, T: Spanned + Node<'a>> Node<'a> for Paren<'a, T> {
-    fn parse(parser: &mut crate::parser::Parser<'a>) -> Result<Self, crate::error::ParseError<'a>>
+    fn parse(
+        parser: &mut crate::parser::ParseStream<'a>,
+    ) -> Result<Self, crate::error::ParseError<'a>>
     where
         Self: Sized,
     {
@@ -70,7 +74,9 @@ impl<'a, T: Spanned + Node<'a>> Spanned for Bracket<'a, T> {
 }
 
 impl<'a, T: Spanned + Node<'a>> Node<'a> for Bracket<'a, T> {
-    fn parse(parser: &mut crate::parser::Parser<'a>) -> Result<Self, crate::error::ParseError<'a>>
+    fn parse(
+        parser: &mut crate::parser::ParseStream<'a>,
+    ) -> Result<Self, crate::error::ParseError<'a>>
     where
         Self: Sized,
     {
@@ -83,6 +89,6 @@ impl<'a, T: Spanned + Node<'a>> Node<'a> for Bracket<'a, T> {
 #[test]
 fn test_delimiter() {
     let mut parser = Parser::new("(abc)");
-    let mut paren: Paren<Ident> = <Paren<Ident> as Node>::parse(&mut parser).unwrap();
+    let mut paren: Paren<Ident> = <Paren<Ident> as Node>::parse(&mut parser.stream()).unwrap();
     dbg!(&paren);
 }
