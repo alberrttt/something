@@ -1,13 +1,13 @@
 use std::marker::PhantomData;
 
-use crate::vm::Vm;
+use crate::vm::VM;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Operand<'a> {
-    Local(LocalName, ConstantRef<'a>),
-    Binary(BinaryOperand, LocalName, ConstantRef<'a>),
+    Local(ConstantRef<'a>),
+    Binary(BinaryOperand),
 
-    Print(LocalName),
+    Print,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -28,15 +28,6 @@ pub enum BinaryOperand {
     Or,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct LocalName {
-    pub name: String,
-}
-impl LocalName {
-    pub fn new(name: String) -> Self {
-        LocalName { name }
-    }
-}
 #[derive(Debug, Clone, PartialEq)]
 pub enum Value {
     Number(f64),
@@ -77,15 +68,18 @@ impl<'a> Function<'a> {
         self.code.push(operand);
     }
 }
-impl<'a> Vm for Function<'a> {
-    fn execute(&self) {
-        
-    }
-}
+
 #[test]
 fn test() {
     let mut main = Function::new("main");
     let constant = main.add_value(Value::Number(1.0));
-    main.add_operand(Operand::Local(LocalName::new("foo".into()), constant));
-    main.add_operand(Operand::Print(LocalName::new("foo".into())));
+    main.add_operand(Operand::Local(constant));
+    let const2 = main.add_value(Value::Number(2.0));
+    main.add_operand(Operand::Local(const2));
+    main.add_operand(Operand::Binary(BinaryOperand::Add));
+    main.add_operand(Operand::Print);
+
+    let mut vm = VM::default();
+
+    vm.run(&main);
 }
