@@ -10,3 +10,20 @@ pub trait Node<'a>: Spanned {
     where
         Self: Sized;
 }
+
+impl<'a, T: Node<'a> + Spanned> Node<'a> for Vec<T> {
+    fn parse(parser: &mut ParseStream<'a>) -> Result<Self, ParseError<'a>>
+    where
+        Self: Sized,
+    {
+        let mut vec = Vec::new();
+        loop {
+            if parser.at_end() {
+                break;
+            }
+            let value = T::parse(parser)?;
+            vec.push(value);
+        }
+        Ok(vec)
+    }
+}

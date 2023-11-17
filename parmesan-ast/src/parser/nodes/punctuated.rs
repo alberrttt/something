@@ -1,8 +1,7 @@
 use std::marker::PhantomData;
 
+use crate::prelude::*;
 use parmesan_common::Spanned;
-
-use crate::{parser::Parser, prelude::ParseResult, traits::Node};
 
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct Punctuated<T, P> {
@@ -24,6 +23,14 @@ impl<T: Spanned, P: Spanned> Spanned for Punctuated<T, P> {
         };
 
         (start, end).into()
+    }
+}
+impl<'a, T: Node<'a>, P: Node<'a>> Node<'a> for Punctuated<T, P> {
+    fn parse(parser: &mut ParseStream<'a>) -> Result<Self, ParseError<'a>>
+    where
+        Self: Sized,
+    {
+        todo!("Punctuated::parse exists just so the trait is implemented")
     }
 }
 impl<'a, T: Node<'a>, P: Node<'a>> Punctuated<T, P> {
@@ -58,7 +65,26 @@ impl<'a, T: Node<'a>, P: Node<'a>> Punctuated<T, P> {
             if parser.at_end() {
                 break;
             }
+            let punct = P::parse(parser)?;
+            punctuated.push_punc(punct);
         }
         Ok(punctuated)
     }
+}
+
+#[test]
+fn parse_punctuated() {
+    let mut parser = Parser::new("a,b,c");
+    let punctuated = Punctuated::<Ident, Comma>::parse_terminated(&mut parser.stream()).unwrap();
+    dbg!(&punctuated);
+}
+
+#[test]
+fn parse_delimited() {
+    let mut parser = Parser::new("(a,b,c)");
+    let delimited =
+        Paren::<Punctuated<Ident, Comma>>::parse_manual(&mut parser.stream(), |parse_stream| {
+            Punctuated::<Ident, Comma>::parse_terminated(parse_stream)
+        });
+    dbg!(&delimited);
 }

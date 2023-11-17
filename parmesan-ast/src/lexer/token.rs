@@ -62,6 +62,8 @@ gen_token!(
     #[lexeme = "-"]
     #[group(BinaryOperator)]
     Minus,
+    #[lexeme = "->"]
+    RightArrow,
     #[lexeme = "-="]
     #[group(BinaryOperator, MutableBinaryOperator)]
     MinusEq,

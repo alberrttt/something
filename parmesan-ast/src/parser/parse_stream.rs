@@ -15,6 +15,12 @@ pub struct ParseStream<'a> {
 }
 
 impl<'a> ParseStream<'a> {
+    pub fn from_range(&self, range: Range<usize>) -> Self {
+        Self {
+            tokens: &self.tokens[range],
+            current: 0,
+        }
+    }
     pub fn step<T>(&mut self, closure: fn(&mut Self) -> ParseResult<'a, T>) -> ParseResult<'a, T> {
         let start = self.current;
         let result = closure(self);
