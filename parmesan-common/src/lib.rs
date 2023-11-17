@@ -25,3 +25,11 @@ impl<T: Spanned> Spanned for Vec<T> {
         (first.span(), last.span()).into()
     }
 }
+impl<T: Spanned> Spanned for Option<T> {
+    fn span(&self) -> Span {
+        match self {
+            Some(t) => t.span(),
+            None => panic!(),
+        }
+    }
+}

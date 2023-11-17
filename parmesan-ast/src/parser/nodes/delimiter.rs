@@ -64,6 +64,7 @@ macro_rules! Delimiter {
 Delimiter!(Paren, LParen, RParen);
 Delimiter!(Bracket, LBracket, RBracket);
 Delimiter!(Brace, LBrace, RBrace);
+Delimiter!(Angle, Less, Greater);
 #[test]
 fn test_delimiter() {
     let mut parser = Parser::new("[{abc}]");
