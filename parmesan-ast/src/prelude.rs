@@ -13,4 +13,5 @@ pub use parser::nodes::{
     expression::{binary::BinaryExpression, number::Number, Expression},
     punctuated::Punctuated,
     statement::{expression_statement::ExpressionStatement, Statement},
+    type_nodes::*,
 };

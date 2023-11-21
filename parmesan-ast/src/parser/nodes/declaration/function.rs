@@ -8,6 +8,7 @@ pub struct Function<'a> {
     pub params: Paren<'a, Punctuated<Ident<'a>, Comma<'a>>>,
     pub body: Brace<'a, Vec<Item<'a>>>,
     pub arrow: RightArrow<'a>,
+    pub ret_type: TypeExpression<'a>,
 }
 impl<'a> Node<'a> for Function<'a> {
     fn parse(
@@ -34,19 +35,25 @@ impl<'a> Node<'a> for Function<'a> {
             })
         })?;
         let arrow = parser.step(|parser| RightArrow::parse(parser).clone())?;
+        let ret_type = parser.step(|parser| TypeExpression::parse(parser).clone())?;
         Ok(Self {
             fn_tkn: fn_token,
             name,
             params,
             body,
             arrow,
+            ret_type,
         })
     }
 }
 
 #[test]
 fn test_fn() {
-    let input = "fn foo(hello) {} ->";
+    let input = "fn foo(hello) {
+        let x = 5;
+        let y = 6;
+        x + 2;
+    } -> wassup::bejing<foo,bar>::icecream";
     let mut parser = Parser::new(input);
     let result = Function::parse(&mut parser.stream()).unwrap();
     dbg!(result);

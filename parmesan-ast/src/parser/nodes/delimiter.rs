@@ -40,6 +40,7 @@ macro_rules! Delimiter {
                     }
                 }
                 let mut inner_parse_stream = parser.from_range(start..parser.current);
+                dbg!(&inner_parse_stream);
                 let inner = inner_parse_stream.step(parsing)?;
                 let close = if inner_parse_stream.at_end() {
                     parser.step($close::parse)?

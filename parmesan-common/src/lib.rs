@@ -5,6 +5,20 @@ pub struct Span {
     pub line_start: usize,
     pub line: usize,
 }
+impl Span {
+    pub fn join(self, other: Self) -> Self {
+        let src_start: usize = self.src_start.min(other.src_start);
+        let src_end = self.src_end.max(other.src_end);
+        let line_start = self.line_start.min(other.line_start);
+        let line = self.line.max(other.line);
+        Span {
+            src_start,
+            src_end,
+            line_start,
+            line,
+        }
+    }
+}
 impl From<(Span, Span)> for Span {
     fn from((start, end): (Span, Span)) -> Self {
         Span {
@@ -31,5 +45,15 @@ impl<T: Spanned> Spanned for Option<T> {
             Some(t) => t.span(),
             None => panic!(),
         }
+    }
+}
+
+impl<A, B> Spanned for (A, B)
+where
+    A: Spanned,
+    B: Spanned,
+{
+    fn span(&self) -> Span {
+        self.0.span().join(self.1.span())
     }
 }

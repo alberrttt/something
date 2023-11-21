@@ -43,13 +43,15 @@ fn parse_unit<'a>(
             parser.advance()?;
             Ok(Expression::Number(Number::from(peeked)))
         }
+        Token::Ident(_) => Ok(Expression::Identifier(Ident::parse(parser)?)),
         _ => Err(crate::error::ParseError::EndOfTokens(EndOfTokens {})),
     }
 }
 fn parse_expression<'a>(
     parser: &mut crate::parser::ParseStream<'a>,
 ) -> Result<Expression<'a>, ParseError<'a>> {
-    let mut left = parse_unit(parser)?;
+    dbg!(parser.tokens);
+    let mut left = dbg!(parse_unit(parser))?;
     while match parser.peek() {
         Err(_) => false,
         Ok(token) => matches!(token, Token::Plus(_) | Token::Minus(_)),
@@ -63,7 +65,6 @@ fn parse_expression<'a>(
             right: Box::new(right),
         });
     }
-    dbg!(&left);
     Ok(left)
 }
 fn parse_term<'a>(

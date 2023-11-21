@@ -7,8 +7,10 @@ use super::ParseStream;
 pub mod declaration;
 pub mod delimiter;
 pub mod expression;
+pub mod path;
 pub mod punctuated;
 pub mod statement;
+pub mod type_nodes;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Empty;

@@ -51,6 +51,8 @@ gen_token!(
     Comma,
     #[lexeme = ":"]
     Colon,
+    #[lexeme = "::"]
+    ColonColon,
     #[lexeme = ";"]
     SemiColon,
     #[lexeme = "+"]

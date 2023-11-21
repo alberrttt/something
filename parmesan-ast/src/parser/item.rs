@@ -14,6 +14,7 @@ use parmesan_dev_macros::Spanned;
 pub enum Item<'a> {
     Variable(Variable<'a>),
     Function(Function<'a>),
+    Statement(Statement<'a>),
 }
 impl<'a> Node<'a> for Item<'a> {
     fn parse(parser: &mut super::ParseStream<'a>) -> Result<Self, crate::error::ParseError<'a>>
@@ -26,10 +27,13 @@ impl<'a> Node<'a> for Item<'a> {
         if let Ok(ok) = parser.step(Function::parse) {
             return Ok(Self::Function(ok));
         }
+        if let Ok(ok) = parser.step(Statement::parse) {
+            return Ok(Self::Statement(ok));
+        }
 
         Err(crate::error::ParseError::ExpectedNode(
             crate::error::ExpectedNode {
-                got: "Item",
+                got: format!("{:?}", parser.peek()).leak(),
                 expected: "Variable or Function",
             },
         ))

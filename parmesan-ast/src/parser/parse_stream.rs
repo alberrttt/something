@@ -15,6 +15,9 @@ pub struct ParseStream<'a> {
 }
 
 impl<'a> ParseStream<'a> {
+    pub fn previous(&self) -> Option<&Token<'a>> {
+        self.tokens.get(self.current - 1)
+    }
     pub fn from_range(&self, range: Range<usize>) -> Self {
         Self {
             tokens: &self.tokens[range],
