@@ -2,7 +2,7 @@ use parmesan_dev_macros::Spanned;
 
 use crate::prelude::*;
 use parmesan_common::Spanned;
-
+use std::ops::Deref;
 macro_rules! Delimiter {
     ($name:ident,$open:ident,$close:ident) => {
         #[derive(Debug, Clone, PartialEq)]
@@ -11,7 +11,12 @@ macro_rules! Delimiter {
             pub inner: T,
             pub close: $close<'a>,
         }
-
+        impl<'a, T: Node<'a>> Deref for $name<'a, T> {
+            type Target = T;
+            fn deref(&self) -> &Self::Target {
+                &self.inner
+            }
+        }
         impl<'a, T: Spanned + Node<'a>> Spanned for $name<'a, T> {
             fn span(&self) -> parmesan_common::Span {
                 (self.open.span(), self.close.span()).into()

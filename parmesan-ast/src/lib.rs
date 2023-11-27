@@ -1,3 +1,4 @@
+#![feature(associated_type_defaults)]
 pub mod error;
 pub mod lexer;
 pub mod parser;
