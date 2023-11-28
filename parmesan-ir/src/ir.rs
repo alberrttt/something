@@ -4,7 +4,7 @@ use crate::vm::VM;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Operand<'a> {
-    Local(Option<ConstantRef<'a>>),
+    Let(Option<ConstantRef<'a>>),
     Binary(BinaryOperand),
 
     Print,
@@ -73,9 +73,9 @@ impl<'a> Function<'a> {
 fn test() {
     let mut main = Function::new("main");
     let constant = main.add_value(Value::Number(1.0));
-    main.add_operand(Operand::Local(constant));
+    main.add_operand(Operand::Let(Some(constant)));
     let const2 = main.add_value(Value::Number(2.0));
-    main.add_operand(Operand::Local(const2));
+    main.add_operand(Operand::Let(Some(const2)));
     main.add_operand(Operand::Binary(BinaryOperand::Add));
     main.add_operand(Operand::Print);
 

@@ -50,8 +50,7 @@ fn parse_unit<'a>(
 fn parse_expression<'a>(
     parser: &mut crate::parser::ParseStream<'a>,
 ) -> Result<Expression<'a>, ParseError<'a>> {
-    dbg!(parser.tokens);
-    let mut left = dbg!(parse_unit(parser))?;
+    let mut left = parse_unit(parser)?;
     while match parser.peek() {
         Err(_) => false,
         Ok(token) => matches!(token, Token::Plus(_) | Token::Minus(_)),

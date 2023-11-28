@@ -49,9 +49,12 @@ impl<'a> VM<'a> {
             let operand = &current_frame.function.code[ip];
             let stack = unsafe { &mut *stack.get() };
             match operand {
-                Operand::Local(value) => {
-                    stack.push(current_frame.function.constants[value.constant].clone());
-                }
+                Operand::Let(value) => match value {
+                    Some(value) => {
+                        stack.push(current_frame.function.constants[value.constant].clone())
+                    }
+                    None => stack.push(Value::Number(0.0)),
+                },
                 Operand::Binary(op) => {
                     let Value::Number(right) = stack.pop().unwrap() else {
                         unsafe { std::hint::unreachable_unchecked() }
