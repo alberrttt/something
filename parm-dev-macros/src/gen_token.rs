@@ -57,6 +57,12 @@ fn generate_struct_defs_token_items(punctuation: &List) -> StructDefsTokenItems 
                 pub lexeme: &'a str,
                 pub span: Span
             }
+            impl<'a> #ident<'a> {
+                // Spanless Equal
+                fn seq(&self, other: &#ident) -> bool {
+                    self.lexeme == other.lexeme
+                }
+            }
             impl<'a> Spanned for #ident<'a> {
                 fn span(&self) -> Span {
                     self.span
@@ -183,10 +189,24 @@ pub fn gen_token(input: TokenStream) -> TokenStream {
                     tmp
                 },})
                 .collect::<Vec<_>>();
+            let seq_members = items
+                .iter()
+                .map(|member| quote! {#ident::#member(token) => token.seq(other),})
+                .collect::<Vec<_>>();
             quote! {
                 #[derive(Debug, Clone, PartialEq,Eq)]
                 pub enum #ident<'a> {
                     #(#members)*
+                }
+                impl<'a> #ident<'a> {
+
+                    // Spanless Equal
+                    fn seq(&self, other: &#ident) -> bool {
+                        match (self, other) {
+                            #(#seq_members)*
+                            _ => false
+                        }
+                    }
                 }
                 impl<'a> Node<'a> for #ident<'a> {
                     fn parse(parser: &mut crate::parser::parse_stream::ParseStream<'a>) -> Result<Self, crate::error::ParseError<'a>>
@@ -229,7 +249,7 @@ pub fn gen_token(input: TokenStream) -> TokenStream {
             }
         })
         .collect::<TokenStream2>();
-    let matches = punctuation
+    let lexeme_arms = punctuation
         .0
         .iter()
         .map(|item| {
@@ -298,6 +318,16 @@ pub fn gen_token(input: TokenStream) -> TokenStream {
             }
         })
         .collect::<Vec<_>>();
+    let spanless_equals = punctuation
+        .0
+        .iter()
+        .map(|item| {
+            let ident = &item.1;
+            quote! {
+                (Token::#ident(token), Token::#ident(other)) => &token.seq(&other),
+            }
+        })
+        .collect::<Vec<_>>();
     quote! {
         #(#struct_defs)*
         #groups
@@ -307,11 +337,19 @@ pub fn gen_token(input: TokenStream) -> TokenStream {
             None,
             #(#token_items)*
         }
-
+        impl<'a> Token<'a> {
+            // Spanless Equal
+            pub fn seq(&self, other: &Token) -> bool {
+                match (self, other) {
+                    #(#spanless_equals)*
+                    _ => false
+                }
+            }
+        }
         impl<'a> Token<'a> {
             pub fn lexeme(&self) -> &'a str {
                 match &self {
-                    #(#matches)*
+                    #(#lexeme_arms)*
                     x => "None"
                 }
             }

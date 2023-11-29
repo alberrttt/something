@@ -42,6 +42,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "parm-incremental-parser"
+version = "0.1.0"
+
+[[package]]
 name = "parm-ir"
 version = "0.1.0"
 dependencies = [
@@ -51,6 +55,9 @@ dependencies = [
 [[package]]
 name = "parm-typechecker"
 version = "0.1.0"
+dependencies = [
+ "parm-ast",
+]
 
 [[package]]
 name = "proc-macro2"
