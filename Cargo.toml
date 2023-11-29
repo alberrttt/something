@@ -1,9 +1,9 @@
 [workspace]
 members = [
-    "parmesan-ast",
-    "parmesan-dev-macros",
-    "parmesan-common",
-    "parmesan-compiler",
+    "parm-ast",
+    "parm-dev-macros",
+    "parm-common",
+    "parm-compiler",
     "alfredo"
-, "parmesan-ir", "parmesan-typechecker",  "parmesan-incremental-parser"]
+, "parm-ir", "parm-typechecker",  "parm-incremental-parser"]
 resolver = "2"

@@ -16,24 +16,24 @@ dependencies = [
 ]
 
 [[package]]
-name = "parmesan-ast"
+name = "parm-ast"
 version = "0.1.0"
 dependencies = [
  "casey",
- "parmesan-common",
- "parmesan-dev-macros",
+ "parm-common",
+ "parm-dev-macros",
 ]
 
 [[package]]
-name = "parmesan-common"
+name = "parm-common"
 version = "0.1.0"
 
 [[package]]
-name = "parmesan-compiler"
+name = "parm-compiler"
 version = "0.1.0"
 
 [[package]]
-name = "parmesan-dev-macros"
+name = "parm-dev-macros"
 version = "0.1.0"
 dependencies = [
  "proc-macro2",
@@ -42,14 +42,14 @@ dependencies = [
 ]
 
 [[package]]
-name = "parmesan-ir"
+name = "parm-ir"
 version = "0.1.0"
 dependencies = [
- "parmesan-ast",
+ "parm-ast",
 ]
 
 [[package]]
-name = "parmesan-typechecker"
+name = "parm-typechecker"
 version = "0.1.0"
 
 [[package]]
