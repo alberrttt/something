@@ -44,6 +44,10 @@ dependencies = [
 [[package]]
 name = "parm-incremental-parser"
 version = "0.1.0"
+dependencies = [
+ "parm-ast",
+ "parm-common",
+]
 
 [[package]]
 name = "parm-ir"

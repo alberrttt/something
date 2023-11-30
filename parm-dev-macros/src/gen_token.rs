@@ -52,10 +52,15 @@ fn generate_struct_defs_token_items(punctuation: &List) -> StructDefsTokenItems 
             #ident(#ident<'a>),
         });
         struct_defs.push(quote! {
-            #[derive(Debug,Clone,Copy,PartialEq,Eq,Hash,Default)]
+            #[derive(Clone,Copy,PartialEq,Eq,Hash,Default)]
             pub struct #ident<'a> {
                 pub lexeme: &'a str,
                 pub span: Span
+            }
+            impl<'a> std::fmt::Debug for #ident<'a> {
+                fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                    write!(f, "{} {} {:?}",self.lexeme, stringify!(#ident),self.span())
+                }
             }
             impl<'a> #ident<'a> {
                 // Spanless Equal
@@ -191,7 +196,7 @@ pub fn gen_token(input: TokenStream) -> TokenStream {
                 .collect::<Vec<_>>();
             let seq_members = items
                 .iter()
-                .map(|member| quote! {#ident::#member(token) => token.seq(other),})
+                .map(|member| quote! {(#ident::#member(token),#ident::#member(other)) => token.seq(&other),})
                 .collect::<Vec<_>>();
             quote! {
                 #[derive(Debug, Clone, PartialEq,Eq)]
@@ -324,7 +329,7 @@ pub fn gen_token(input: TokenStream) -> TokenStream {
         .map(|item| {
             let ident = &item.1;
             quote! {
-                (Token::#ident(token), Token::#ident(other)) => &token.seq(&other),
+                (Token::#ident(token), Token::#ident(other)) => token.seq(&other),
             }
         })
         .collect::<Vec<_>>();
@@ -367,7 +372,7 @@ pub fn gen_token(input: TokenStream) -> TokenStream {
                 let char = self.peek().unwrap();
                 match char {
                     #(#lexemes)*
-                    _ => todo!("286"),
+                   char => todo!("{char}"),
                 }
             }
         }
