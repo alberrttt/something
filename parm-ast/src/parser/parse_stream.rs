@@ -1,12 +1,6 @@
 use std::ops::Range;
 
-use crate::{
-    error::{EndOfTokens, ParseError},
-    lexer::token::Token,
-    prelude::ParseResult,
-};
-
-use super::Parser;
+use crate::prelude::*;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct ParseStream<'a> {
@@ -50,19 +44,25 @@ impl<'a> ParseStream<'a> {
     pub fn at_end(&self) -> bool {
         self.current >= self.tokens.len()
     }
-    pub fn advance<'b>(&mut self) -> Result<&Token<'a>, ParseError<'b>> {
+    pub fn advance<'b>(&mut self) -> ParseResult<'b, &'b Token<'a>> {
         match self.tokens.get(self.current) {
             Some(some) => {
                 self.current += 1;
                 Ok(some)
             }
-            None => Err(ParseError::EndOfTokens(EndOfTokens {})),
+            None => Err(ParseError::new(
+                ErrorKind::EndOfTokens(EndOfTokens {}),
+                self.tokens,
+            )),
         }
     }
-    pub fn peek<'b: 'a>(&self) -> Result<&'b Token<'a>, ParseError<'b>> {
+    pub fn peek<'b: 'a>(&self) -> ParseResult<'a, &'b Token<'a>> {
         match self.tokens.get(self.current) {
             Some(some) => Ok(some),
-            None => Err(ParseError::EndOfTokens(EndOfTokens {})),
+            None => Err(ParseError::new(
+                ErrorKind::EndOfTokens(EndOfTokens {}),
+                self.tokens,
+            )),
         }
     }
 }

@@ -3,6 +3,7 @@ use parm_common::Spanned;
 use crate::{
     error::ExpectedToken,
     lexer::token::{Integer, Token},
+    prelude::{ParseError, ParseResult},
     traits::Node,
 };
 
@@ -31,9 +32,7 @@ impl Spanned for Number<'_> {
     }
 }
 impl<'a> Node<'a> for Number<'a> {
-    fn parse(
-        parser: &mut crate::parser::ParseStream<'a>,
-    ) -> Result<Self, crate::error::ParseError<'a>>
+    fn parse(parser: &mut crate::parser::ParseStream<'a>) -> ParseResult<'a, Self>
     where
         Self: Sized,
     {
@@ -55,10 +54,13 @@ impl<'a> Node<'a> for Number<'a> {
             }
             token => {
                 dbg!(token);
-                Err(crate::error::ParseError::ExpectedToken(ExpectedToken {
-                    expected: Token::Integer(Integer::default()),
-                    got: token.clone(),
-                }))
+                Err(ParseError::new(
+                    crate::error::ErrorKind::ExpectedToken(ExpectedToken {
+                        expected: Token::Integer(Integer::default()),
+                        got: token.clone(),
+                    }),
+                    parser.tokens,
+                ))
             }
         }
     }

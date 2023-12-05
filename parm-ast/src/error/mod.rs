@@ -1,4 +1,5 @@
-use std::{cmp::Ordering, error::Error, fmt::Display, slice, vec};
+pub mod printer;
+use std::{backtrace::Backtrace, cmp::Ordering, error::Error, fmt::Display, slice, vec};
 
 use parm_common::{Span, Spanned};
 
@@ -62,16 +63,56 @@ fn test_error_message() {
 
     // assert_eq!(msg.to_string(), "line1 item2\nline2\nline3")
 }
+#[derive(Debug)]
+pub struct ParseError<'a> {
+    pub kind: ErrorKind<'a>,
+    pub backtrace: Option<Backtrace>,
+    pub surrounding: &'a [Token<'a>],
+}
+impl<'a> Error for ParseError<'a> {}
+impl<'a> PartialEq for ParseError<'a> {
+    fn eq(&self, other: &Self) -> bool {
+        self.kind == other.kind && self.surrounding == other.surrounding
+    }
+}
+impl<'a> Clone for ParseError<'a> {
+    fn clone(&self) -> Self {
+        Self {
+            kind: self.kind.clone(),
+            backtrace: self.backtrace.as_ref().map(|_| Backtrace::capture()),
+            surrounding: self.surrounding,
+        }
+    }
+}
+impl<'a> ParseError<'a> {
+    pub fn new(kind: ErrorKind<'a>, surrounding: &'a [Token<'a>]) -> Self {
+        Self {
+            kind,
+            surrounding,
+            backtrace: Some(Backtrace::capture()),
+        }
+    }
+}
+impl<'a> Display for ParseError<'a> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        // check if PEB is set
+        if std::env::var("PEB").is_ok() {
+            write!(f, "{}", self.backtrace.as_ref().unwrap())?;
+        }
+
+        write!(f, "{}", self.kind)
+    }
+}
 #[derive(Debug, PartialEq, Clone)]
-pub enum ParseError<'a> {
+pub enum ErrorKind<'a> {
     EndOfTokens(EndOfTokens),
     ExpectedToken(ExpectedToken<'a>),
     ExpectedNode(ExpectedNode<'a>),
 }
-impl Error for ParseError<'_> {}
-impl Display for ParseError<'_> {
+impl Error for ErrorKind<'_> {}
+impl Display for ErrorKind<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        todo!()
+        write!(f, "")
     }
 }
 #[derive(Debug, Clone, PartialEq, Default)]

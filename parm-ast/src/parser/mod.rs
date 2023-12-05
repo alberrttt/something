@@ -1,5 +1,5 @@
 use crate::{
-    error::{EndOfTokens, ParseError},
+    error::{EndOfTokens, ErrorKind},
     lexer::token::Token,
     prelude::ParseResult,
 };
@@ -55,17 +55,17 @@ impl<'a> Parser<'a> {
             }
         }
     }
-    pub fn advance<'b>(&mut self) -> Result<&Token<'a>, ParseError<'b>> {
+    pub fn advance<'b>(&mut self) -> Result<&Token<'a>, ErrorKind<'b>> {
         if self.current > self.tokens.len() {
-            Err(ParseError::EndOfTokens(EndOfTokens {}))
+            Err(ErrorKind::EndOfTokens(EndOfTokens {}))
         } else {
             self.current += 1;
             Ok(unsafe { self.tokens.get_unchecked(self.current) })
         }
     }
-    pub fn peek<'b: 'a>(&self) -> Result<&'b Token<'a>, ParseError<'b>> {
+    pub fn peek<'b: 'a>(&self) -> Result<&'b Token<'a>, ErrorKind<'b>> {
         if self.current > self.tokens.len() {
-            Err(ParseError::EndOfTokens(EndOfTokens {}))
+            Err(ErrorKind::EndOfTokens(EndOfTokens {}))
         } else {
             // as long as it compiles 🙂😀
             Ok(unsafe { ::std::mem::transmute(self.tokens.get_unchecked(self.current)) })

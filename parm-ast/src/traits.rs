@@ -1,15 +1,18 @@
 use parm_common::Spanned;
 
 use crate::{
-    error::ParseError,
+    error::ErrorKind,
     parser::{parse_stream::ParseStream, Parser},
-    prelude::ParseResult,
+    prelude::{ParseError, ParseResult, Token},
 };
 
-pub trait Node<'a, Output = Result<Self, ParseError<'a>>>: Spanned {
+pub trait Node<'a, Output = ParseResult<'a, Self>>: Spanned {
     fn parse(parser: &mut ParseStream<'a>) -> Output
     where
         Self: Sized;
+    fn to_tokens<'b>(&self) -> &'b [Token<'a>] {
+        todo!()
+    }
 }
 impl<'a, T: Node<'a> + Spanned> Node<'a, (Self, Vec<ParseError<'a>>)> for Vec<T> {
     fn parse(parser: &mut ParseStream<'a>) -> (Self, Vec<ParseError<'a>>)
@@ -24,7 +27,10 @@ impl<'a, T: Node<'a> + Spanned> Node<'a, (Self, Vec<ParseError<'a>>)> for Vec<T>
             }
             match T::parse(parser) {
                 Ok(ok) => vec.push(ok),
-                Err(err) => errors.push(err),
+                Err(err) => {
+                    errors.push(err);
+                    break;
+                }
             }
         }
         (vec, errors)

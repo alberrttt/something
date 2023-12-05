@@ -1,6 +1,6 @@
 use parm_common::Spanned;
 
-use crate::prelude::{Node, ParseError};
+use crate::prelude::{ErrorKind, Node, ParseResult};
 
 use super::ParseStream;
 
@@ -20,7 +20,7 @@ impl<'a> Spanned for Empty {
     }
 }
 impl<'a> Node<'a> for Empty {
-    fn parse(parser: &mut ParseStream<'a>) -> Result<Self, ParseError<'a>>
+    fn parse(parser: &mut ParseStream<'a>) -> ParseResult<'a, Self>
     where
         Self: Sized,
     {

@@ -5,5 +5,5 @@ members = [
     "parm-common",
     "parm-compiler",
     "alfredo"
-, "parm-ir", "parm-typechecker",  "parm-incremental-parser"]
+, "parm-ir", "parm-typechecker"]
 resolver = "2"

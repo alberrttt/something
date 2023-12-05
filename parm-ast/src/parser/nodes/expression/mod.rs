@@ -3,12 +3,13 @@ use std::error::Error;
 use parm_common::Spanned;
 mod precedence;
 use crate::{
-    error::{EndOfTokens, ParseError},
+    error::{EndOfTokens, ErrorKind},
     lexer::{
         token::{self, BinaryOperator, Ident, Token},
         Lexer,
     },
     parser::{self, Parser},
+    prelude::{ParseError, ParseResult},
     traits::Node,
 };
 
@@ -24,18 +25,16 @@ pub enum Expression<'a> {
     BinaryExpression(binary::BinaryExpression<'a>),
 }
 impl<'a> Node<'a> for Expression<'a> {
-    fn parse(
-        parser: &mut crate::parser::ParseStream<'a>,
-    ) -> Result<Self, crate::error::ParseError<'a>>
+    fn parse(parser: &mut crate::parser::ParseStream<'a>) -> ParseResult<'a, Self>
     where
         Self: Sized,
     {
         parse_expression(parser)
     }
 }
-fn parse_unit<'a>(
+pub fn parse_unit<'a>(
     parser: &mut crate::parser::ParseStream<'a>,
-) -> Result<Expression<'a>, crate::error::ParseError<'a>> {
+) -> ParseResult<'a, Expression<'a>> {
     let peeked = parser.peek()?;
 
     match peeked {
@@ -44,12 +43,15 @@ fn parse_unit<'a>(
             Ok(Expression::Number(Number::from(peeked)))
         }
         Token::Ident(_) => Ok(Expression::Identifier(Ident::parse(parser)?)),
-        _ => Err(crate::error::ParseError::EndOfTokens(EndOfTokens {})),
+        _ => Err(ParseError::new(
+            crate::error::ErrorKind::EndOfTokens(EndOfTokens {}),
+            parser.tokens,
+        )),
     }
 }
 fn parse_expression<'a>(
     parser: &mut crate::parser::ParseStream<'a>,
-) -> Result<Expression<'a>, ParseError<'a>> {
+) -> ParseResult<'a, Expression<'a>> {
     let mut left = parse_unit(parser)?;
     while match parser.peek() {
         Err(_) => false,
@@ -66,9 +68,7 @@ fn parse_expression<'a>(
     }
     Ok(left)
 }
-fn parse_term<'a>(
-    parser: &mut crate::parser::ParseStream<'a>,
-) -> Result<Expression<'a>, ParseError<'a>> {
+fn parse_term<'a>(parser: &mut crate::parser::ParseStream<'a>) -> ParseResult<'a, Expression<'a>> {
     let mut left: Expression<'_> = parse_unit(parser)?;
     while match parser.peek() {
         Err(_) => false,

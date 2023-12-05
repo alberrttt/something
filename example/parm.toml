@@ -1,0 +1,3 @@
+[package]
+name = "parmesan-example"
+bin = { entry = "src/main.af" }

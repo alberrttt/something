@@ -34,7 +34,7 @@ impl<T: Spanned, P: Spanned> Spanned for Punctuated<T, P> {
     }
 }
 impl<'a, T: Node<'a>, P: Node<'a>> Node<'a> for Punctuated<T, P> {
-    fn parse(parser: &mut ParseStream<'a>) -> Result<Self, ParseError<'a>>
+    fn parse(parser: &mut ParseStream<'a>) -> ParseResult<'a, Self>
     where
         Self: Sized,
     {

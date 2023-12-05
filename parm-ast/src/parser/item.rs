@@ -1,14 +1,8 @@
-use crate::traits::Node;
-
-use super::{
-    nodes::{
-        declaration::{function::Function, variable::Variable},
-        statement::Statement,
-    },
-    Parser,
-};
+use crate::prelude::*;
 use parm_common::Spanned;
 use parm_dev_macros::Spanned;
+
+use super::nodes::expression::parse_unit;
 
 #[derive(Debug, Clone, PartialEq, Spanned)]
 pub enum Item<'a> {
@@ -17,25 +11,38 @@ pub enum Item<'a> {
     Statement(Statement<'a>),
 }
 impl<'a> Node<'a> for Item<'a> {
-    fn parse(parser: &mut super::ParseStream<'a>) -> Result<Self, crate::error::ParseError<'a>>
+    fn parse(parser: &mut super::ParseStream<'a>) -> ParseResult<'a, Self>
     where
         Self: Sized,
     {
-        if let Ok(ok) = parser.step(Variable::parse) {
-            return Ok(Self::Variable(ok));
-        }
-        if let Ok(ok) = parser.step(Function::parse) {
-            return Ok(Self::Function(ok));
-        }
-        if let Ok(ok) = parser.step(Statement::parse) {
-            return Ok(Self::Statement(ok));
+        let peeked = parser.peek()?;
+        match peeked {
+            Token::Let(_) => {
+                let var: Variable = <Variable as Node>::parse(parser)?;
+                return Ok(Item::Variable(var));
+            }
+            Token::FnKeyword(_) => {
+                let func: Function = <Function as Node>::parse(parser)?;
+                return Ok(Item::Function(func));
+            }
+
+            _ => {
+                let expr = parser.step(parse_unit);
+                match expr {
+                    Ok(_) => {
+                        return Ok(Item::Statement(Statement::parse(parser)?));
+                    }
+                    Err(err) => {}
+                }
+            }
         }
 
-        Err(crate::error::ParseError::ExpectedNode(
-            crate::error::ExpectedNode {
+        Err(ParseError::new(
+            crate::error::ErrorKind::ExpectedNode(crate::error::ExpectedNode {
                 got: format!("{:?}", parser.peek()).leak(),
                 expected: "Variable or Function",
-            },
+            }),
+            parser.tokens,
         ))
     }
 }

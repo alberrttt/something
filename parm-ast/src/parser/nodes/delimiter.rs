@@ -26,7 +26,7 @@ macro_rules! Delimiter {
             pub fn parse_manual(
                 parser: &mut ParseStream<'a>,
                 parsing: fn(&mut ParseStream<'a>) -> ParseResult<'a, T>,
-            ) -> Result<Self, crate::error::ParseError<'a>> {
+            ) -> ParseResult<'a, Self> {
                 let open = parser.step($open::parse)?;
                 let mut depth = 1;
                 let start = parser.current;
@@ -55,9 +55,7 @@ macro_rules! Delimiter {
             }
         }
         impl<'a, T: Spanned + Node<'a>> Node<'a> for $name<'a, T> {
-            fn parse(
-                parser: &mut crate::parser::ParseStream<'a>,
-            ) -> Result<Self, crate::error::ParseError<'a>>
+            fn parse(parser: &mut crate::parser::ParseStream<'a>) -> ParseResult<'a, Self>
             where
                 Self: Sized,
             {

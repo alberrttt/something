@@ -76,7 +76,7 @@ fn generate_struct_defs_token_items(punctuation: &List) -> StructDefsTokenItems 
             impl<'a> Node<'a> for #ident<'a> {
                 fn parse(
                     parser: &mut crate::parser::parse_stream::ParseStream<'a>,
-                ) -> Result<Self, crate::error::ParseError<'a>>
+                ) -> ParseResult<'a, Self>
                 where
                     Self: Sized,
                 {
@@ -87,11 +87,14 @@ fn generate_struct_defs_token_items(punctuation: &List) -> StructDefsTokenItems 
                         tmp
                     } else {
                         Err(
-                            ParseError::ExpectedNode(
-                                ExpectedNode {
-                                    got: peeked.lexeme(),
-                                    expected: stringify!(#ident)
-                                }
+                            ParseError::new(
+                                ErrorKind::ExpectedNode(
+                                    ExpectedNode {
+                                        got: peeked.lexeme(),
+                                        expected: stringify!(#ident)
+                                    }
+                                ),
+                                parser.tokens
                             )
                         )
                     }
@@ -214,7 +217,7 @@ pub fn gen_token(input: TokenStream) -> TokenStream {
                     }
                 }
                 impl<'a> Node<'a> for #ident<'a> {
-                    fn parse(parser: &mut crate::parser::parse_stream::ParseStream<'a>) -> Result<Self, crate::error::ParseError<'a>>
+                    fn parse(parser: &mut crate::parser::parse_stream::ParseStream<'a>) -> ParseResult<'a, Self>
                     where
                         Self: Sized,
                     {
@@ -223,11 +226,14 @@ pub fn gen_token(input: TokenStream) -> TokenStream {
                             #(#node_arms)*
                             peek => {
                                 Err(
-                                    ParseError::ExpectedNode(
-                                        ExpectedNode {
-                                            got: peek.lexeme(),
-                                            expected: stringify!(#ident)
-                                        }
+                                    ParseError::new(
+                                        ErrorKind::ExpectedNode(
+                                            ExpectedNode {
+                                                got: peek.lexeme(),
+                                                expected: stringify!(#ident)
+                                            }
+                                        ),
+                                        parser.tokens
                                     )
                                 )
                             }

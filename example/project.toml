@@ -1,5 +1,0 @@
-[package]
-bin = { entry = "src/main.ps" }
-
-[dependencies]
-libc = "0.2"

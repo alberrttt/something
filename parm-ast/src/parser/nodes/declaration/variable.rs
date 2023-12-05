@@ -16,9 +16,7 @@ pub struct Initializer<'a> {
     pub expr: Expression<'a>,
 }
 impl<'a> Node<'a> for Variable<'a> {
-    fn parse(
-        parser: &mut crate::parser::ParseStream<'a>,
-    ) -> Result<Self, crate::error::ParseError<'a>>
+    fn parse(parser: &mut crate::parser::ParseStream<'a>) -> ParseResult<'a, Self>
     where
         Self: Sized,
     {

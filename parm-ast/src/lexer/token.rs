@@ -1,4 +1,7 @@
-use crate::error::{ExpectedNode, ParseError};
+use crate::{
+    error::{ErrorKind, ExpectedNode},
+    prelude::{ParseError, ParseResult},
+};
 use casey::upper;
 use parm_common::{Span, Spanned};
 use std::{marker::PhantomData, slice};
@@ -9,22 +12,23 @@ impl<'a> Spanned for Dook<'a> {
     }
 }
 impl<'a> Node<'a> for Dook<'a> {
-    fn parse(
-        parser: &mut crate::parser::ParseStream<'a>,
-    ) -> Result<Self, crate::error::ParseError<'a>>
+    fn parse(parser: &mut crate::parser::ParseStream<'a>) -> ParseResult<'a, Self>
     where
         Self: Sized,
     {
         let peeked = parser.peek()?;
         if let Token::Integer(peeked) = peeked {
-            let tmp: Result<Integer<'a>, ParseError<'a>> = Ok(peeked.clone());
+            let tmp: Result<Integer<'a>, ErrorKind<'a>> = Ok(peeked.clone());
             parser.advance()?;
             Ok(Dook(PhantomData::default()))
         } else {
-            Err(ParseError::ExpectedNode(ExpectedNode {
-                got: peeked.lexeme(),
-                expected: "Integer",
-            }))
+            Err(ParseError::new(
+                ErrorKind::ExpectedNode(ExpectedNode {
+                    got: peeked.lexeme(),
+                    expected: "Integer",
+                }),
+                parser.tokens,
+            ))
         }
     }
 }

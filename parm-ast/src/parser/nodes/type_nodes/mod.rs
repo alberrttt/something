@@ -11,9 +11,7 @@ pub struct TypeIdent<'a> {
     pub generics: Option<Angle<'a, Punctuated<Ident<'a>, Comma<'a>>>>,
 }
 impl<'a> Node<'a> for TypeIdent<'a> {
-    fn parse(
-        parser: &mut crate::parser::ParseStream<'a>,
-    ) -> Result<Self, crate::error::ParseError<'a>>
+    fn parse(parser: &mut crate::parser::ParseStream<'a>) -> ParseResult<'a, Self>
     where
         Self: Sized,
     {
@@ -33,9 +31,7 @@ pub struct Borrow<'a> {
     pub mutable: Option<Mut<'a>>,
 }
 impl<'a> Node<'a> for Borrow<'a> {
-    fn parse(
-        parser: &mut crate::parser::ParseStream<'a>,
-    ) -> Result<Self, crate::error::ParseError<'a>>
+    fn parse(parser: &mut crate::parser::ParseStream<'a>) -> ParseResult<'a, Self>
     where
         Self: Sized,
     {
@@ -53,9 +49,7 @@ pub struct TypePath<'a> {
     pub segments: Punctuated<TypeIdent<'a>, ColonColon<'a>>,
 }
 impl<'a> Node<'a> for TypePath<'a> {
-    fn parse(
-        parser: &mut crate::parser::ParseStream<'a>,
-    ) -> Result<Self, crate::error::ParseError<'a>>
+    fn parse(parser: &mut crate::parser::ParseStream<'a>) -> ParseResult<'a, Self>
     where
         Self: Sized,
     {
@@ -75,9 +69,7 @@ pub struct TypeExpression<'a> {
     pub path: TypePath<'a>,
 }
 impl<'a> Node<'a> for TypeExpression<'a> {
-    fn parse(
-        parser: &mut crate::parser::ParseStream<'a>,
-    ) -> Result<Self, crate::error::ParseError<'a>>
+    fn parse(parser: &mut crate::parser::ParseStream<'a>) -> ParseResult<'a, Self>
     where
         Self: Sized,
     {

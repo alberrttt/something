@@ -4,7 +4,7 @@ use std::path::PathBuf;
 use crate::{
     lexer::Lexer,
     parser::{item::Item, Parser},
-    prelude::{Node, ParseError, ParseResult},
+    prelude::{ErrorKind, Node, ParseResult},
 };
 
 #[derive(Debug, Clone, PartialEq)]
@@ -13,6 +13,19 @@ pub struct PreparsedSourceFile<'a> {
     pub src: &'a str,
     pub lexer: Lexer<'a>,
     pub parser: Parser<'a>,
+}
+impl<'a> PreparsedSourceFile<'a> {
+    pub fn new(path: PathBuf, src: &'a str) -> Self {
+        let lexer = Lexer::from(src);
+        let parser = Parser::new(src);
+
+        Self {
+            path,
+            src,
+            lexer,
+            parser,
+        }
+    }
 }
 impl<'a> PreparsedSourceFile<'a> {
     pub fn parse(self) -> (SourceFile<'a>, Vec<ParseError<'a>>) {

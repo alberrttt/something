@@ -11,9 +11,7 @@ pub struct Function<'a> {
     pub ret_type: TypeExpression<'a>,
 }
 impl<'a> Node<'a> for Function<'a> {
-    fn parse(
-        parser: &mut crate::parser::ParseStream<'a>,
-    ) -> Result<Self, crate::error::ParseError<'a>>
+    fn parse(parser: &mut crate::parser::ParseStream<'a>) -> ParseResult<'a, Self>
     where
         Self: Sized,
     {

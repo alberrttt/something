@@ -11,9 +11,7 @@ pub enum Statement<'a> {
     ExpressionWithSemi((Expression<'a>, SemiColon<'a>)),
 }
 impl<'a> Node<'a> for Statement<'a> {
-    fn parse(
-        parser: &mut crate::parser::ParseStream<'a>,
-    ) -> Result<Self, crate::error::ParseError<'a>>
+    fn parse(parser: &mut crate::parser::ParseStream<'a>) -> ParseResult<'a, Self>
     where
         Self: Sized,
     {
