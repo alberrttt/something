@@ -21,5 +21,5 @@ fn main() {
     for error in errors {
         eprintln!("{}", error);
     }
-    dbg!(ast);
+    // dbg!(ast);
 }

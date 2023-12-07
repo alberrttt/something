@@ -2,7 +2,7 @@ use parm_dev_macros::Spanned;
 
 use crate::prelude::*;
 
-use super::expression::Expression;
+use super::expression::{parse_unit, Expression};
 
 pub mod expression_statement;
 #[derive(Debug, Clone, PartialEq, Spanned)]
@@ -15,9 +15,18 @@ impl<'a> Node<'a> for Statement<'a> {
     where
         Self: Sized,
     {
-        let expr = parser.step(Expression::parse)?;
+        let expr = parser.step(parse_unit)?;
 
         let semi = parser.step(SemiColon::parse);
         Ok(Self::ExpressionWithSemi((expr, semi?)))
+    }
+}
+impl<'a> Statement<'a> {
+    pub fn with_expression(parser: &mut ParseStream<'a>, expr: Expression<'a>) -> Self {
+        let semi = parser.step(SemiColon::parse);
+        match semi {
+            Ok(semi) => Self::ExpressionWithSemi((expr, semi)),
+            Err(_) => Self::Expression(expr),
+        }
     }
 }

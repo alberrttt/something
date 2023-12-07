@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use parm_ast::lexer::token::Ident;
+use parm_ast::lexer::token::Identifier;
 
 #[derive(Debug, Clone, Default)]
 pub struct LoweringContext<'a> {
@@ -17,7 +17,7 @@ impl<'a> LoweringContext<'a> {
 }
 #[derive(Debug, Clone, Default)]
 pub struct Scope<'a> {
-    pub variables: Vec<Ident<'a>>,
+    pub variables: Vec<Identifier<'a>>,
 }
 pub trait Lower<'a> {
     type Output;

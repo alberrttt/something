@@ -4,8 +4,8 @@ use parm_dev_macros::Spanned;
 #[derive(Debug, Clone, PartialEq, Spanned)]
 pub struct Function<'a> {
     pub fn_tkn: FnKeyword<'a>,
-    pub name: Ident<'a>,
-    pub params: Paren<'a, Punctuated<Ident<'a>, Comma<'a>>>,
+    pub name: Identifier<'a>,
+    pub params: Paren<'a, Punctuated<Identifier<'a>, Comma<'a>>>,
     pub body: Brace<'a, Vec<Item<'a>>>,
     pub arrow: RightArrow<'a>,
     pub ret_type: TypeExpression<'a>,
@@ -16,8 +16,8 @@ impl<'a> Node<'a> for Function<'a> {
         Self: Sized,
     {
         let fn_token = parser.step(|parser| FnKeyword::parse(parser).clone())?;
-        let name = Ident::parse(parser)?;
-        let params: Paren<'_, Punctuated<Ident<'_>, Comma<'_>>> =
+        let name = Identifier::parse(parser)?;
+        let params: Paren<'_, Punctuated<Identifier<'_>, Comma<'_>>> =
             parser.step(|parser| Paren::parse_manual(parser, Punctuated::parse_terminated))?;
         let body = parser.step(|parser| {
             Brace::parse_manual(parser, |parser| {
@@ -26,8 +26,13 @@ impl<'a> Node<'a> for Function<'a> {
                     if parser.at_end() {
                         break;
                     }
-                    let item = Item::parse(parser)?;
-                    body.push(item);
+                    match Item::parse(parser) {
+                        Ok(res) => body.push(res),
+                        Err(err) => {
+                            eprintln!("{}", err);
+                            break;
+                        }
+                    };
                 }
                 Ok(body)
             })

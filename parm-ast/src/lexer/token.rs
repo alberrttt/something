@@ -1,10 +1,9 @@
 use crate::{
     error::{ErrorKind, ExpectedNode},
-    prelude::{ParseError, ParseResult},
+    prelude::*,
 };
-use casey::upper;
 use parm_common::{Span, Spanned};
-use std::{marker::PhantomData, slice};
+use std::marker::PhantomData;
 struct Dook<'a>(PhantomData<&'a ()>);
 impl<'a> Spanned for Dook<'a> {
     fn span(&self) -> Span {
@@ -35,7 +34,8 @@ impl<'a> Node<'a> for Dook<'a> {
 gen_token!(
     Integer,
     Float,
-    Ident,
+    Identifier,
+    Eot,
     // syntax
     #[lexeme = "("]
     LParen,

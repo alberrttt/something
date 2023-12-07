@@ -5,11 +5,11 @@ mod precedence;
 use crate::{
     error::{EndOfTokens, ErrorKind},
     lexer::{
-        token::{self, BinaryOperator, Ident, Token},
+        token::{self, BinaryOperator, Identifier, Token},
         Lexer,
     },
     parser::{self, Parser},
-    prelude::{ParseError, ParseResult},
+    prelude::{ExpectedNode, ParseError, ParseResult},
     traits::Node,
 };
 
@@ -20,7 +20,7 @@ pub mod literal;
 pub mod number;
 #[derive(Debug, Clone, PartialEq)]
 pub enum Expression<'a> {
-    Identifier(Ident<'a>),
+    Identifier(Identifier<'a>),
     Number(number::Number<'a>),
     BinaryExpression(binary::BinaryExpression<'a>),
 }
@@ -42,9 +42,12 @@ pub fn parse_unit<'a>(
             parser.advance()?;
             Ok(Expression::Number(Number::from(peeked)))
         }
-        Token::Ident(_) => Ok(Expression::Identifier(Ident::parse(parser)?)),
-        _ => Err(ParseError::new(
-            crate::error::ErrorKind::EndOfTokens(EndOfTokens {}),
+        Token::Identifier(_) => Ok(Expression::Identifier(Identifier::parse(parser)?)),
+        token => Err(ParseError::new(
+            crate::error::ErrorKind::ExpectedNode(ExpectedNode {
+                expected: "expression",
+                got: token.lexeme(),
+            }),
             parser.tokens,
         )),
     }

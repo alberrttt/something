@@ -7,18 +7,17 @@ use parm_dev_macros::Spanned;
 
 #[derive(Debug, Clone, PartialEq, Spanned)]
 pub struct TypeIdent<'a> {
-    pub ident: Ident<'a>,
-    pub generics: Option<Angle<'a, Punctuated<Ident<'a>, Comma<'a>>>>,
+    pub ident: Identifier<'a>,
+    pub generics: Option<Angle<'a, Punctuated<Identifier<'a>, Comma<'a>>>>,
 }
 impl<'a> Node<'a> for TypeIdent<'a> {
     fn parse(parser: &mut crate::parser::ParseStream<'a>) -> ParseResult<'a, Self>
     where
         Self: Sized,
     {
-        let ident = Ident::parse(parser)?;
-        let generics = parser.step(|parser| {
-            Angle::parse_manual(parser, |parser| Punctuated::parse_terminated(parser))
-        });
+        let ident = Identifier::parse(parser)?;
+        let generics =
+            parser.step(|parser| Angle::parse_manual(parser, Punctuated::parse_terminated));
         Ok(Self {
             ident,
             generics: generics.ok(),

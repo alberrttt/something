@@ -6,5 +6,5 @@ use crate::prelude::*;
 #[derive(Debug, Clone, PartialEq, Spanned)]
 pub struct SimplePath<'a> {
     pub prefix: Option<ColonColon<'a>>,
-    pub segments: Punctuated<Ident<'a>, ColonColon<'a>>,
+    pub segments: Punctuated<Identifier<'a>, ColonColon<'a>>,
 }

@@ -18,6 +18,7 @@ impl<'a> ParseStream<'a> {
             current: 0,
         }
     }
+    #[track_caller]
     pub fn step<T>(&mut self, closure: fn(&mut Self) -> ParseResult<'a, T>) -> ParseResult<'a, T> {
         let start = self.current;
         let result = closure(self);
@@ -51,7 +52,7 @@ impl<'a> ParseStream<'a> {
                 Ok(some)
             }
             None => Err(ParseError::new(
-                ErrorKind::EndOfTokens(EndOfTokens {}),
+                ErrorKind::EndOfTokens(EndOfTokens { expected: None }),
                 self.tokens,
             )),
         }
@@ -60,7 +61,7 @@ impl<'a> ParseStream<'a> {
         match self.tokens.get(self.current) {
             Some(some) => Ok(some),
             None => Err(ParseError::new(
-                ErrorKind::EndOfTokens(EndOfTokens {}),
+                ErrorKind::EndOfTokens(EndOfTokens { expected: None }),
                 self.tokens,
             )),
         }

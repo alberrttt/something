@@ -71,6 +71,6 @@ Delimiter!(Angle, Less, Greater);
 #[test]
 fn test_delimiter() {
     let mut parser = Parser::new("[{abc}]");
-    let mut paren = <Bracket<Brace<Ident>> as Node>::parse(&mut parser.stream()).unwrap();
+    let mut paren = <Bracket<Brace<Identifier>> as Node>::parse(&mut parser.stream()).unwrap();
     dbg!(&paren);
 }

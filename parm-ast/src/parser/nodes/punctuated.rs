@@ -101,16 +101,17 @@ impl<'a, T: Node<'a>, P: Node<'a>> Punctuated<T, P> {
 #[test]
 fn parse_punctuated() {
     let mut parser = Parser::new("a,b,c");
-    let punctuated = Punctuated::<Ident, Comma>::parse_terminated(&mut parser.stream()).unwrap();
+    let punctuated =
+        Punctuated::<Identifier, Comma>::parse_terminated(&mut parser.stream()).unwrap();
     dbg!(&punctuated);
 }
 
 #[test]
 fn parse_delimited() {
     let mut parser = Parser::new("(a,b,c)");
-    let delimited =
-        Paren::<Punctuated<Ident, Comma>>::parse_manual(&mut parser.stream(), |parse_stream| {
-            Punctuated::<Ident, Comma>::parse_terminated(parse_stream)
-        });
+    let delimited = Paren::<Punctuated<Identifier, Comma>>::parse_manual(
+        &mut parser.stream(),
+        |parse_stream| Punctuated::<Identifier, Comma>::parse_terminated(parse_stream),
+    );
     dbg!(&delimited);
 }

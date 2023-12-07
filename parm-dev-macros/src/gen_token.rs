@@ -51,6 +51,7 @@ fn generate_struct_defs_token_items(punctuation: &List) -> StructDefsTokenItems 
         token_items.push(quote! {
             #ident(#ident<'a>),
         });
+        let expected = syn::LitStr::new(&ident.to_string().to_lowercase(), ident.span());
         struct_defs.push(quote! {
             #[derive(Clone,Copy,PartialEq,Eq,Hash,Default)]
             pub struct #ident<'a> {
@@ -80,7 +81,15 @@ fn generate_struct_defs_token_items(punctuation: &List) -> StructDefsTokenItems 
                 where
                     Self: Sized,
                 {
-                    let peeked = parser.peek()?;
+                    let peeked = match parser.peek() {
+                        Ok(peeked) => peeked,
+                        Err(err) => return Err(ParseError::new(
+                            ErrorKind::EndOfTokens(EndOfTokens {
+                                expected: Some(#expected)
+                            }),
+                            parser.tokens
+                        )),
+                    };
                     if let Token::#ident(peeked) = peeked {
                         let tmp = Ok(peeked.clone());
                         parser.advance()?;

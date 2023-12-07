@@ -29,8 +29,8 @@ impl<'a> Node<'a> for Item<'a> {
             _ => {
                 let expr = parser.step(parse_unit);
                 match expr {
-                    Ok(_) => {
-                        return Ok(Item::Statement(Statement::parse(parser)?));
+                    Ok(expr) => {
+                        return Ok(Item::Statement(Statement::with_expression(parser, expr)));
                     }
                     Err(err) => {}
                 }

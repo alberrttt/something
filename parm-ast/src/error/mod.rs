@@ -12,20 +12,58 @@ use crate::lexer::{
 };
 
 use std::fmt::Write;
+#[derive(Debug, PartialEq, Clone)]
+pub struct Annotation {
+    pub message: String,
+    pub offset: usize,
+    pub after: bool,
+    // size of the arrows; usize::MAX: automatically calculate size, based on the length of the token
+    pub size: usize,
+}
+impl Annotation {
+    pub fn new(message: String) -> Self {
+        Annotation {
+            message,
+            offset: 0,
+            after: false,
+            size: usize::MAX,
+        }
+    }
+
+    pub fn after(mut self) -> Self {
+        self.after = true;
+        self
+    }
+
+    pub fn offset(mut self, offset: usize) -> Self {
+        self.offset = offset;
+        self
+    }
+
+    pub fn size(mut self, size: usize) -> Self {
+        self.size = size;
+        self
+    }
+
+    pub fn auto(mut self) -> Self {
+        self.size = usize::MAX;
+        self
+    }
+}
+
 fn display_tokens_with_annotations<'a>(
     tokens: &[Token<'a>],
-    annotations: HashMap<usize, String>,
+    annotations: HashMap<usize, Annotation>,
 ) -> Result<String, Box<dyn Error>> {
     let mut f = String::new();
     let lines = tokens_by_line(tokens);
     let mut idx = 0;
-    let mut line_offset = 0;
     let mut annotation_location = HashMap::new();
 
-    for (line, tokens) in lines.iter().enumerate() {
+    for (line, token_on_line) in lines.iter().enumerate() {
         let mut prev_token: *const Token<'_> = std::ptr::null();
 
-        for (line_idx, token) in tokens.iter().enumerate() {
+        for (line_idx, token) in token_on_line.iter().enumerate() {
             if line_idx == 0 {
                 write!(
                     f,
@@ -48,30 +86,35 @@ fn display_tokens_with_annotations<'a>(
             write!(f, "{}", token.lexeme())?;
             prev_token = token;
             if let Some(annotation) = annotations.get(&idx) {
-                annotation_location.insert(line_offset, idx);
+                annotation_location.insert(token.span().line_start, idx);
             }
             idx += 1;
-            line_offset += 1;
         }
 
-        if line != lines.len() - 1 {
-            writeln!(f)?;
-        }
+        writeln!(f)?;
 
         if !annotation_location.is_empty() {
-            for (line_offset, annotation) in annotation_location.iter() {
+            for (line_offset, annotation_idx) in annotation_location.iter() {
+                let annotation = annotations.get(annotation_idx).unwrap();
+                let token = &tokens[*annotation_idx];
+                let len = token.lexeme().len();
                 write!(
                     f,
-                    "{} {:whitespace$}",
-                    "^".repeat(tokens[*annotation].lexeme().len()),
-                    annotations.get(annotation).unwrap(),
-                    whitespace = line_offset
+                    "{:whitespace$}{} {}",
+                    "",
+                    "^".repeat(if annotation.size == usize::MAX {
+                        len
+                    } else {
+                        annotation.size
+                    }),
+                    annotation.message,
+                    whitespace =
+                        *line_offset + annotation.offset + if annotation.after { len } else { 0 },
                 )?;
             }
             writeln!(f)?;
         }
 
-        line_offset = 0;
         annotation_location.clear();
     }
     Ok(f)
@@ -146,6 +189,7 @@ impl<'a> Clone for ParseError<'a> {
     }
 }
 impl<'a> ParseError<'a> {
+    #[track_caller]
     pub fn new(kind: ErrorKind<'a>, surrounding: &'a [Token<'a>]) -> Self {
         Self {
             kind,
@@ -156,20 +200,54 @@ impl<'a> ParseError<'a> {
 
     pub fn print(&self) -> String {
         let mut result = String::new();
-        let displayed = display_tokens_with_annotations(self.surrounding, {
-            let mut map = HashMap::new();
-            map.insert(0, "error".to_string());
-            map
-        });
-        writeln!(result, "{}", displayed.unwrap()).unwrap();
-
-        match self.kind {
-            ErrorKind::EndOfTokens(_) => {
-                write!(result, "Unexpected end of tokens").unwrap();
+        let mut map: HashMap<usize, Annotation> = HashMap::new();
+        match &self.kind {
+            ErrorKind::EndOfTokens(eot) => {
+                map.insert(self.surrounding.len() - 1, {
+                    let mut annotation = String::from("unexpected token end");
+                    if let Some(expected) = eot.expected {
+                        write!(annotation, ", expected a(n) {}", expected).unwrap();
+                    }
+                    Annotation::new(annotation).after().size(1)
+                });
             }
-            ErrorKind::ExpectedToken(_) => todo!(),
-            ErrorKind::ExpectedNode(_) => todo!(),
+            ErrorKind::ExpectedToken(expected) => {
+                let mut coresponing_token = 0usize;
+                for (i, token) in self.surrounding.iter().enumerate() {
+                    if token.span() == expected.expected.span() {
+                        coresponing_token = i;
+                        break;
+                    }
+                }
+                map.insert(
+                    coresponing_token,
+                    Annotation::new(format!(
+                        "Expected {} but got {}",
+                        expected.expected.lexeme(),
+                        expected.got.lexeme()
+                    )),
+                );
+            }
+            ErrorKind::ExpectedNode(expected) => {
+                let mut coresponing_token = 0usize;
+                for (i, token) in self.surrounding.iter().enumerate() {
+                    if token.span().src_start == expected.got.as_bytes().as_ptr() as usize {
+                        coresponing_token = i;
+                        break;
+                    }
+                }
+                map.insert(
+                    coresponing_token,
+                    Annotation::new(format!(
+                        "Expected {} but got {}",
+                        expected.expected, expected.got
+                    )),
+                );
+            }
         }
+
+        let displayed = display_tokens_with_annotations(self.surrounding, map);
+        writeln!(result, "{}", displayed.unwrap()).unwrap();
         result
     }
 }
@@ -186,7 +264,7 @@ impl<'a> Display for ParseError<'a> {
 }
 #[derive(Debug, PartialEq, Clone)]
 pub enum ErrorKind<'a> {
-    EndOfTokens(EndOfTokens),
+    EndOfTokens(EndOfTokens<'a>),
     ExpectedToken(ExpectedToken<'a>),
     ExpectedNode(ExpectedNode<'a>),
 }
@@ -201,8 +279,10 @@ impl Display for ErrorKind<'_> {
     }
 }
 #[derive(Debug, Clone, PartialEq, Default)]
-pub struct EndOfTokens {}
-impl Display for EndOfTokens {
+pub struct EndOfTokens<'a> {
+    pub expected: Option<&'a str>,
+}
+impl Display for EndOfTokens<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         todo!()
     }

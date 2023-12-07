@@ -4,7 +4,7 @@ use parm_common::Span;
 use std::char;
 use token::Token;
 
-use self::token::{Float, Ident, If, Integer};
+use self::token::{Float, Identifier, If, Integer, Eot};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Lexer<'src> {
@@ -89,6 +89,7 @@ impl<'src> Lexer<'src> {
                 _ => tokens.push(self.lex_syntax()),
             }
         }
+        tokens.push(Token::Eot(Eot::default()));
         tokens
     }
     pub(crate) fn number(&mut self) -> Token<'src> {
@@ -164,7 +165,7 @@ impl<'src> Lexer<'src> {
             "return" => Return { lexeme, span }.into(),
             "let" => Let { lexeme, span }.into(),
             "mut" => Mut { lexeme, span }.into(),
-            _ => Ident { lexeme, span }.into(),
+            _ => Identifier { lexeme, span }.into(),
         }
     }
 }

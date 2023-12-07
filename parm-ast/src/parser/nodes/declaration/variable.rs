@@ -6,7 +6,7 @@ use crate::prelude::*;
 #[derive(Debug, Clone, PartialEq, Spanned)]
 pub struct Variable<'a> {
     pub let_tkn: Let<'a>,
-    pub ident: Ident<'a>,
+    pub ident: Identifier<'a>,
     pub initializer: Option<Initializer<'a>>,
     pub semi: SemiColon<'a>,
 }
@@ -21,7 +21,7 @@ impl<'a> Node<'a> for Variable<'a> {
         Self: Sized,
     {
         let let_tkn = parser.step(Let::parse)?;
-        let ident = parser.step(Ident::parse)?;
+        let ident = parser.step(Identifier::parse)?;
         let initializer = parser.step(|parser| {
             let eq = parser.step(Eq::parse)?;
             let expr = parser.step(Expression::parse)?;
