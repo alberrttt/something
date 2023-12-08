@@ -9,7 +9,9 @@ pub enum Item<'a> {
     Variable(Variable<'a>),
     Function(Function<'a>),
     Statement(Statement<'a>),
+    Return(ReturnStatement<'a>),
 }
+
 impl<'a> Node<'a> for Item<'a> {
     fn parse(parser: &mut super::ParseStream<'a>) -> ParseResult<'a, Self>
     where
@@ -24,6 +26,10 @@ impl<'a> Node<'a> for Item<'a> {
             Token::FnKeyword(_) => {
                 let func: Function = <Function as Node>::parse(parser)?;
                 return Ok(Item::Function(func));
+            }
+            Token::Return(_) => {
+                let ret: ReturnStatement = <ReturnStatement as Node>::parse(parser)?;
+                return Ok(Item::Return(ret));
             }
 
             _ => {
@@ -46,7 +52,27 @@ impl<'a> Node<'a> for Item<'a> {
         ))
     }
 }
-
+#[derive(Debug, Clone, PartialEq, Spanned)]
+pub struct ReturnStatement<'a> {
+    pub return_tkn: Return<'a>,
+    pub expr: Expression<'a>,
+    pub semi: SemiColon<'a>,
+}
+impl<'a> Node<'a> for ReturnStatement<'a> {
+    fn parse(parser: &mut ParseStream<'a>) -> Result<Self, ParseError<'a>>
+    where
+        Self: Sized,
+    {
+        let return_tkn = parser.step(|parser| Return::parse(parser).clone())?;
+        let expr = parser.step(|parser| Expression::parse(parser).clone())?;
+        let semi = parser.step(|parser| SemiColon::parse(parser).clone())?;
+        Ok(Self {
+            return_tkn,
+            expr,
+            semi,
+        })
+    }
+}
 #[test]
 fn test_var() {
     let mut parser = Parser::new("let x = 1;");

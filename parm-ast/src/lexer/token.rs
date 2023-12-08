@@ -35,7 +35,6 @@ gen_token!(
     Integer,
     Float,
     Identifier,
-    Eot,
     // syntax
     #[lexeme = "("]
     LParen,

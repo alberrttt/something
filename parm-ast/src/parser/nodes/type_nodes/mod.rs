@@ -80,3 +80,19 @@ impl<'a> Node<'a> for TypeExpression<'a> {
         })
     }
 }
+
+#[derive(Debug, Clone, Spanned, PartialEq)]
+pub struct TypeAnnotation<'a> {
+    pub colon: Colon<'a>,
+    pub ty: TypeExpression<'a>,
+}
+impl<'a> Node<'a> for TypeAnnotation<'a> {
+    fn parse(parser: &mut ParseStream<'a>) -> ParseResult<'a, Self>
+    where
+        Self: Sized,
+    {
+        let colon = parser.step(|parser| Colon::parse(parser).clone())?;
+        let ty = parser.step(|parser| TypeExpression::parse(parser).clone())?;
+        Ok(Self { colon, ty })
+    }
+}

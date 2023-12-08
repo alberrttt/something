@@ -60,7 +60,6 @@ fn parse_expression<'a>(
         Err(_) => false,
         Ok(token) => matches!(token, Token::Plus(_) | Token::Minus(_)),
     } {
-        dbg!(parser.peek()?);
         let operator: BinaryOperator = BinaryOperator::parse(parser)?;
         let right = parse_term(parser)?;
         left = Expression::BinaryExpression(BinaryExpression {
@@ -103,6 +102,15 @@ impl Spanned for Expression<'_> {
 #[test]
 fn test_expr() -> Result<(), Box<dyn Error>> {
     let src = "1+2*3+4";
+    let mut parser = Parser::new(src);
+
+    let bin = <Expression as Node>::parse(&mut parser.stream()).unwrap();
+    dbg!(bin);
+    Ok(())
+}
+#[test]
+fn test_add() -> Result<(), Box<dyn Error>> {
+    let src = "a*2";
     let mut parser = Parser::new(src);
 
     let bin = <Expression as Node>::parse(&mut parser.stream()).unwrap();

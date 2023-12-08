@@ -2,10 +2,25 @@ use crate::prelude::*;
 use parm_common::Spanned;
 use parm_dev_macros::Spanned;
 #[derive(Debug, Clone, PartialEq, Spanned)]
+pub struct Param<'a> {
+    pub name: Identifier<'a>,
+    pub annotation: TypeAnnotation<'a>,
+}
+impl<'a> Node<'a> for Param<'a> {
+    fn parse(parser: &mut ParseStream<'a>) -> Result<Self, ParseError<'a>>
+    where
+        Self: Sized,
+    {
+        let name = parser.step(|parser| Identifier::parse(parser).clone())?;
+        let annotation = parser.step(|parser| TypeAnnotation::parse(parser).clone())?;
+        Ok(Self { name, annotation })
+    }
+}
+#[derive(Debug, Clone, PartialEq, Spanned)]
 pub struct Function<'a> {
     pub fn_tkn: FnKeyword<'a>,
     pub name: Identifier<'a>,
-    pub params: Paren<'a, Punctuated<Identifier<'a>, Comma<'a>>>,
+    pub params: Paren<'a, Punctuated<Param<'a>, Comma<'a>>>,
     pub body: Brace<'a, Vec<Item<'a>>>,
     pub arrow: RightArrow<'a>,
     pub ret_type: TypeExpression<'a>,
@@ -17,7 +32,7 @@ impl<'a> Node<'a> for Function<'a> {
     {
         let fn_token = parser.step(|parser| FnKeyword::parse(parser).clone())?;
         let name = Identifier::parse(parser)?;
-        let params: Paren<'_, Punctuated<Identifier<'_>, Comma<'_>>> =
+        let params: Paren<'_, Punctuated<Param<'_>, Comma<'_>>> =
             parser.step(|parser| Paren::parse_manual(parser, Punctuated::parse_terminated))?;
         let body = parser.step(|parser| {
             Brace::parse_manual(parser, |parser| {
