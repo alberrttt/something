@@ -1,46 +1,44 @@
+use std::cell::UnsafeCell;
+
 use crate::{
     error::{EndOfTokens, ErrorKind},
     lexer::token::Token,
     prelude::ParseResult,
+    source_file::PreparsedSourceFile,
 };
 
 pub use self::parse_stream::ParseStream;
 pub mod item;
 pub mod nodes;
 pub mod parse_stream;
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug)]
 pub struct Parser<'a> {
     pub src: &'a str,
     pub tokens: Vec<Token<'a>>,
-    pub stream: ParseStream<'a>,
     /// The index of the current token
     pub current: usize,
 }
-
+impl<'a> PartialEq for Parser<'a> {
+    fn eq(&self, other: &Self) -> bool {
+        self.tokens == other.tokens && self.current == other.current && self.src == other.src
+    }
+}
 impl<'a> Parser<'a> {
-    pub fn stream<'b: 'a>(&'b self) -> ParseStream<'b> {
+    pub fn stream<'b: 'a>(
+        &'b self,
+        src_file: &'a UnsafeCell<PreparsedSourceFile<'a>>,
+    ) -> ParseStream<'b> {
         ParseStream {
             tokens: &self.tokens,
             current: self.current,
+            src_file,
+            panic: false,
         }
     }
     pub fn at_end(&self) -> bool {
         self.current >= self.tokens.len()
     }
-    pub fn new(src: &'a str) -> Self {
-        let tokens = crate::lexer::Lexer::from(src).lex();
-        let reference =
-            unsafe { std::mem::transmute::<&[Token<'a>], &'a [Token<'a>]>(tokens.as_ref()) };
-        Self {
-            src,
-            tokens,
-            stream: ParseStream {
-                tokens: reference,
-                current: 0,
-            },
-            current: 0,
-        }
-    }
+
     pub fn step<T>(
         &mut self,
         closure: fn(&mut Parser<'a>) -> ParseResult<'a, T>,

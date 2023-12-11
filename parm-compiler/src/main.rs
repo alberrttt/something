@@ -1,4 +1,5 @@
 use std::{
+    env,
     fs::{self, File},
     path::{Path, PathBuf},
 };
@@ -15,11 +16,13 @@ fn main() {
 
     let entry_src = fs::read_to_string(entry.clone()).unwrap();
 
-    let mut parser = Parser::new(entry_src.as_ref());
     let preparsed_src_file = PreparsedSourceFile::new(entry.clone(), &entry_src);
     let (ast, errors) = preparsed_src_file.parse();
     for error in errors {
         eprintln!("{}", error);
+    }
+    if env::var("AST").is_ok() {
+        println!("{:#?}", ast);
     }
     // dbg!(ast);
 }

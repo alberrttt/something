@@ -100,7 +100,8 @@ fn generate_struct_defs_token_items(punctuation: &List) -> StructDefsTokenItems 
                                 ErrorKind::ExpectedNode(
                                     ExpectedNode {
                                         got: peeked.lexeme(),
-                                        expected: stringify!(#ident)
+                                        expected: stringify!(#ident),
+                                        location: parser.current
                                     }
                                 ),
                                 parser.tokens
@@ -231,6 +232,8 @@ pub fn gen_token(input: TokenStream) -> TokenStream {
                         Self: Sized,
                     {
                         let peek = parser.peek()?;
+                       let location  = parser.current_location_in_file();
+
                         match peek {
                             #(#node_arms)*
                             peek => {
@@ -239,7 +242,8 @@ pub fn gen_token(input: TokenStream) -> TokenStream {
                                         ErrorKind::ExpectedNode(
                                             ExpectedNode {
                                                 got: peek.lexeme(),
-                                                expected: stringify!(#ident)
+                                                expected: stringify!(#ident),
+                                                location,
                                             }
                                         ),
                                         parser.tokens

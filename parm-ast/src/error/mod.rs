@@ -1,7 +1,7 @@
 pub mod printer;
 use std::{
-    backtrace::Backtrace, cmp::Ordering, collections::HashMap, error::Error, fmt::Display, slice,
-    vec,
+    backtrace::Backtrace, cmp::Ordering, collections::HashMap, error::Error, f32::consts::E,
+    fmt::Display, slice, vec,
 };
 
 use parm_common::{Span, Spanned};
@@ -59,7 +59,6 @@ fn display_tokens_with_annotations<'a>(
     let lines = tokens_by_line(tokens);
     let mut idx = 0;
     let mut annotation_location = HashMap::new();
-
     for (line, token_on_line) in lines.iter().enumerate() {
         let mut prev_token: *const Token<'_> = std::ptr::null();
 
@@ -229,15 +228,8 @@ impl<'a> ParseError<'a> {
                 );
             }
             ErrorKind::ExpectedNode(expected) => {
-                let mut coresponing_token = 0usize;
-                for (i, token) in self.surrounding.iter().enumerate() {
-                    if token.span().src_start == expected.got.as_bytes().as_ptr() as usize {
-                        coresponing_token = i;
-                        break;
-                    }
-                }
                 map.insert(
-                    coresponing_token,
+                    expected.location,
                     Annotation::new(format!(
                         "Expected {} but got {}",
                         expected.expected, expected.got
@@ -303,6 +295,9 @@ impl<'a> Display for ExpectedToken<'a> {
 pub struct ExpectedNode<'a> {
     pub expected: &'static str,
     pub got: &'a str,
+
+    /// location in the source file's tokens
+    pub location: usize,
 }
 
 impl<'a> Display for ExpectedNode<'a> {

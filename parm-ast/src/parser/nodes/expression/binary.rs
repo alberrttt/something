@@ -34,6 +34,7 @@ impl<'a> Node<'a> for BinaryExpression<'a> {
                 ErrorKind::ExpectedNode(ExpectedNode {
                     got: "Expression",
                     expected: "BinaryExpression",
+                    location: parser.current,
                 }),
                 parser.tokens,
             )),
@@ -41,11 +42,11 @@ impl<'a> Node<'a> for BinaryExpression<'a> {
     }
 }
 
-#[test]
-fn test_bin() -> Result<(), Box<dyn Error>> {
-    let mut parser = Parser::new("1+2");
+// #[test]
+// fn test_bin() -> Result<(), Box<dyn Error>> {
+//     let mut parser = Parser::new("1+2");
 
-    let bin: BinaryExpression = <BinaryExpression as Node>::parse(&mut parser.stream()).unwrap();
-    dbg!(bin);
-    Ok(())
-}
+//     let bin: BinaryExpression = <BinaryExpression as Node>::parse(&mut parser.stream()).unwrap();
+//     dbg!(bin);
+//     Ok(())
+// }

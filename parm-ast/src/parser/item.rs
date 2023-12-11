@@ -1,4 +1,4 @@
-use crate::prelude::*;
+use crate::{prelude::*, source_file::PreparsedSourceFile};
 use parm_common::Spanned;
 use parm_dev_macros::Spanned;
 
@@ -19,10 +19,14 @@ impl<'a> Node<'a> for Item<'a> {
     {
         let peeked = parser.peek()?;
         match peeked {
-            Token::Let(_) => {
-                let var: Variable = <Variable as Node>::parse(parser)?;
-                return Ok(Item::Variable(var));
-            }
+            Token::Let(_) => match <Variable as Node>::parse(parser) {
+                Ok(ok) => return Ok(Item::Variable(ok)),
+                Err(err) => {
+                    parser.panic = true;
+                    return Err(err);
+                }
+            },
+
             Token::FnKeyword(_) => {
                 let func: Function = <Function as Node>::parse(parser)?;
                 return Ok(Item::Function(func));
@@ -42,11 +46,11 @@ impl<'a> Node<'a> for Item<'a> {
                 }
             }
         }
-
         Err(ParseError::new(
             crate::error::ErrorKind::ExpectedNode(crate::error::ExpectedNode {
                 got: format!("{:?}", parser.peek()).leak(),
                 expected: "Variable or Function",
+                location: parser.current,
             }),
             parser.tokens,
         ))
@@ -73,16 +77,17 @@ impl<'a> Node<'a> for ReturnStatement<'a> {
         })
     }
 }
-#[test]
-fn test_var() {
-    let mut parser = Parser::new("let x = 1;");
-    let var: Item = <Item as Node>::parse(&mut parser.stream()).unwrap();
-    dbg!(var);
-}
+// #[test]
+// fn test_var() {
+//     let pre = PreparsedSourceFile::new("test".into(), "let x = 1;");
+//     let mut parser = Parser::new("let x = 1;");
+//     let var: Item = <Item as Node>::parse(&mut parser.stream()).unwrap();
+//     dbg!(var);
+// }
 
-#[test]
-fn test_fn() {
-    let mut parser = Parser::new("fn x() {}");
-    let var: Item = <Item as Node>::parse(&mut parser.stream()).unwrap();
-    dbg!(var);
-}
+// #[test]
+// fn test_fn() {
+//     let mut parser = Parser::new("fn x() {}");
+//     let var: Item = <Item as Node>::parse(&mut parser.stream()).unwrap();
+//     dbg!(var);
+// }

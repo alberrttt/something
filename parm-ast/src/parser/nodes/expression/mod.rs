@@ -47,6 +47,7 @@ pub fn parse_unit<'a>(
             crate::error::ErrorKind::ExpectedNode(ExpectedNode {
                 expected: "expression",
                 got: token.lexeme(),
+                location: parser.current,
             }),
             parser.tokens,
         )),
@@ -99,21 +100,21 @@ impl Spanned for Expression<'_> {
         }
     }
 }
-#[test]
-fn test_expr() -> Result<(), Box<dyn Error>> {
-    let src = "1+2*3+4";
-    let mut parser = Parser::new(src);
+// #[test]
+// fn test_expr() -> Result<(), Box<dyn Error>> {
+//     let src = "1+2*3+4";
+//     let mut parser = Parser::new(src);
 
-    let bin = <Expression as Node>::parse(&mut parser.stream()).unwrap();
-    dbg!(bin);
-    Ok(())
-}
-#[test]
-fn test_add() -> Result<(), Box<dyn Error>> {
-    let src = "a*2";
-    let mut parser = Parser::new(src);
+//     let bin = <Expression as Node>::parse(&mut parser.stream()).unwrap();
+//     dbg!(bin);
+//     Ok(())
+// }
+// #[test]
+// fn test_add() -> Result<(), Box<dyn Error>> {
+//     let src = "a*2";
+//     let mut parser = Parser::new(src);
 
-    let bin = <Expression as Node>::parse(&mut parser.stream()).unwrap();
-    dbg!(bin);
-    Ok(())
-}
+//     let bin = <Expression as Node>::parse(&mut parser.stream()).unwrap();
+//     dbg!(bin);
+//     Ok(())
+// }

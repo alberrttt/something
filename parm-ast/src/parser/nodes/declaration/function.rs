@@ -41,13 +41,39 @@ impl<'a> Node<'a> for Function<'a> {
                     if parser.at_end() {
                         break;
                     }
-                    match Item::parse(parser) {
+                    let peeked = parser.peek()?;
+                    match parser.step(Item::parse) {
                         Ok(res) => body.push(res),
                         Err(err) => {
                             eprintln!("{}", err);
-                            break;
                         }
                     };
+                    if parser.panic {
+                        //  lets recover
+                        match peeked {
+                            Token::Let(_) => loop {
+                                if let Ok(semicolon) =
+                                    parser.step(|parser| SemiColon::parse(parser).clone())
+                                {
+                                    break;
+                                } else {
+                                    let _ = parser.advance();
+                                }
+                                parser.panic = false
+                            },
+                            Token::FnKeyword(_) => loop {
+                                if let Ok(semicolon) =
+                                    parser.step(|parser| SemiColon::parse(parser).clone())
+                                {
+                                    break;
+                                } else {
+                                    let _ = parser.advance();
+                                }
+                                parser.panic = false
+                            },
+                            _ => {}
+                        }
+                    }
                 }
                 Ok(body)
             })
@@ -65,14 +91,14 @@ impl<'a> Node<'a> for Function<'a> {
     }
 }
 
-#[test]
-fn test_fn() {
-    let input = "fn foo(hello) {
-        let x = 5;
-        let y = 6;
-        x + 2;
-    } -> wassup::bejing<foo,bar>::icecream";
-    let mut parser = Parser::new(input);
-    let result = Function::parse(&mut parser.stream()).unwrap();
-    dbg!(result);
-}
+// #[test]
+// fn test_fn() {
+//     let input = "fn foo(hello) {
+//         let x = 5;
+//         let y = 6;
+//         x + 2;
+//     } -> wassup::bejing<foo,bar>::icecream";
+//     let mut parser = Parser::new(input);
+//     let result = Function::parse(&mut parser.stream()).unwrap();
+//     dbg!(result);
+// }

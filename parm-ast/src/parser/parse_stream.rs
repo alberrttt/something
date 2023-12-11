@@ -1,14 +1,39 @@
-use std::ops::Range;
+use std::{cell::UnsafeCell, ops::Range};
 
-use crate::prelude::*;
+use crate::{prelude::*, source_file::PreparsedSourceFile};
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug)]
 pub struct ParseStream<'a> {
     pub tokens: &'a [Token<'a>],
     pub current: usize,
+    pub src_file: &'a UnsafeCell<PreparsedSourceFile<'a>>,
+    pub panic: bool,
 }
-
+impl<'a> PartialEq for ParseStream<'a> {
+    fn eq(&self, other: &Self) -> bool {
+        self.tokens == other.tokens && self.current == other.current
+    }
+}
 impl<'a> ParseStream<'a> {
+    pub fn current_location_in_file(&self) -> usize {
+        let src_file_tokens = &unsafe { &*self.src_file.get() }.parser.tokens;
+        let location = src_file_tokens
+            .windows(self.tokens.len())
+            .position(|window| window == self.tokens)
+            .unwrap();
+        location
+    }
+    pub fn from_src_file(
+        src_file: &'a UnsafeCell<PreparsedSourceFile<'a>>,
+        range: Range<usize>,
+    ) -> Self {
+        Self {
+            tokens: &unsafe { &*src_file.get() }.parser.tokens[range],
+            current: 0,
+            src_file,
+            panic: false,
+        }
+    }
     pub fn previous(&self) -> Option<&Token<'a>> {
         self.tokens.get(self.current - 1)
     }
@@ -16,6 +41,8 @@ impl<'a> ParseStream<'a> {
         Self {
             tokens: &self.tokens[range],
             current: 0,
+            src_file: self.src_file,
+            panic: false,
         }
     }
     #[track_caller]
@@ -30,18 +57,7 @@ impl<'a> ParseStream<'a> {
             }
         }
     }
-    pub fn from_parse_stream(stream: &'a ParseStream<'a>, range: Range<usize>) -> Self {
-        Self {
-            tokens: &stream.tokens[range],
-            current: 0,
-        }
-    }
-    pub fn from_parser(parser: &'a Parser<'a>, range: Range<usize>) -> Self {
-        Self {
-            tokens: &parser.tokens[range],
-            current: 0,
-        }
-    }
+
     pub fn at_end(&self) -> bool {
         self.current >= self.tokens.len()
     }

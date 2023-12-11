@@ -25,6 +25,7 @@ impl<'a> Node<'a> for Dook<'a> {
                 ErrorKind::ExpectedNode(ExpectedNode {
                     got: peeked.lexeme(),
                     expected: "Integer",
+                    location: parser.current,
                 }),
                 parser.tokens,
             ))
