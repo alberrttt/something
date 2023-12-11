@@ -1,14 +1,17 @@
+use std::backtrace::Backtrace;
+
 use crate::{prelude::*, source_file::PreparsedSourceFile};
 use parm_common::Spanned;
 use parm_dev_macros::Spanned;
 
-use super::nodes::expression::parse_unit;
+use crate::parser::nodes::expression::parse_unit;
 
 #[derive(Debug, Clone, PartialEq, Spanned)]
 pub enum Item<'a> {
     Variable(Variable<'a>),
     Function(Function<'a>),
     Statement(Statement<'a>),
+    Use(UseStatement<'a>),
     Return(ReturnStatement<'a>),
 }
 
@@ -35,7 +38,10 @@ impl<'a> Node<'a> for Item<'a> {
                 let ret: ReturnStatement = <ReturnStatement as Node>::parse(parser)?;
                 return Ok(Item::Return(ret));
             }
-
+            Token::Use(_) => {
+                let use_stmt: UseStatement = <UseStatement as Node>::parse(parser)?;
+                return Ok(Item::Use(use_stmt));
+            }
             _ => {
                 let expr = parser.step(parse_unit);
                 match expr {
@@ -46,10 +52,11 @@ impl<'a> Node<'a> for Item<'a> {
                 }
             }
         }
+
         Err(ParseError::new(
             crate::error::ErrorKind::ExpectedNode(crate::error::ExpectedNode {
-                got: format!("{:?}", parser.peek()).leak(),
-                expected: "Variable or Function",
+                got: parser.peek()?.lexeme(),
+                expected: "an item",
                 location: parser.current,
             }),
             parser.tokens,

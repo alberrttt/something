@@ -15,6 +15,9 @@ impl<'a> PartialEq for ParseStream<'a> {
     }
 }
 impl<'a> ParseStream<'a> {
+    pub fn parse<T: Node<'a>>(&mut self) -> ParseResult<'a, T> {
+        T::parse(self)
+    }
     pub fn current_location_in_file(&self) -> usize {
         let src_file_tokens = &unsafe { &*self.src_file.get() }.parser.tokens;
         let location = src_file_tokens

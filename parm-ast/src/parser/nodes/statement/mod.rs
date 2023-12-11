@@ -3,12 +3,14 @@ use parm_dev_macros::Spanned;
 use crate::prelude::*;
 
 use super::expression::{parse_unit, Expression};
-
 pub mod expression_statement;
+pub mod use_stmt;
+pub use use_stmt::*;
 #[derive(Debug, Clone, PartialEq, Spanned)]
 pub enum Statement<'a> {
     Expression(Expression<'a>),
     ExpressionWithSemi((Expression<'a>, SemiColon<'a>)),
+    Use(UseStatement<'a>),
 }
 impl<'a> Node<'a> for Statement<'a> {
     fn parse(parser: &mut crate::parser::ParseStream<'a>) -> ParseResult<'a, Self>

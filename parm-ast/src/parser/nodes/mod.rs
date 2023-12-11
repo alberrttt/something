@@ -7,6 +7,7 @@ use super::ParseStream;
 pub mod declaration;
 pub mod delimiter;
 pub mod expression;
+pub mod item;
 pub mod path;
 pub mod punctuated;
 pub mod statement;

@@ -75,10 +75,10 @@ gen_token!(
     MinusEq,
     #[lexeme = "*"]
     #[group(BinaryOperator)]
-    Star,
+    Asterisk,
     #[lexeme = "**"]
     #[group(BinaryOperator)]
-    StarStar,
+    AsteriskAsterisk,
     #[lexeme = "**="]
     #[group(BinaryOperator, MutableBinaryOperator)]
     StarStarEq,
@@ -151,6 +151,12 @@ gen_token!(
     #[lexeme = "^="]
     #[group(BinaryOperator, MutableBinaryOperator)]
     CaretEq,
+    #[lexeme = "#"]
+    Octothorpe,
+    #[lexeme = "\""]
+    DoubleQuote,
+    #[lexeme = "'"]
+    SingleQuote,
     // keywords
     True,
     False,
@@ -159,7 +165,22 @@ gen_token!(
     FnKeyword,
     Return,
     Let,
-    Mut
+    Mut,
+    Use,
+    Loop,
+    While,
+    For,
+    In,
+    Break,
+    Continue,
+    Struct,
+    Enum,
+    Impl,
+    Type,
+    Trait,
+    LSelf,
+    USelf,
+    Pub
 );
 
 #[test]
@@ -301,7 +322,7 @@ fn test() {
                 line: 0,
             },
         }),
-        Token::Star(Star {
+        Token::Asterisk(Asterisk {
             lexeme: "*",
             span: Span {
                 src_start: 37,
@@ -310,7 +331,7 @@ fn test() {
                 line: 0,
             },
         }),
-        Token::StarStar(StarStar {
+        Token::AsteriskAsterisk(AsteriskAsterisk {
             lexeme: "**",
             span: Span {
                 src_start: 39,

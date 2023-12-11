@@ -3,7 +3,7 @@ use std::{cell::UnsafeCell, path::PathBuf};
 
 use crate::{
     lexer::Lexer,
-    parser::{item::Item, Parser},
+    parser::Parser,
     prelude::{ErrorKind, Node, ParseResult},
 };
 

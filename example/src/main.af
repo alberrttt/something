@@ -1,4 +1,4 @@
-use ::std::math::prelude::*;
+use std::math::prelude::*;
 
 #[dit] // differentiate
 fn foo(a: i32) -> i32 {

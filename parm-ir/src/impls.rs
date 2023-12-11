@@ -12,8 +12,8 @@ impl<'a> Lower<'a> for parm_ast::prelude::Function<'a> {
                 Item::Variable(variable) => {
                     function.add_operand(variable.lower(ctx));
                 }
-                Item::Function(_) => todo!(),
-                Item::Statement(_) => todo!(),
+
+                _ => todo!(),
             }
         }
 

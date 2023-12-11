@@ -59,7 +59,21 @@ fn display_tokens_with_annotations<'a>(
     let lines = tokens_by_line(tokens);
     let mut idx = 0;
     let mut annotation_location = HashMap::new();
+    let mut used_lines = vec![];
     for (line, token_on_line) in lines.iter().enumerate() {
+        for (line_idx, token) in token_on_line.iter().enumerate() {
+            if let Some(annotation) = annotations.get(&idx) {
+                used_lines.push(line);
+            }
+            idx += 1;
+        }
+    }
+    idx = 0;
+    for (line, token_on_line) in lines
+        .iter()
+        .enumerate()
+        .filter(|(line, _)| used_lines.contains(line))
+    {
         let mut prev_token: *const Token<'_> = std::ptr::null();
 
         for (line_idx, token) in token_on_line.iter().enumerate() {
@@ -231,7 +245,7 @@ impl<'a> ParseError<'a> {
                 map.insert(
                     expected.location,
                     Annotation::new(format!(
-                        "Expected {} but got {}",
+                        "Expected {} but got `{}`",
                         expected.expected, expected.got
                     )),
                 );

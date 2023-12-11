@@ -75,7 +75,7 @@ fn parse_term<'a>(parser: &mut crate::parser::ParseStream<'a>) -> ParseResult<'a
     let mut left: Expression<'_> = parse_unit(parser)?;
     while match parser.peek() {
         Err(_) => false,
-        Ok(token) => matches!(token, Token::Star(_) | Token::Slash(_)),
+        Ok(token) => matches!(token, Token::Asterisk(_) | Token::Slash(_)),
     } {
         dbg!(parser.peek()?);
         let operator: BinaryOperator = BinaryOperator::parse(parser)?;
