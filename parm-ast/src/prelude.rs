@@ -17,3 +17,19 @@ pub use parser::nodes::{
     statement::{expression_statement::ExpressionStatement, use_stmt::UseStatement, Statement},
     type_nodes::*,
 };
+
+pub macro parse($src:expr) {{
+    use crate::prelude::*;
+    use crate::source_file::PreparsedSourceFile;
+    use std::cell::UnsafeCell;
+    let src = $src;
+    dbg!(&src);
+    let tokens = Lexer::from(src).lex();
+    let mut parser = Parser {
+        src,
+        tokens,
+        current: 0,
+    };
+    let preparsed = UnsafeCell::new(PreparsedSourceFile::new("./test".into(), src));
+    (parser, preparsed)
+}}

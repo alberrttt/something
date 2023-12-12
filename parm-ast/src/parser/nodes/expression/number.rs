@@ -46,7 +46,7 @@ impl<'a> Node<'a> for Number<'a> {
         let num = parser.peek()?;
         match num {
             Token::Integer(int) => {
-                dbg!(parser.advance()?);
+                parser.advance()?;
                 Ok(Number {
                     token: num,
                     value: int.lexeme.parse::<f64>().unwrap(),

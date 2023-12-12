@@ -9,9 +9,11 @@ use crate::{
     traits::{CreateDisplayNode, Node},
 };
 
-use self::{binary::BinaryExpression, number::Number, precedence::Precedence};
+use self::{binary::BinaryExpression, group::Group, number::Number, precedence::Precedence};
 
+use super::statement::parse;
 pub mod binary;
+pub mod group;
 pub mod literal;
 pub mod number;
 #[derive(Debug, Clone, PartialEq)]
@@ -19,6 +21,7 @@ pub enum Expression<'a> {
     Identifier(Identifier<'a>),
     Number(number::Number<'a>),
     BinaryExpression(binary::BinaryExpression<'a>),
+    Group(Group<'a>),
 }
 
 impl<'a> Node<'a> for Expression<'a> {
@@ -34,7 +37,6 @@ pub fn expr<'a>(
     min_precedence: Precedence,
 ) -> ParseResult<'a, Expression<'a>> {
     let mut left = atom(parser)?;
-
     loop {
         let Ok(next) = parser.peek() else { break };
         let precedence = Precedence::from(next);
@@ -69,6 +71,10 @@ pub fn atom<'a>(parser: &mut crate::parser::ParseStream<'a>) -> ParseResult<'a, 
             let number = parser.step(|parser| Number::parse(parser).clone())?;
             Ok(Expression::Number(number))
         }
+        Token::LParen(_) => {
+            let group = parser.step(Group::parse)?;
+            Ok(Expression::Group(group))
+        }
         _ => Err(ParseError::new(
             crate::error::ErrorKind::ExpectedNode(crate::error::ExpectedNode {
                 got: token.lexeme(),
@@ -86,6 +92,7 @@ impl Spanned for Expression<'_> {
             Identifier(ident) => ident.span(),
             Number(number) => number.span(),
             BinaryExpression(binary) => binary.span(),
+            Group(group) => group.span(),
         }
     }
 }
@@ -96,22 +103,44 @@ impl CreateDisplayNode for Expression<'_> {
             Identifier(ident) => ident.create_display_node(),
             Number(number) => number.create_display_node(),
             BinaryExpression(binary) => binary.create_display_node(),
+            Group(group) => group.create_display_node(),
         }
     }
 }
 
-
 #[test]
 fn test_add() -> Result<(), Box<dyn Error>> {
-    let src = "1 + a ** 2 + 3";
-    let tokens = Lexer::from(src).lex();
-    let mut parser = Parser {
-        src,
-        tokens,
-        current: 0,
-    };
-    let preparsed = UnsafeCell::new(PreparsedSourceFile::new("./test".into(), src));
+    let (parser, preparsed) = parse!("1 + 2");
     let bin = <Expression as Node>::parse(&mut parser.stream(&preparsed)).unwrap();
     bin.create_display_node().display(0);
+    Ok(())
+}
+
+#[test]
+fn test_pow() -> Result<(), Box<dyn Error>> {
+    let (parser, preparsed) = parse!("1 + a**2+3");
+    let bin = <Expression as Node>::parse(&mut parser.stream(&preparsed));
+    match bin {
+        Ok(bin) => {
+            dbg!(&bin);
+            bin.create_display_node().display(0);
+        }
+        Err(err) => {
+            eprint!("{}", err);
+            panic!()
+        }
+    }
+    Ok(())
+}
+#[test]
+fn test_group() -> Result<(), Box<dyn Error>> {
+    let (parser, preparsed) = parse!("a**(1 + 2)");
+    let bin = <Expression as Node>::parse(&mut parser.stream(&preparsed));
+    match bin {
+        Ok(bin) => {
+            bin.create_display_node().display(0);
+        }
+        Err(err) => eprint!("{}", err),
+    }
     Ok(())
 }

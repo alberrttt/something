@@ -1,4 +1,6 @@
 #![feature(associated_type_defaults)]
+#![feature(decl_macro)]
+
 pub mod error;
 pub mod lexer;
 pub mod parser;

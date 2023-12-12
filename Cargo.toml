@@ -7,3 +7,4 @@ members = [
     "alfredo"
 , "parm-ir", "parm-typechecker"]
 resolver = "2"
+default-members = ["parm-compiler"]

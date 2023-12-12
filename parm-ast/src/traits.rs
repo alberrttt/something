@@ -1,3 +1,5 @@
+use std::marker::PhantomData;
+
 use parm_common::Spanned;
 
 use crate::{
@@ -47,5 +49,13 @@ impl<'a, T: Node<'a> + Spanned> Node<'a, ParseResult<'a, Self>> for Vec<T> {
             eprintln!("{}", error);
         }
         Ok(result)
+    }
+}
+impl<'a, T: Node<'a>> Node<'a> for Box<T> {
+    fn parse(parser: &mut ParseStream<'a>) -> ParseResult<'a, Self>
+    where
+        Self: Sized,
+    {
+        Ok(Box::new(T::parse(parser)?))
     }
 }

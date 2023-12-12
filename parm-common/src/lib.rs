@@ -47,6 +47,14 @@ impl<T: Spanned> Spanned for Option<T> {
         }
     }
 }
+impl<T> Spanned for Box<T>
+where
+    T: Spanned,
+{
+    fn span(&self) -> Span {
+        todo!()
+    }
+}
 
 impl<A, B> Spanned for (A, B)
 where
