@@ -1,10 +1,8 @@
-
-
-use crate::{prelude::*};
+use crate::prelude::*;
 use parm_common::Spanned;
 use parm_dev_macros::Spanned;
 
-use crate::parser::nodes::expression::parse_unit;
+use super::comment::Comment;
 
 #[derive(Debug, Clone, PartialEq, Spanned)]
 pub enum Item<'a> {
@@ -13,6 +11,7 @@ pub enum Item<'a> {
     Statement(Statement<'a>),
     Use(UseStatement<'a>),
     Return(ReturnStatement<'a>),
+    Comment(Comment<'a>),
 }
 
 impl<'a> Node<'a> for Item<'a> {
@@ -20,8 +19,16 @@ impl<'a> Node<'a> for Item<'a> {
     where
         Self: Sized,
     {
+        let attribute = parser.step(|parser| Attribute::parse(parser).clone());
+        if let Ok(attribute) = attribute {
+            parser.attributes.push(attribute);
+        }
         let peeked = parser.peek()?;
+
         match peeked {
+            Token::SlashSlash(slash_slash) => {
+                return Ok(Self::Comment(Comment::parse(parser)?));
+            }
             Token::Let(_) => match <Variable as Node>::parse(parser) {
                 Ok(ok) => return Ok(Item::Variable(ok)),
                 Err(err) => {
@@ -43,7 +50,7 @@ impl<'a> Node<'a> for Item<'a> {
                 return Ok(Item::Use(use_stmt));
             }
             _ => {
-                let expr = parser.step(parse_unit);
+                let expr = parser.step(Expression::parse);
                 match expr {
                     Ok(expr) => {
                         return Ok(Item::Statement(Statement::with_expression(parser, expr)));
@@ -52,7 +59,6 @@ impl<'a> Node<'a> for Item<'a> {
                 }
             }
         }
-
         Err(ParseError::new(
             crate::error::ErrorKind::ExpectedNode(crate::error::ExpectedNode {
                 got: parser.peek()?.lexeme(),

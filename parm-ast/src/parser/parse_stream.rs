@@ -8,6 +8,8 @@ pub struct ParseStream<'a> {
     pub current: usize,
     pub src_file: &'a UnsafeCell<PreparsedSourceFile<'a>>,
     pub panic: bool,
+
+    pub attributes: Vec<Attribute<'a>>,
 }
 impl<'a> PartialEq for ParseStream<'a> {
     fn eq(&self, other: &Self) -> bool {
@@ -32,9 +34,10 @@ impl<'a> ParseStream<'a> {
     ) -> Self {
         Self {
             tokens: &unsafe { &*src_file.get() }.parser.tokens[range],
-            current: 0,
             src_file,
-            panic: false,
+            current: Default::default(),
+            panic: Default::default(),
+            attributes: Default::default(),
         }
     }
     pub fn previous(&self) -> Option<&Token<'a>> {
@@ -43,9 +46,10 @@ impl<'a> ParseStream<'a> {
     pub fn from_range(&self, range: Range<usize>) -> Self {
         Self {
             tokens: &self.tokens[range],
-            current: 0,
             src_file: self.src_file,
-            panic: false,
+            current: Default::default(),
+            panic: Default::default(),
+            attributes: Default::default(),
         }
     }
     #[track_caller]

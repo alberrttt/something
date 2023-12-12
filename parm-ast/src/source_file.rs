@@ -1,11 +1,7 @@
 use crate::prelude::*;
 use std::{cell::UnsafeCell, path::PathBuf};
 
-use crate::{
-    lexer::Lexer,
-    parser::Parser,
-    prelude::{Node},
-};
+use crate::{lexer::Lexer, parser::Parser, prelude::Node};
 
 #[derive(Debug, PartialEq)]
 pub struct PreparsedSourceFile<'a> {
@@ -42,6 +38,7 @@ impl<'a> PreparsedSourceFile<'a> {
             current: 0,
             src_file,
             panic: false,
+            attributes: Default::default(),
         };
         let (ast, errors) =
             <Vec<Item<'a>> as Node<'a, (Vec<Item<'a>>, Vec<ParseError<'a>>)>>::parse(&mut stream);

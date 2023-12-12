@@ -63,6 +63,11 @@ fn generate_struct_defs_token_items(punctuation: &List) -> StructDefsTokenItems 
                     write!(f, "{} {} {:?}",self.lexeme, stringify!(#ident),self.span())
                 }
             }
+            impl CreateDisplayNode for #ident<'_> {
+                fn create_display_node(&self) -> crate::parser::ast_displayer::DisplayNode {
+                    crate::parser::ast_displayer::DisplayNode::new(stringify!(#ident))
+                }
+            }
             impl<'a> #ident<'a> {
                 // Spanless Equal
                 fn seq(&self, other: &#ident) -> bool {
@@ -211,21 +216,51 @@ pub fn gen_token(input: TokenStream) -> TokenStream {
                 .iter()
                 .map(|member| quote! {(#ident::#member(token),#ident::#member(other)) => token.seq(&other),})
                 .collect::<Vec<_>>();
+            let is_member_arms: Vec<TokenStream2> = items
+                .iter()
+                .map(|member| quote! {Token::#member(_) => true,})
+                .collect::<Vec<_>>();
+            let from_token_arms = items
+                .iter().map(|member| quote! {
+                    Token::#member(token) => #ident::#member(token),
+                }).collect::<Vec<_>>();
+    ;
             quote! {
                 #[derive(Debug, Clone, PartialEq,Eq)]
                 pub enum #ident<'a> {
                     #(#members)*
                 }
+                impl CreateDisplayNode for #ident<'_> {
+                    fn create_display_node(&self) -> crate::parser::ast_displayer::DisplayNode {
+                        crate::parser::ast_displayer::DisplayNode::new(self.lexeme())
+                    }
+                }
+                impl<'a> From<Token<'a>> for #ident<'a> {
+                    fn from(token: Token<'a>) -> #ident<'a> {
+                        match token {
+                            #(#from_token_arms)*
+                            _ => todo!("187")
+                        }
+                    }
+                }
                 impl<'a> #ident<'a> {
 
                     // Spanless Equal
-                    fn seq(&self, other: &#ident) -> bool {
+                    pub fn seq(&self, other: &#ident) -> bool {
                         match (self, other) {
                             #(#seq_members)*
                             _ => false
                         }
                     }
+
+                    pub fn token_is_member(token: &Token<'a>) -> bool {
+                        match token {
+                            #(#is_member_arms)*
+                            _ => false
+                        }
+                    }
                 }
+
                 impl<'a> Node<'a> for #ident<'a> {
                     fn parse(parser: &mut crate::parser::parse_stream::ParseStream<'a>) -> ParseResult<'a, Self>
                     where
@@ -352,6 +387,16 @@ pub fn gen_token(input: TokenStream) -> TokenStream {
             }
         })
         .collect::<Vec<_>>();
+    let create_display_node_arms = punctuation
+        .0
+        .iter()
+        .map(|item| {
+            let ident = &item.1;
+            quote! {
+                Token::#ident(token) => token.create_display_node(),
+            }
+        })
+        .collect::<Vec<_>>();
     quote! {
         #(#struct_defs)*
         #groups
@@ -360,6 +405,14 @@ pub fn gen_token(input: TokenStream) -> TokenStream {
             #[default]
             None,
             #(#token_items)*
+        }
+        impl CreateDisplayNode for Token<'_> {
+            fn create_display_node(&self) -> crate::parser::ast_displayer::DisplayNode {
+                match self {
+                    #(#create_display_node_arms)*
+                    _ => todo!("245")
+                }
+            }
         }
         impl<'a> Token<'a> {
             // Spanless Equal

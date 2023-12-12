@@ -1,18 +1,15 @@
-
-
 use parm_common::Spanned;
-use parm_dev_macros::{Spanned};
+use parm_dev_macros::Spanned;
 
 use crate::{
     error::ExpectedNode,
-    lexer::{
-        token::{BinaryOperator},
-    },
+    lexer::token::BinaryOperator,
+    parser::ast_displayer::DisplayNode,
     prelude::{ErrorKind, ParseError, ParseResult},
-    traits::Node,
+    traits::{CreateDisplayNode, Node},
 };
 
-use super::{Expression};
+use super::Expression;
 
 #[derive(Debug, Clone, PartialEq, Spanned)]
 pub struct BinaryExpression<'a> {
@@ -20,7 +17,14 @@ pub struct BinaryExpression<'a> {
     pub(crate) operator: BinaryOperator<'a>,
     pub(crate) right: Box<Expression<'a>>,
 }
-
+impl CreateDisplayNode for BinaryExpression<'_> {
+    fn create_display_node(&self) -> crate::parser::ast_displayer::DisplayNode {
+        DisplayNode::new("BinaryExpression")
+            .child(self.left.create_display_node().subtitle("Left: "))
+            .child(self.operator.create_display_node().subtitle("Operator: "))
+            .child(self.right.create_display_node().subtitle("Right: "))
+    }
+}
 impl<'a> Node<'a> for BinaryExpression<'a> {
     fn parse(parser: &mut crate::parser::ParseStream<'a>) -> ParseResult<'a, Self>
     where

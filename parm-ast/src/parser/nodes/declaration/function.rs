@@ -1,3 +1,5 @@
+use std::mem;
+
 use crate::prelude::*;
 use parm_common::Spanned;
 use parm_dev_macros::Spanned;
@@ -18,6 +20,7 @@ impl<'a> Node<'a> for Param<'a> {
 }
 #[derive(Debug, Clone, PartialEq, Spanned)]
 pub struct Function<'a> {
+    pub attributes: Vec<Attribute<'a>>,
     pub fn_tkn: FnKeyword<'a>,
     pub name: Identifier<'a>,
     pub params: Paren<'a, Punctuated<Param<'a>, Comma<'a>>>,
@@ -79,8 +82,9 @@ impl<'a> Node<'a> for Function<'a> {
             })
         })?;
         let arrow = parser.step(|parser| RightArrow::parse(parser).clone())?;
-        let ret_type = parser.step(|parser| TypeExpression::parse(parser).clone())?;
+        let ret_type = parser.step(TypeExpression::parse)?;
         Ok(Self {
+            attributes: mem::take(&mut parser.attributes),
             fn_tkn: fn_token,
             name,
             params,

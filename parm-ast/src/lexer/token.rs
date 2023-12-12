@@ -1,6 +1,7 @@
 use crate::{
     error::{ErrorKind, ExpectedNode},
     prelude::*,
+    traits::CreateDisplayNode,
 };
 use parm_common::{Span, Spanned};
 use std::marker::PhantomData;
@@ -72,7 +73,7 @@ gen_token!(
     RightArrow,
     #[lexeme = "-="]
     #[group(BinaryOperator, MutableBinaryOperator)]
-    MinusEq,
+    DashEq,
     #[lexeme = "*"]
     #[group(BinaryOperator)]
     Asterisk,
@@ -88,6 +89,8 @@ gen_token!(
     #[lexeme = "/"]
     #[group(BinaryOperator)]
     Slash,
+    #[lexeme = "//"]
+    SlashSlash,
     #[lexeme = "/="]
     #[group(BinaryOperator, MutableBinaryOperator)]
     SlashEq,
@@ -372,7 +375,7 @@ fn test() {
         assert_eq!(input, against)
     }
 }
-use parm_dev_macros::{gen_token};
+use parm_dev_macros::gen_token;
 
 use crate::{lexer::Lexer, traits::Node};
 pub fn tokens_by_line<'a, 'b: 'a>(tokens: &'b [Token<'a>]) -> Vec<&'b [Token<'a>]> {

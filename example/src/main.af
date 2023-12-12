@@ -1,22 +1,12 @@
 use std::math::prelude::*;
 
 #[dit] // differentiate
-fn foo(a: i32) -> i32 {
-    a**2 + 3*a
+fn foo(a: i32) {
+    return 1;
 } -> i32
 
 
 fn main() {
-    let bar = foo(4);
-
-    let derivative = diff!(
-        foo,
-        wrt=a,
-    );
-
-    println("Derivative of foo wrt a at 4 is {}", derivative(4)); // 11
-    println("Value of foo at 4 is {}", bar); // 28
-
 
     
 } -> void

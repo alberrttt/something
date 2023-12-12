@@ -1,16 +1,15 @@
-
+use std::{cell::UnsafeCell, error::Error};
 
 use parm_common::Spanned;
 mod precedence;
 use crate::{
-    lexer::{
-        token::{BinaryOperator, Identifier, Token},
-    },
-    prelude::{ExpectedNode, ParseError, ParseResult},
-    traits::Node,
+    lexer::token::{BinaryOperator, Identifier, Token},
+    prelude::{ExpectedNode, Lexer, ParseError, ParseResult, ParseStream, Parser},
+    source_file::PreparsedSourceFile,
+    traits::{CreateDisplayNode, Node},
 };
 
-use self::{binary::BinaryExpression, number::Number};
+use self::{binary::BinaryExpression, number::Number, precedence::Precedence};
 
 pub mod binary;
 pub mod literal;
@@ -21,72 +20,65 @@ pub enum Expression<'a> {
     Number(number::Number<'a>),
     BinaryExpression(binary::BinaryExpression<'a>),
 }
+
 impl<'a> Node<'a> for Expression<'a> {
     fn parse(parser: &mut crate::parser::ParseStream<'a>) -> ParseResult<'a, Self>
     where
         Self: Sized,
     {
-        parse_expression(parser)
+        expr(parser, Precedence::Assignment)
     }
 }
-pub fn parse_unit<'a>(
-    parser: &mut crate::parser::ParseStream<'a>,
+pub fn expr<'a>(
+    parser: &mut ParseStream<'a>,
+    min_precedence: Precedence,
 ) -> ParseResult<'a, Expression<'a>> {
-    let peeked = parser.peek()?;
+    let mut left = atom(parser)?;
 
-    match peeked {
-        Token::Integer(_) | Token::Float(_) => {
-            parser.advance()?;
-            Ok(Expression::Number(Number::from(peeked)))
+    loop {
+        let Ok(next) = parser.peek() else { break };
+        let precedence = Precedence::from(next);
+        if (precedence < min_precedence) || !BinaryOperator::token_is_member(next) {
+            break;
         }
-        Token::Identifier(_) => Ok(Expression::Identifier(Identifier::parse(parser)?)),
-        token => Err(ParseError::new(
-            crate::error::ErrorKind::ExpectedNode(ExpectedNode {
-                expected: "expression",
+        let operator = parser.advance()?;
+        let next_min_precedence = precedence.increment();
+        let mut right = expr(parser, next_min_precedence)?;
+
+        left = Expression::BinaryExpression(BinaryExpression {
+            left: Box::new(left),
+            operator: BinaryOperator::from(operator.clone()),
+            right: Box::new(right),
+        });
+    }
+
+    Ok(left)
+}
+pub fn atom<'a>(parser: &mut crate::parser::ParseStream<'a>) -> ParseResult<'a, Expression<'a>> {
+    let token = parser.peek()?;
+    match token {
+        Token::Identifier(_) => {
+            let ident = parser.step(|parser| Identifier::parse(parser).clone())?;
+            Ok(Expression::Identifier(ident))
+        }
+        Token::Integer(_) => {
+            let number = parser.step(|parser| Number::parse(parser).clone())?;
+            Ok(Expression::Number(number))
+        }
+        Token::Float(_) => {
+            let number = parser.step(|parser| Number::parse(parser).clone())?;
+            Ok(Expression::Number(number))
+        }
+        _ => Err(ParseError::new(
+            crate::error::ErrorKind::ExpectedNode(crate::error::ExpectedNode {
                 got: token.lexeme(),
+                expected: "an expression",
                 location: parser.current,
             }),
             parser.tokens,
         )),
     }
 }
-fn parse_expression<'a>(
-    parser: &mut crate::parser::ParseStream<'a>,
-) -> ParseResult<'a, Expression<'a>> {
-    let mut left = parse_unit(parser)?;
-    while match parser.peek() {
-        Err(_) => false,
-        Ok(token) => matches!(token, Token::Plus(_) | Token::Minus(_)),
-    } {
-        let operator: BinaryOperator = BinaryOperator::parse(parser)?;
-        let right = parse_term(parser)?;
-        left = Expression::BinaryExpression(BinaryExpression {
-            left: Box::new(left),
-            operator,
-            right: Box::new(right),
-        });
-    }
-    Ok(left)
-}
-fn parse_term<'a>(parser: &mut crate::parser::ParseStream<'a>) -> ParseResult<'a, Expression<'a>> {
-    let mut left: Expression<'_> = parse_unit(parser)?;
-    while match parser.peek() {
-        Err(_) => false,
-        Ok(token) => matches!(token, Token::Asterisk(_) | Token::Slash(_)),
-    } {
-        dbg!(parser.peek()?);
-        let operator: BinaryOperator = BinaryOperator::parse(parser)?;
-        let right = parse_unit(parser)?;
-        left = Expression::BinaryExpression(BinaryExpression {
-            left: Box::new(left),
-            operator,
-            right: Box::new(right),
-        });
-    }
-
-    Ok(left)
-}
-
 impl Spanned for Expression<'_> {
     fn span(&self) -> parm_common::Span {
         use Expression::*;
@@ -97,21 +89,29 @@ impl Spanned for Expression<'_> {
         }
     }
 }
-// #[test]
-// fn test_expr() -> Result<(), Box<dyn Error>> {
-//     let src = "1+2*3+4";
-//     let mut parser = Parser::new(src);
+impl CreateDisplayNode for Expression<'_> {
+    fn create_display_node(&self) -> crate::parser::ast_displayer::DisplayNode {
+        use Expression::*;
+        match self {
+            Identifier(ident) => ident.create_display_node(),
+            Number(number) => number.create_display_node(),
+            BinaryExpression(binary) => binary.create_display_node(),
+        }
+    }
+}
 
-//     let bin = <Expression as Node>::parse(&mut parser.stream()).unwrap();
-//     dbg!(bin);
-//     Ok(())
-// }
-// #[test]
-// fn test_add() -> Result<(), Box<dyn Error>> {
-//     let src = "a*2";
-//     let mut parser = Parser::new(src);
 
-//     let bin = <Expression as Node>::parse(&mut parser.stream()).unwrap();
-//     dbg!(bin);
-//     Ok(())
-// }
+#[test]
+fn test_add() -> Result<(), Box<dyn Error>> {
+    let src = "1 + a ** 2 + 3";
+    let tokens = Lexer::from(src).lex();
+    let mut parser = Parser {
+        src,
+        tokens,
+        current: 0,
+    };
+    let preparsed = UnsafeCell::new(PreparsedSourceFile::new("./test".into(), src));
+    let bin = <Expression as Node>::parse(&mut parser.stream(&preparsed)).unwrap();
+    bin.create_display_node().display(0);
+    Ok(())
+}

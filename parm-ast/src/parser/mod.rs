@@ -8,8 +8,10 @@ use crate::{
 };
 
 pub use self::parse_stream::ParseStream;
+pub mod ast_displayer;
 pub mod nodes;
 pub mod parse_stream;
+pub mod token_stream;
 #[derive(Debug)]
 pub struct Parser<'a> {
     pub src: &'a str,
@@ -32,6 +34,7 @@ impl<'a> Parser<'a> {
             current: self.current,
             src_file,
             panic: false,
+            attributes: Default::default(),
         }
     }
     pub fn at_end(&self) -> bool {

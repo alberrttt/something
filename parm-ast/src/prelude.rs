@@ -8,6 +8,7 @@ pub use crate::traits::Node;
 pub use parm_common::{Span, Spanned};
 pub use parm_dev_macros::*;
 pub use parser::nodes::{
+    attribute::Attribute,
     declaration::{function::Function, variable::Variable},
     delimiter::{Brace, Bracket, Paren},
     expression::{binary::BinaryExpression, number::Number, Expression},

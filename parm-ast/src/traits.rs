@@ -1,10 +1,12 @@
 use parm_common::Spanned;
 
 use crate::{
-    parser::{parse_stream::ParseStream},
+    parser::{ast_displayer::DisplayNode, parse_stream::ParseStream},
     prelude::{ParseError, ParseResult, Token},
 };
-
+pub trait CreateDisplayNode {
+    fn create_display_node(&self) -> DisplayNode;
+}
 pub trait Node<'a, Output = ParseResult<'a, Self>>: Spanned {
     fn parse(parser: &mut ParseStream<'a>) -> Output
     where

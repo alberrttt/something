@@ -1,8 +1,6 @@
 use parm_dev_macros::Spanned;
 
-
-
-use super::expression::{parse_unit, Expression};
+use super::expression::Expression;
 pub mod expression_statement;
 pub mod use_stmt;
 pub use use_stmt::*;
@@ -17,7 +15,7 @@ impl<'a> Node<'a> for Statement<'a> {
     where
         Self: Sized,
     {
-        let expr = parser.step(parse_unit)?;
+        let expr = parser.step(Expression::parse)?;
 
         let semi = parser.step(SemiColon::parse);
         Ok(Self::ExpressionWithSemi((expr, semi?)))

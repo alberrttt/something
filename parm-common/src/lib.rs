@@ -57,3 +57,10 @@ where
         self.0.span().join(self.1.span())
     }
 }
+impl<'a, T: Spanned + 'a> Spanned for &'a [T] {
+    fn span(&self) -> Span {
+        let first = self.first().unwrap();
+        let last = self.last().unwrap();
+        (first.span(), last.span()).into()
+    }
+}

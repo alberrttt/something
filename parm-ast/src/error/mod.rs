@@ -1,14 +1,9 @@
 pub mod printer;
-use std::{
-    backtrace::Backtrace, collections::HashMap, error::Error,
-    fmt::Display, vec,
-};
+use std::{backtrace::Backtrace, collections::HashMap, error::Error, fmt::Display, vec};
 
-use parm_common::{Spanned};
+use parm_common::Spanned;
 
-use crate::lexer::{
-    token::{tokens_by_line, Token},
-};
+use crate::lexer::token::{tokens_by_line, Token};
 
 use std::fmt::Write;
 #[derive(Debug, PartialEq, Clone)]
@@ -60,7 +55,7 @@ fn display_tokens_with_annotations<'a>(
     let mut annotation_location = HashMap::new();
     let mut used_lines = vec![];
     for (line, token_on_line) in lines.iter().enumerate() {
-        for (_line_idx, _token) in token_on_line.iter().enumerate() {
+        for _token in token_on_line.iter() {
             if let Some(_annotation) = annotations.get(&idx) {
                 used_lines.push(line);
             }
@@ -68,12 +63,12 @@ fn display_tokens_with_annotations<'a>(
         }
     }
     idx = 0;
-    for (_line, token_on_line) in lines
-        .iter()
-        .enumerate()
-        .filter(|(line, _)| used_lines.contains(line))
-    {
+    for (_line, token_on_line) in lines.iter().enumerate() {
         let mut prev_token: *const Token<'_> = std::ptr::null();
+        if !used_lines.contains(&_line) {
+            idx += token_on_line.len();
+            continue;
+        }
 
         for (line_idx, token) in token_on_line.iter().enumerate() {
             if line_idx == 0 {
@@ -259,8 +254,8 @@ impl<'a> ParseError<'a> {
 impl<'a> Display for ParseError<'a> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         // check if PDB is set
-        // Print Diagnostic Backtrace
-        if std::env::var("PDB").is_ok() {
+        // Display Diagnostic Backtrace
+        if std::env::var("DDB").is_ok() {
             write!(f, "{}", self.backtrace.as_ref().unwrap())?;
         }
 

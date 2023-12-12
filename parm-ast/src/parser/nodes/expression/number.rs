@@ -3,8 +3,9 @@ use parm_common::Spanned;
 use crate::{
     error::ExpectedToken,
     lexer::token::{Integer, Token},
+    parser::ast_displayer::DisplayNode,
     prelude::{ParseError, ParseResult},
-    traits::Node,
+    traits::{CreateDisplayNode, Node},
 };
 
 #[derive(Debug, Clone, PartialEq)]
@@ -12,6 +13,12 @@ pub struct Number<'a> {
     token: &'a Token<'a>,
     pub value: f64,
 }
+impl CreateDisplayNode for Number<'_> {
+    fn create_display_node(&self) -> crate::parser::ast_displayer::DisplayNode {
+        crate::parser::ast_displayer::DisplayNode::new(self.value.to_string())
+    }
+}
+
 impl<'a> From<&'a Token<'a>> for Number<'a> {
     fn from(token: &'a Token<'a>) -> Self {
         Number {

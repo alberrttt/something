@@ -1,5 +1,3 @@
-
-
 use crate::prelude::*;
 
 use super::delimiter::Angle;
@@ -52,7 +50,7 @@ impl<'a> Node<'a> for TypePath<'a> {
     where
         Self: Sized,
     {
-        let prefix = parser.step(|parser| ColonColon::parse(parser).clone());
+        let prefix = parser.step(ColonColon::parse);
         let segments: Punctuated<TypeIdent<'_>, ColonColon<'_>> =
             Punctuated::parse_terminated_expect(parser)?;
         Ok(Self {
@@ -72,7 +70,7 @@ impl<'a> Node<'a> for TypeExpression<'a> {
     where
         Self: Sized,
     {
-        let borrow = parser.step(|parser| Borrow::parse(parser).clone());
+        let borrow = parser.step(Borrow::parse);
         let path = TypePath::parse(parser)?;
         Ok(Self {
             borrow: borrow.ok(),

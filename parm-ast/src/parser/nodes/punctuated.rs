@@ -1,5 +1,3 @@
-
-
 use crate::prelude::*;
 use parm_common::Spanned;
 
@@ -74,7 +72,12 @@ impl<'a, T: Node<'a>, P: Node<'a>> Punctuated<T, P> {
             if parser.at_end() {
                 break;
             }
-            let punct = P::parse(parser)?;
+            let punct = match P::parse(parser) {
+                Ok(punct) => punct,
+                Err(err) => {
+                    break;
+                }
+            };
             punctuated.push_punc(punct);
         }
         Ok(punctuated)
