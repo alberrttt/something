@@ -4,7 +4,7 @@ use std::{cell::UnsafeCell, path::PathBuf};
 use crate::{
     lexer::Lexer,
     parser::Parser,
-    prelude::{ErrorKind, Node, ParseResult},
+    prelude::{Node},
 };
 
 #[derive(Debug, PartialEq)]

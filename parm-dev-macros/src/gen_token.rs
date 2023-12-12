@@ -152,7 +152,7 @@ fn generate_struct_defs_token_items(punctuation: &List) -> StructDefsTokenItems 
                             ));
                             let mut prev_arm = &mut tmp.0;
                             for char in chars {
-                                let mut arm = prev_arm.children.entry(char).or_insert(LexArm {
+                                let arm = prev_arm.children.entry(char).or_insert(LexArm {
                                     char,
                                     children: HashMap::new(),
                                     ident: ident.clone(),

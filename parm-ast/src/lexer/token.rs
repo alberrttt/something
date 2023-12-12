@@ -17,7 +17,7 @@ impl<'a> Node<'a> for Dook<'a> {
     {
         let peeked = parser.peek()?;
         if let Token::Integer(peeked) = peeked {
-            let tmp: Result<Integer<'a>, ErrorKind<'a>> = Ok(peeked.clone());
+            let _tmp: Result<Integer<'a>, ErrorKind<'a>> = Ok(peeked.clone());
             parser.advance()?;
             Ok(Dook(PhantomData::default()))
         } else {
@@ -372,7 +372,7 @@ fn test() {
         assert_eq!(input, against)
     }
 }
-use parm_dev_macros::{gen_token, Spanned};
+use parm_dev_macros::{gen_token};
 
 use crate::{lexer::Lexer, traits::Node};
 pub fn tokens_by_line<'a, 'b: 'a>(tokens: &'b [Token<'a>]) -> Vec<&'b [Token<'a>]> {

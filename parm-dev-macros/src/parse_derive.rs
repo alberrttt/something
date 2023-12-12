@@ -1,6 +1,6 @@
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{Data, DataStruct, DeriveInput};
+use syn::{Data};
 pub fn parse_derive(input: TokenStream) -> TokenStream {
     let input = syn::parse_macro_input!(input as syn::DeriveInput);
     let name = input.ident;
@@ -9,7 +9,7 @@ pub fn parse_derive(input: TokenStream) -> TokenStream {
         _ => panic!("Only structs are supported"),
     };
     let fields = &data.fields;
-    let mut field_names = fields.iter().map(|field| &field.ident);
+    let field_names = fields.iter().map(|field| &field.ident);
 
     (quote! {
         impl<'a> Node<'a> for #name<'a> {

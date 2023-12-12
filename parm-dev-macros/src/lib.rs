@@ -1,15 +1,11 @@
-use std::{collections::HashMap, path::Path};
+
 
 use proc_macro::TokenStream;
-use proc_macro2::{Ident, TokenStream as TokenStream2};
-use quote::{format_ident, quote, ToTokens};
+use proc_macro2::{Ident};
+use quote::{quote};
 use spanned::spanned_derive;
 use syn::{
-    parse::{Parse, ParseBuffer},
-    parse_macro_input,
-    punctuated::Punctuated,
-    token::{Comma, Token},
-    Attribute, Expr, ExprLit, Lit, LitStr, Meta,
+    parse_macro_input, LitStr,
 };
 
 #[proc_macro]

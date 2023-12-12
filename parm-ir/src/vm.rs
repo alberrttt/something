@@ -42,8 +42,8 @@ impl<'a> VM<'a> {
         );
 
         let mut ip = 0;
-        let mut current_frame = self.current_frame();
-        let mut stack = &self.stack;
+        let current_frame = self.current_frame();
+        let stack = &self.stack;
         while ip < unsafe { &*current_frame.get() }.function.code.len() {
             let current_frame = unsafe { &*current_frame.get() };
             let operand = &current_frame.function.code[ip];

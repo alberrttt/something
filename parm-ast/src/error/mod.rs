@@ -1,14 +1,13 @@
 pub mod printer;
 use std::{
-    backtrace::Backtrace, cmp::Ordering, collections::HashMap, error::Error, f32::consts::E,
-    fmt::Display, slice, vec,
+    backtrace::Backtrace, collections::HashMap, error::Error,
+    fmt::Display, vec,
 };
 
-use parm_common::{Span, Spanned};
+use parm_common::{Spanned};
 
 use crate::lexer::{
     token::{tokens_by_line, Token},
-    Lexer,
 };
 
 use std::fmt::Write;
@@ -61,15 +60,15 @@ fn display_tokens_with_annotations<'a>(
     let mut annotation_location = HashMap::new();
     let mut used_lines = vec![];
     for (line, token_on_line) in lines.iter().enumerate() {
-        for (line_idx, token) in token_on_line.iter().enumerate() {
-            if let Some(annotation) = annotations.get(&idx) {
+        for (_line_idx, _token) in token_on_line.iter().enumerate() {
+            if let Some(_annotation) = annotations.get(&idx) {
                 used_lines.push(line);
             }
             idx += 1;
         }
     }
     idx = 0;
-    for (line, token_on_line) in lines
+    for (_line, token_on_line) in lines
         .iter()
         .enumerate()
         .filter(|(line, _)| used_lines.contains(line))
@@ -98,7 +97,7 @@ fn display_tokens_with_annotations<'a>(
             }
             write!(f, "{}", token.lexeme())?;
             prev_token = token;
-            if let Some(annotation) = annotations.get(&idx) {
+            if let Some(_annotation) = annotations.get(&idx) {
                 annotation_location.insert(token.span().line_start, idx);
             }
             idx += 1;
@@ -289,7 +288,7 @@ pub struct EndOfTokens<'a> {
     pub expected: Option<&'a str>,
 }
 impl Display for EndOfTokens<'_> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         todo!()
     }
 }
@@ -300,7 +299,7 @@ pub struct ExpectedToken<'a> {
     pub got: Token<'a>,
 }
 impl<'a> Display for ExpectedToken<'a> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         todo!()
     }
 }
@@ -315,7 +314,7 @@ pub struct ExpectedNode<'a> {
 }
 
 impl<'a> Display for ExpectedNode<'a> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         todo!()
     }
 }

@@ -1,20 +1,18 @@
-use std::error::Error;
+
 
 use parm_common::Spanned;
-use parm_dev_macros::{Parse, Spanned};
+use parm_dev_macros::{Spanned};
 
 use crate::{
     error::ExpectedNode,
     lexer::{
-        token::{Amper, BinaryOperator},
-        Lexer,
+        token::{BinaryOperator},
     },
-    parser::Parser,
     prelude::{ErrorKind, ParseError, ParseResult},
     traits::Node,
 };
 
-use super::{number::Number, Expression};
+use super::{Expression};
 
 #[derive(Debug, Clone, PartialEq, Spanned)]
 pub struct BinaryExpression<'a> {

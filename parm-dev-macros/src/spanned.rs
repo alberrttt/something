@@ -1,9 +1,8 @@
 use proc_macro::TokenStream;
-use proc_macro2::TokenStream as TokenStream2;
-use quote::{format_ident, quote};
+
+use quote::{quote};
 use syn::{
-    parse_macro_input, punctuated::Punctuated, Data, DeriveInput, Error, ExprParen, ExprPath,
-    Fields, Path,
+    parse_macro_input, Data, DeriveInput,
 };
 pub fn spanned_derive(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);

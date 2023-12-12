@@ -1,6 +1,6 @@
-use std::backtrace::Backtrace;
 
-use crate::{prelude::*, source_file::PreparsedSourceFile};
+
+use crate::{prelude::*};
 use parm_common::Spanned;
 use parm_dev_macros::Spanned;
 
@@ -48,7 +48,7 @@ impl<'a> Node<'a> for Item<'a> {
                     Ok(expr) => {
                         return Ok(Item::Statement(Statement::with_expression(parser, expr)));
                     }
-                    Err(err) => {}
+                    Err(_err) => {}
                 }
             }
         }

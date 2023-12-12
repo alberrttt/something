@@ -1,8 +1,7 @@
 use parm_common::Spanned;
 
 use crate::{
-    error::ErrorKind,
-    parser::{parse_stream::ParseStream, Parser},
+    parser::{parse_stream::ParseStream},
     prelude::{ParseError, ParseResult, Token},
 };
 

@@ -25,10 +25,10 @@ impl<'a> Lower<'a> for Variable<'a> {
 
     fn lower(&self, ctx: &mut crate::lowering::LoweringContext<'a>) -> Self::Output {
         let scope = ctx.scopes.last_mut().unwrap();
-        let idx = scope.variables.len();
+        let _idx = scope.variables.len();
         scope.variables.push(self.ident.clone());
         match &self.initializer {
-            Some(initializer) => return Operand::Let(None),
+            Some(_initializer) => return Operand::Let(None),
             None => return Operand::Let(None),
         }
     }

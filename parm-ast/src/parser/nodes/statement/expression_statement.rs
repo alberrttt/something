@@ -1,6 +1,6 @@
 use parm_common::Spanned;
 
-use crate::{lexer::token::SemiColon, parser::nodes::expression::Expression, traits::Node};
+use crate::{lexer::token::SemiColon, parser::nodes::expression::Expression};
 
 #[derive(Debug, Clone)]
 pub struct ExpressionStatement<'a> {

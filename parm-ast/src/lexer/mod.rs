@@ -4,7 +4,7 @@ use parm_common::Span;
 use std::char;
 use token::Token;
 
-use self::token::{Float, Identifier, If, Integer};
+use self::token::{Float, Integer};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Lexer<'src> {
@@ -140,7 +140,7 @@ impl<'src> Lexer<'src> {
 
         let lexeme = &self.src[start..self.src_pos];
         let span = self.new_span(start);
-        use parm_dev_macros::lower_stringify;
+        
         macro_rules! keyword_match {
             ($($ident:ident),*) => {
                 match lexeme {
@@ -189,10 +189,10 @@ fn test_lit() {
     let mut lexer = Lexer::from("123 123.456");
     let tokens = lexer.lex();
 
-    let tmp = tokens.get(0).unwrap();
+    let _tmp = tokens.get(0).unwrap();
 }
 #[test]
 fn test_ident() {
     let mut lexer = Lexer::from("let mut false if else ident1 ident2 a_b_c");
-    let tokens = lexer.lex();
+    let _tokens = lexer.lex();
 }

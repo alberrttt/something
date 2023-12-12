@@ -1,4 +1,4 @@
-use std::marker::PhantomData;
+
 
 use crate::prelude::*;
 use parm_common::Spanned;
@@ -94,7 +94,7 @@ impl<'a, T: Node<'a>, P: Node<'a>> Punctuated<T, P> {
             }
             let punct = match P::parse(parser) {
                 Ok(punct) => punct,
-                Err(err) => {
+                Err(_err) => {
                     break;
                 }
             };
