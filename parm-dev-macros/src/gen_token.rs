@@ -102,10 +102,10 @@ fn generate_struct_defs_token_items(punctuation: &List) -> StructDefsTokenItems 
                     } else {
                         Err(
                             ParseError::new(
-                                ErrorKind::ExpectedNode(
-                                    ExpectedNode {
-                                        got: peeked.lexeme(),
-                                        expected: stringify!(#ident),
+                                ErrorKind::ExpectedToken(
+                                    ExpectedToken {
+                                        got: peeked.to_owned(),
+                                        expected: Token::#ident(Self::default()),
                                         location: parser.current
                                     }
                                 ),
@@ -182,7 +182,7 @@ pub fn gen_token(input: TokenStream) -> TokenStream {
     let punctuation = parse_macro_input!(input as List);
 
     let StructDefsTokenItems {
-        token_items,
+        mut token_items,
         struct_defs,
         groups,
         lexemes,
@@ -192,6 +192,7 @@ pub fn gen_token(input: TokenStream) -> TokenStream {
         .iter()
         .map(|(group_name, items)| {
             let ident = format_ident!("{}", group_name);
+            
             let members = items
                 .iter()
                 .map(|ident| quote! {#ident(#ident<'a>),})
@@ -224,11 +225,16 @@ pub fn gen_token(input: TokenStream) -> TokenStream {
                 .iter().map(|member| quote! {
                     Token::#member(token) => #ident::#member(token),
                 }).collect::<Vec<_>>();
-    ;
+                token_items.push(quote! {
+                    #ident(#ident<'a>),
+                });
             quote! {
-                #[derive(Debug, Clone, PartialEq,Eq)]
+                #[derive(Debug, Clone, PartialEq,Eq,Default)]
                 pub enum #ident<'a> {
+                    #[default]
+                    None,
                     #(#members)*
+                   
                 }
                 impl CreateDisplayNode for #ident<'_> {
                     fn create_display_node(&self) -> crate::parser::ast_displayer::DisplayNode {
@@ -274,10 +280,10 @@ pub fn gen_token(input: TokenStream) -> TokenStream {
                             peek => {
                                 Err(
                                     ParseError::new(
-                                        ErrorKind::ExpectedNode(
-                                            ExpectedNode {
-                                                got: peek.lexeme(),
-                                                expected: stringify!(#ident),
+                                        ErrorKind::ExpectedToken(
+                                            ExpectedToken {
+                                                got: peek.clone(),
+                                                expected: Token::#ident(Self::default()),
                                                 location,
                                             }
                                         ),

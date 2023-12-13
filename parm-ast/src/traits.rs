@@ -39,14 +39,14 @@ impl<'a, T: Node<'a> + Spanned> Node<'a, (Self, Vec<ParseError<'a>>)> for Vec<T>
         (vec, errors)
     }
 }
-impl<'a, T: Node<'a> + Spanned> Node<'a, ParseResult<'a, Self>> for Vec<T> {
+impl<'a, T: Node<'a> + Spanned> Node<'a> for Vec<T> {
     fn parse(parser: &mut ParseStream<'a>) -> ParseResult<'a, Self>
     where
         Self: Sized,
     {
         let (result, errors) = <Vec<T> as Node<'a, (Self, Vec<ParseError<'a>>)>>::parse(parser);
         for error in errors {
-            eprintln!("{}", error);
+            parser.errors.push(error)
         }
         Ok(result)
     }

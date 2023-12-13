@@ -9,3 +9,4 @@ edition = "2021"
 serde = { version = "1", features = ["serde_derive"] }
 toml = "0.8.8"
 parm-ast = { path = "../parm-ast" }
+parm-typechecker = { path = "../parm-typechecker" }

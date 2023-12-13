@@ -9,7 +9,7 @@ pub use parm_common::{Span, Spanned};
 pub use parm_dev_macros::*;
 pub use parser::nodes::{
     attribute::Attribute,
-    declaration::{function::Function, variable::Variable},
+    declaration::{function::Function, struct_dec::Struct, variable::Variable},
     delimiter::{Brace, Bracket, Paren},
     expression::{binary::BinaryExpression, number::Number, Expression},
     item::Item,

@@ -35,6 +35,7 @@ impl<'a> Parser<'a> {
             src_file,
             panic: false,
             attributes: Default::default(),
+            errors: Default::default(),
         }
     }
     pub fn at_end(&self) -> bool {

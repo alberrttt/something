@@ -229,7 +229,7 @@ impl<'a> ParseError<'a> {
                 map.insert(
                     coresponing_token,
                     Annotation::new(format!(
-                        "Expected {} but got {}",
+                        "Expected token {} but got {}",
                         expected.expected.lexeme(),
                         expected.got.lexeme()
                     )),
@@ -292,6 +292,9 @@ impl Display for EndOfTokens<'_> {
 pub struct ExpectedToken<'a> {
     pub expected: Token<'a>,
     pub got: Token<'a>,
+
+    /// location in the source file's tokens
+    pub location: usize,
 }
 impl<'a> Display for ExpectedToken<'a> {
     fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {

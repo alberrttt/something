@@ -1,13 +1,13 @@
 use std::math::prelude::*;
 
-#[dit] // differentiate
+struct Foo 
+
+
+#[diff]
 fn foo(a: i32) {
-    return 1;
+    a * a
 } -> i32
 
-
 fn main() {
-
-    
+    foo(4);  // 8 
 } -> void
-

@@ -1,3 +1,5 @@
+use std::{fmt::Error, mem};
+
 use crate::prelude::*;
 use parm_common::Spanned;
 use parm_dev_macros::Spanned;
@@ -12,6 +14,7 @@ pub enum Item<'a> {
     Use(UseStatement<'a>),
     Return(ReturnStatement<'a>),
     Comment(Comment<'a>),
+    Struct(Struct<'a>),
 }
 
 impl<'a> Node<'a> for Item<'a> {
@@ -19,9 +22,20 @@ impl<'a> Node<'a> for Item<'a> {
     where
         Self: Sized,
     {
-        let attribute = parser.step(|parser| Attribute::parse(parser).clone());
-        if let Ok(attribute) = attribute {
-            parser.attributes.push(attribute);
+        let attributes: Result<Vec<Attribute<'_>>, ParseError<'_>> =
+            parser.step(Vec::<Attribute>::parse);
+        for error in mem::take(&mut parser.errors) {
+            if let ErrorKind::ExpectedToken(expected) = &error.kind {
+                match &expected.expected {
+                    Token::Octothorpe(_) => {}
+                    _ => {
+                        eprintln!("{}", error);
+                    }
+                }
+            }
+        }
+        if let Ok(mut attributes) = attributes {
+            parser.attributes.append(&mut attributes);
         }
         let peeked = parser.peek()?;
 
@@ -36,7 +50,10 @@ impl<'a> Node<'a> for Item<'a> {
                     return Err(err);
                 }
             },
-
+            Token::StructKeyword(_) => {
+                let struct_dec: Struct = <Struct as Node>::parse(parser)?;
+                return Ok(Item::Struct(struct_dec));
+            }
             Token::FnKeyword(_) => {
                 let func: Function = <Function as Node>::parse(parser)?;
                 return Ok(Item::Function(func));

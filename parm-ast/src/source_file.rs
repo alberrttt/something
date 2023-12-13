@@ -39,10 +39,10 @@ impl<'a> PreparsedSourceFile<'a> {
             src_file,
             panic: false,
             attributes: Default::default(),
+            errors: Default::default(),
         };
         let (ast, errors) =
             <Vec<Item<'a>> as Node<'a, (Vec<Item<'a>>, Vec<ParseError<'a>>)>>::parse(&mut stream);
-
         (
             SourceFile {
                 preparsed: src_file,

@@ -140,7 +140,7 @@ impl<'src> Lexer<'src> {
 
         let lexeme = &self.src[start..self.src_pos];
         let span = self.new_span(start);
-        
+
         macro_rules! keyword_match {
             ($($ident:ident),*) => {
                 match lexeme {
@@ -171,7 +171,7 @@ impl<'src> Lexer<'src> {
             "in" => In { lexeme, span }.into(),
             "break" => Break { lexeme, span }.into(),
             "continue" => Continue { lexeme, span }.into(),
-            "struct" => Struct { lexeme, span }.into(),
+            "struct" => StructKeyword { lexeme, span }.into(),
             "enum" => Enum { lexeme, span }.into(),
             "impl" => Impl { lexeme, span }.into(),
             "trait" => Trait { lexeme, span }.into(),

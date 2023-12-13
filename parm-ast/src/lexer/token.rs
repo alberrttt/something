@@ -176,7 +176,7 @@ gen_token!(
     In,
     Break,
     Continue,
-    Struct,
+    StructKeyword,
     Enum,
     Impl,
     Type,

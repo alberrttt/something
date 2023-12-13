@@ -18,11 +18,14 @@ fn main() {
 
     let preparsed_src_file = PreparsedSourceFile::new(entry.clone(), &entry_src);
     let (ast, errors) = preparsed_src_file.parse();
+
     for error in errors {
         eprintln!("{}", error);
     }
     if env::var("AST").is_ok() {
         println!("{:#?}", ast);
     }
+    let mut typechecked = parm_typechecker::TypeCheckedSourceFile::new(ast);
+    typechecked.typecheck();
     // dbg!(ast);
 }

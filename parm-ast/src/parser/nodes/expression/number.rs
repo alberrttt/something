@@ -65,6 +65,7 @@ impl<'a> Node<'a> for Number<'a> {
                     crate::error::ErrorKind::ExpectedToken(ExpectedToken {
                         expected: Token::Integer(Integer::default()),
                         got: token.clone(),
+                        location: parser.current,
                     }),
                     parser.tokens,
                 ))
