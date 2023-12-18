@@ -175,7 +175,7 @@ impl<'src> Lexer<'src> {
             "enum" => Enum { lexeme, span }.into(),
             "impl" => Impl { lexeme, span }.into(),
             "trait" => Trait { lexeme, span }.into(),
-            "type" => Type { lexeme, span }.into(),
+            "type" => TypeKeyword { lexeme, span }.into(),
             "pub" => Pub { lexeme, span }.into(),
             "self" => LSelf { lexeme, span }.into(),
             "Self" => USelf { lexeme, span }.into(),

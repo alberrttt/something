@@ -2,6 +2,7 @@ pub use crate::error::{EndOfTokens, ErrorKind, ExpectedNode, ExpectedToken, Pars
 
 pub type ParseResult<'a, T> = Result<T, ParseError<'a>>;
 
+pub use super::source_file::*;
 pub use crate::lexer::{token::*, Lexer};
 pub use crate::parser::{self, ParseStream, Parser};
 pub use crate::traits::Node;
@@ -9,7 +10,11 @@ pub use parm_common::{Span, Spanned};
 pub use parm_dev_macros::*;
 pub use parser::nodes::{
     attribute::Attribute,
-    declaration::{function::Function, struct_dec::Struct, variable::Variable},
+    declaration::{
+        function::{Function, Param},
+        struct_dec::Struct,
+        variable::Variable,
+    },
     delimiter::{Brace, Bracket, Paren},
     expression::{binary::BinaryExpression, number::Number, Expression},
     item::Item,
@@ -17,7 +22,6 @@ pub use parser::nodes::{
     statement::{expression_statement::ExpressionStatement, use_stmt::UseStatement, Statement},
     type_nodes::*,
 };
-
 pub macro parse($src:expr) {{
     use crate::prelude::*;
     use crate::source_file::PreparsedSourceFile;

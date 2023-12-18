@@ -179,7 +179,7 @@ gen_token!(
     StructKeyword,
     Enum,
     Impl,
-    Type,
+    TypeKeyword,
     Trait,
     LSelf,
     USelf,

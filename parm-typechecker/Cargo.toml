@@ -7,3 +7,4 @@ edition = "2021"
 
 [dependencies]
 parm-ast = { path = "../parm-ast" }
+parm-dev-macros = { path = "../parm-dev-macros" }

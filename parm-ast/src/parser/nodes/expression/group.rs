@@ -21,7 +21,6 @@ impl<'a> Node<'a> for Group<'a> {
         Self: Sized,
     {
         let paren: Paren<'a, Box<Expression<'a>>> = Paren::parse_manual(parser, |parser| {
-            dbg!(&parser);
             let expr = expr(parser, Precedence::Assignment)?;
             Ok(Box::new(expr))
         })?;

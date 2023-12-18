@@ -87,6 +87,7 @@ name = "parm-typechecker"
 version = "0.1.0"
 dependencies = [
  "parm-ast",
+ "parm-dev-macros",
 ]
 
 [[package]]

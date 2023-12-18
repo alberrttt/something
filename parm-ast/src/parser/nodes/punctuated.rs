@@ -6,6 +6,7 @@ pub struct Punctuated<T, P> {
     pub inner: Vec<(T, P)>,
     pub last: Option<Box<T>>,
 }
+
 impl<T, P> Default for Punctuated<T, P> {
     fn default() -> Self {
         Self {
