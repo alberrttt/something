@@ -54,7 +54,7 @@ impl<'a> Node<'a> for Function<'a> {
                     if parser.panic {
                         //  lets recover
                         match peeked {
-                            Token::Let(_) => loop {
+                            Token::FnKeyword(_) | Token::Identifier(_) | Token::Let(_) => loop {
                                 if let Ok(_semicolon) =
                                     parser.step(|parser| SemiColon::parse(parser).clone())
                                 {
@@ -64,16 +64,7 @@ impl<'a> Node<'a> for Function<'a> {
                                 }
                                 parser.panic = false
                             },
-                            Token::FnKeyword(_) => loop {
-                                if let Ok(_semicolon) =
-                                    parser.step(|parser| SemiColon::parse(parser).clone())
-                                {
-                                    break;
-                                } else {
-                                    let _ = parser.advance();
-                                }
-                                parser.panic = false
-                            },
+
                             _ => {}
                         }
                     }

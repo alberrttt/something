@@ -91,4 +91,13 @@ impl<'a> ParseStream<'a> {
             )),
         }
     }
+    pub fn peek_next<'b: 'a>(&self) -> ParseResult<'a, &'b Token<'a>> {
+        match self.tokens.get(self.current + 1) {
+            Some(some) => Ok(some),
+            None => Err(ParseError::new(
+                ErrorKind::EndOfTokens(EndOfTokens { expected: None }),
+                self.tokens,
+            )),
+        }
+    }
 }

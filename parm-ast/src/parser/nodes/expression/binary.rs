@@ -13,9 +13,9 @@ use super::Expression;
 
 #[derive(Debug, Clone, PartialEq, Spanned)]
 pub struct BinaryExpression<'a> {
-    pub(crate) left: Box<Expression<'a>>,
-    pub(crate) operator: BinaryOperator<'a>,
-    pub(crate) right: Box<Expression<'a>>,
+    pub left: Box<Expression<'a>>,
+    pub operator: BinaryOperator<'a>,
+    pub right: Box<Expression<'a>>,
 }
 impl CreateDisplayNode for BinaryExpression<'_> {
     fn create_display_node(&self) -> crate::parser::ast_displayer::DisplayNode {

@@ -36,6 +36,7 @@ impl<'a, T: Node<'a> + Spanned> Node<'a, (Self, Vec<ParseError<'a>>)> for Vec<T>
                 }
             }
         }
+
         (vec, errors)
     }
 }

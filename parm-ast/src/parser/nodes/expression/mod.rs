@@ -4,7 +4,7 @@ use parm_common::Spanned;
 mod precedence;
 use crate::{
     lexer::token::{BinaryOperator, Identifier, Token},
-    prelude::{ExpectedNode, Lexer, ParseError, ParseResult, ParseStream, Parser},
+    prelude::*,
     source_file::PreparsedSourceFile,
     traits::{CreateDisplayNode, Node},
 };
@@ -13,6 +13,7 @@ use self::{binary::BinaryExpression, group::Group, number::Number, precedence::P
 
 use super::statement::parse;
 pub mod binary;
+pub mod call;
 pub mod group;
 pub mod literal;
 pub mod number;
@@ -22,6 +23,7 @@ pub enum Expression<'a> {
     Number(number::Number<'a>),
     BinaryExpression(binary::BinaryExpression<'a>),
     Group(Group<'a>),
+    Call(Call<'a>),
 }
 
 impl<'a> Node<'a> for Expression<'a> {
@@ -61,7 +63,15 @@ pub fn atom<'a>(parser: &mut crate::parser::ParseStream<'a>) -> ParseResult<'a, 
     match token {
         Token::Identifier(_) => {
             let ident = parser.step(|parser| Identifier::parse(parser).clone())?;
-            Ok(Expression::Identifier(ident))
+            let ident = Expression::Identifier(ident);
+            if let Ok(Token::LParen(_)) = parser.peek() {
+                return Ok(Expression::Call(Call {
+                    callee: Box::new(ident),
+                    arguments: Call::args(parser)?,
+                }));
+            }
+
+            Ok(ident)
         }
         Token::Integer(_) => {
             let number = parser.step(|parser| Number::parse(parser).clone())?;
@@ -93,6 +103,7 @@ impl Spanned for Expression<'_> {
             Number(number) => number.span(),
             BinaryExpression(binary) => binary.span(),
             Group(group) => group.span(),
+            Call(call) => call.span(),
         }
     }
 }
@@ -104,6 +115,7 @@ impl CreateDisplayNode for Expression<'_> {
             Number(number) => number.create_display_node(),
             BinaryExpression(binary) => binary.create_display_node(),
             Group(group) => group.create_display_node(),
+            Call(call) => todo!(),
         }
     }
 }

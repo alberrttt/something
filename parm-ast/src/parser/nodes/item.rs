@@ -76,6 +76,7 @@ impl<'a> Node<'a> for Item<'a> {
                 }
             }
         }
+        parser.panic = true;
         Err(ParseError::new(
             crate::error::ErrorKind::ExpectedNode(crate::error::ExpectedNode {
                 got: parser.peek()?.lexeme(),

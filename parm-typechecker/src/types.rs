@@ -8,6 +8,7 @@ macro_rules!  numeric_type {
             }
 
             impl $name {
+                #[allow(clippy::new_without_default)]
                 pub fn new() -> Self {
                     Self {}
                 }
@@ -26,16 +27,16 @@ macro_rules!  numeric_type {
     }
 }
 
-numeric_type!(U8, U16, U32, U64, U128, I8, I16, I32, I64, I128);
+numeric_type!(U8, U16, U32, U64, U128, I8, I16, I32, I64, I128, F32, F64, F128);
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Boolean {
     True,
     False,
 }
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct String {}
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Type {
     Numeric(Numeric),
     Boolean(Boolean),
@@ -47,7 +48,7 @@ impl Type {
         let path = &type_expr.path;
         let path = &path.segments.last;
 
-        let ident= path.as_ref().unwrap();
+        let ident = path.as_ref().unwrap();
         match ident.ident.lexeme {
             "u8" => Type::Numeric(Numeric::U8(U8::new())),
             "u16" => Type::Numeric(Numeric::U16(U16::new())),

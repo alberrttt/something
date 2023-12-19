@@ -16,7 +16,7 @@ pub use parser::nodes::{
         variable::Variable,
     },
     delimiter::{Brace, Bracket, Paren},
-    expression::{binary::BinaryExpression, number::Number, Expression},
+    expression::{binary::BinaryExpression, call::Call, number::Number, Expression},
     item::Item,
     punctuated::Punctuated,
     statement::{expression_statement::ExpressionStatement, use_stmt::UseStatement, Statement},
