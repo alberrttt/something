@@ -41,15 +41,35 @@ pub enum Type {
     Numeric(Numeric),
     Boolean(Boolean),
     String(String),
+    Void,
+    FnSig(FnSig),
 }
+#[derive(Debug, PartialEq, Clone)]
+pub struct FnSig {
+    pub params: Vec<Type>,
+    pub return_type: Box<Type>,
+}
+#[derive(Debug, PartialEq, Clone)]
+pub struct FunctionSig {}
 
 impl Type {
-    pub fn numeric(type_expr: &TypeExpression) -> Self {
+    pub fn boolean(type_expr: &TypeExpression) -> Option<Self> {
         let path = &type_expr.path;
         let path = &path.segments.last;
 
         let ident = path.as_ref().unwrap();
-        match ident.ident.lexeme {
+        Some(match ident.ident.lexeme {
+            "true" => Type::Boolean(Boolean::True),
+            "false" => Type::Boolean(Boolean::False),
+            lexeme => return None,
+        })
+    }
+    pub fn numeric(type_expr: &TypeExpression) -> Option<Self> {
+        let path = &type_expr.path;
+        let path = &path.segments.last;
+
+        let ident = path.as_ref().unwrap();
+        Some(match ident.ident.lexeme {
             "u8" => Type::Numeric(Numeric::U8(U8::new())),
             "u16" => Type::Numeric(Numeric::U16(U16::new())),
             "u32" => Type::Numeric(Numeric::U32(U32::new())),
@@ -60,7 +80,7 @@ impl Type {
             "i32" => Type::Numeric(Numeric::I32(I32::new())),
             "i64" => Type::Numeric(Numeric::I64(I64::new())),
             "i128" => Type::Numeric(Numeric::I128(I128::new())),
-            lexeme => panic!("Unknown numeric type: {lexeme}"),
-        }
+            lexeme => return None,
+        })
     }
 }

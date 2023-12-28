@@ -24,7 +24,7 @@ pub struct Function<'a> {
     pub fn_tkn: FnKeyword<'a>,
     pub name: Identifier<'a>,
     pub params: Paren<'a, Punctuated<Param<'a>, Comma<'a>>>,
-    pub body: Brace<'a, Vec<Item<'a>>>,
+    pub body: Brace<'a, Vec<Statement<'a>>>,
     pub arrow: RightArrow<'a>,
     pub ret_type: TypeExpression<'a>,
 }
@@ -37,15 +37,15 @@ impl<'a> Node<'a> for Function<'a> {
         let name = Identifier::parse(parser)?;
         let params: Paren<'_, Punctuated<Param<'_>, Comma<'_>>> =
             parser.step(|parser| Paren::parse_manual(parser, Punctuated::parse_terminated))?;
-        let body = parser.step(|parser| {
+        let body: Brace<'_, Vec<Statement<'_>>> = parser.step(|parser| {
             Brace::parse_manual(parser, |parser| {
-                let mut body = Vec::new();
+                let mut body: Vec<Statement<'_>> = Vec::new();
                 loop {
                     if parser.at_end() {
                         break;
                     }
                     let peeked = parser.peek()?;
-                    match parser.step(Item::parse) {
+                    match parser.step(Statement::parse) {
                         Ok(res) => body.push(res),
                         Err(err) => {
                             eprintln!("{}", err);

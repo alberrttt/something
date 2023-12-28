@@ -13,7 +13,7 @@ pub use parser::nodes::{
     declaration::{
         function::{Function, Param},
         struct_dec::Struct,
-        variable::Variable,
+        variable::LetStmt,
     },
     delimiter::{Brace, Bracket, Paren},
     expression::{binary::BinaryExpression, call::Call, number::Number, Expression},

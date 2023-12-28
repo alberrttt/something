@@ -9,6 +9,9 @@ use crate::{
 pub trait CreateDisplayNode {
     fn create_display_node(&self) -> DisplayNode;
 }
+pub trait EscapedText {
+    fn escaped_text(&self) -> String;
+}
 pub trait Node<'a, Output = ParseResult<'a, Self>>: Spanned {
     fn parse(parser: &mut ParseStream<'a>) -> Output
     where

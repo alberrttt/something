@@ -1,13 +1,22 @@
 #![feature(decl_macro)]
-use std::collections::HashMap;
+use std::{cell::RefCell, collections::HashMap, error::Error, rc::Rc};
 
-use parm_ast::prelude::*;
-use types::{Type, F64, I32};
+use parm_ast::{parser::nodes::statement, prelude::*};
+use symbol::Symbol;
+use types::{FnSig, Type, F64, I32};
+mod symbol;
 mod traits;
 mod types;
 #[derive(Debug, Default)]
 pub struct Scope<'a> {
-    pub variables: HashMap<&'a str, Type>,
+    pub variables: HashMap<&'a str, Rc<RefCell<Symbol<'a>>>>,
+}
+
+impl<'a> Scope<'a> {
+    /// O(n)
+    pub fn get(&self, name: impl Into<&'a str>) -> Option<Rc<RefCell<Symbol<'a>>>> {
+        self.variables.get(name.into()).cloned()
+    }
 }
 
 #[derive(Debug)]
@@ -24,7 +33,34 @@ impl<'a> TypeCheckedSourceFile<'a> {
         }
     }
     pub fn typecheck(&mut self) {
-        self.typechecker.scopes.push(Scope::default());
+        let mut scope = Scope::default();
+        for item in &self.source_file.ast {
+            if let Item::Function(function) = item {
+                let return_type = self
+                    .typechecker
+                    .ty_from_ty_expr(&function.ret_type)
+                    .unwrap();
+                let mut params: Vec<Type> = Vec::new();
+
+                for param in function.params.inner.iter() {
+                    let ty = &param.annotation.ty;
+                    let ty = Type::numeric(ty);
+                    params.push(ty.unwrap());
+                }
+                scope.variables.insert(
+                    function.name.lexeme,
+                    Rc::new(RefCell::new(Symbol {
+                        declaration: Some(symbol::SymbolDeclaration::Function(function.clone())),
+                        ty: Type::FnSig(FnSig {
+                            params,
+                            return_type: Box::new(return_type),
+                        }),
+                    })),
+                );
+            }
+        }
+        self.typechecker.scopes.push(scope);
+
         for item in &self.source_file.ast {
             self.typechecker.item(item);
         }
@@ -44,19 +80,19 @@ impl<'a> TypeChecker<'a> {
             Item::Use(use_stmt) => self.use_stmt(use_stmt),
             Item::Function(function) => self.function(function),
             Item::Struct(struct_) => self.struct_(struct_),
-            Item::Statement(state) => self.statement(state),
-            Item::Comment(_) => {}
+
             item => todo!("{:?}", item),
         }
+        return;
     }
-    pub fn scope(&self) -> &Scope {
+    pub fn scope<'b>(&'b self) -> &'b Scope<'a> {
         self.scopes.last().as_ref().unwrap()
     }
-    pub fn get_variable(&self, ident: &str) -> Option<&Type> {
+    pub fn get_symbol(&self, ident: &str) -> Option<Rc<RefCell<Symbol<'a>>>> {
         let mut scope = self.scope();
         loop {
             match scope.variables.get(ident) {
-                Some(ty) => return Some(ty),
+                Some(ty) => return Some(ty.clone()),
                 None => {
                     scope = match self.scopes.get(self.scopes.len() - 2) {
                         Some(scope) => scope,
@@ -66,7 +102,8 @@ impl<'a> TypeChecker<'a> {
             }
         }
     }
-    pub fn expression(&mut self, expr: &Expression<'a>) -> Type {
+
+    pub fn expression<'b: 'a>(&mut self, expr: &Expression<'a>) -> Type {
         match expr {
             Expression::BinaryExpression(binary) => self.binary_expression(binary),
             Expression::Group(group) => self.expression(&group.paren.inner),
@@ -80,8 +117,9 @@ impl<'a> TypeChecker<'a> {
                 }
             }
             Expression::Identifier(identifier) => {
-                let ty = self.get_variable(identifier.lexeme).unwrap();
-                ty.clone()
+                let symbol = self.get_symbol(identifier.lexeme).unwrap();
+                let symbol = symbol.as_ref().borrow();
+                symbol.ty.clone()
             }
             Expression::Call(call) => {
                 todo!();
@@ -100,31 +138,49 @@ impl<'a> TypeChecker<'a> {
     }
     pub fn statement(&mut self, statement: &Statement<'a>) {
         match statement {
-            Statement::Expression(expression) => self.expression(expression),
-            Statement::ExpressionWithSemi((expression, _)) => self.expression(expression),
-            Statement::Use(_) => todo!(),
+            Statement::Expression(expression) => {
+                self.expression(expression);
+            }
+            Statement::ExpressionWithSemi((expression, _)) => {
+                self.expression(expression);
+            }
+            Statement::Item(item) => {
+                self.item(item);
+            }
+            Statement::Let(let_) => {
+                self.variable(let_);
+            }
         };
     }
-    pub fn variable(&mut self, variable: &Variable<'a>) {
+    pub fn variable(&mut self, variable: &LetStmt<'a>) {
         let ty = self.expression(&variable.initializer.as_ref().unwrap().expr);
         let scope = self.scopes.last_mut().unwrap();
 
-        scope.variables.insert(variable.ident.lexeme, ty);
+        scope.variables.insert(
+            variable.ident.lexeme,
+            Rc::new(RefCell::new(Symbol {
+                declaration: Some(symbol::SymbolDeclaration::Variable(variable.clone())),
+                ty,
+            })),
+        );
     }
     pub fn struct_(&mut self, struct_: &Struct) {}
     pub fn use_stmt(&mut self, use_stmt: &UseStatement<'a>) {}
     pub fn param(&mut self, param: &Param<'a>) {
-        let scope = self.scopes.last_mut().unwrap();
         let ty = &param.annotation.ty;
-        let ty = Type::numeric(ty);
-        scope.variables.insert(param.name.lexeme, ty);
+        let ty = self.ty_from_ty_expr(ty).unwrap();
+
+        let scope = self.scopes.last_mut().unwrap();
+        scope.variables.insert(
+            param.name.lexeme,
+            Rc::new(RefCell::new(Symbol {
+                declaration: Some(symbol::SymbolDeclaration::Param(param.clone())),
+                ty,
+            })),
+        );
     }
     pub fn function(&mut self, function: &Function<'a>) {
         let parent = self.scopes.last_mut().unwrap();
-        parent.variables.insert(
-            function.name.lexeme,
-            Type::Numeric(types::Numeric::I32(I32::new())),
-        );
 
         self.scopes.push(Scope::default());
         for (param, _) in function.params.inner.inner.iter() {
@@ -133,9 +189,33 @@ impl<'a> TypeChecker<'a> {
         if let Some(last_param) = function.params.last.as_ref() {
             self.param(last_param);
         }
-        for item in function.body.iter() {
-            self.item(item);
+        for statement in function.body.iter() {
+            self.statement(statement);
         }
         self.scopes.pop();
+    }
+
+    pub fn ty_from_ty_expr(&self, ty_expr: &TypeExpression<'a>) -> Result<Type, Box<dyn Error>> {
+        let path = &ty_expr.path;
+        let path = &path.segments.last;
+
+        let ident = path.as_ref().unwrap();
+        let ident = &ident.ident;
+
+        let numeric = Type::numeric(ty_expr);
+        if let Some(numeric) = numeric {
+            return Ok(numeric);
+        }
+
+        let boolean = Type::boolean(ty_expr);
+        if let Some(boolean) = boolean {
+            return Ok(boolean);
+        }
+
+        if ident.lexeme == "void" {
+            return Ok(Type::Void);
+        }
+
+        todo!()
     }
 }

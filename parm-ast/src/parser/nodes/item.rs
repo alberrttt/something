@@ -8,12 +8,9 @@ use super::comment::Comment;
 
 #[derive(Debug, Clone, PartialEq, Spanned)]
 pub enum Item<'a> {
-    Variable(Variable<'a>),
+    Variable(LetStmt<'a>),
     Function(Function<'a>),
-    Statement(Statement<'a>),
     Use(UseStatement<'a>),
-    Return(ReturnStatement<'a>),
-    Comment(Comment<'a>),
     Struct(Struct<'a>),
 }
 
@@ -40,10 +37,7 @@ impl<'a> Node<'a> for Item<'a> {
         let peeked = parser.peek()?;
 
         match peeked {
-            Token::SlashSlash(slash_slash) => {
-                return Ok(Self::Comment(Comment::parse(parser)?));
-            }
-            Token::Let(_) => match <Variable as Node>::parse(parser) {
+            Token::Let(_) => match <LetStmt as Node>::parse(parser) {
                 Ok(ok) => return Ok(Item::Variable(ok)),
                 Err(err) => {
                     parser.panic = true;
@@ -58,23 +52,12 @@ impl<'a> Node<'a> for Item<'a> {
                 let func: Function = <Function as Node>::parse(parser)?;
                 return Ok(Item::Function(func));
             }
-            Token::Return(_) => {
-                let ret: ReturnStatement = <ReturnStatement as Node>::parse(parser)?;
-                return Ok(Item::Return(ret));
-            }
+
             Token::Use(_) => {
                 let use_stmt: UseStatement = <UseStatement as Node>::parse(parser)?;
                 return Ok(Item::Use(use_stmt));
             }
-            _ => {
-                let expr = parser.step(Expression::parse);
-                match expr {
-                    Ok(expr) => {
-                        return Ok(Item::Statement(Statement::with_expression(parser, expr)));
-                    }
-                    Err(_err) => {}
-                }
-            }
+            _ => {}
         }
         parser.panic = true;
         Err(ParseError::new(

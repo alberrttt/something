@@ -20,7 +20,7 @@ impl<'a> Lower<'a> for parm_ast::prelude::Function<'a> {
         (function, ctx.scopes.pop().unwrap())
     }
 }
-impl<'a> Lower<'a> for Variable<'a> {
+impl<'a> Lower<'a> for LetStmt<'a> {
     type Output = Operand<'a>;
 
     fn lower(&self, ctx: &mut crate::lowering::LoweringContext<'a>) -> Self::Output {

@@ -1,3 +1,5 @@
+use std::slice::Iter;
+
 use crate::prelude::*;
 use parm_common::Spanned;
 
@@ -42,6 +44,15 @@ impl<'a, T: Node<'a>, P: Node<'a>> Node<'a> for Punctuated<T, P> {
     }
 }
 impl<'a, T: Node<'a>, P: Node<'a>> Punctuated<T, P> {
+    pub fn iter(&self) -> Vec<&T> {
+        let mut iter = self.inner.iter().map(|(t, _)| t).collect::<Vec<_>>();
+        if let Some(last) = self.last.as_ref() {
+            iter.push(last)
+        }
+
+        iter
+    }
+
     pub fn new(inner: Vec<(T, P)>, last: Option<Box<T>>) -> Self {
         Self { inner, last }
     }
@@ -90,9 +101,9 @@ impl<'a, T: Node<'a>, P: Node<'a>> Punctuated<T, P> {
             if parser.at_end() {
                 break;
             }
+
             let value = T::parse(parser)?;
             punctuated.push_value(value);
-
             if parser.at_end() {
                 break;
             }

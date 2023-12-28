@@ -85,14 +85,17 @@ pub fn atom<'a>(parser: &mut crate::parser::ParseStream<'a>) -> ParseResult<'a, 
             let group = parser.step(Group::parse)?;
             Ok(Expression::Group(group))
         }
-        _ => Err(ParseError::new(
-            crate::error::ErrorKind::ExpectedNode(crate::error::ExpectedNode {
-                got: token.lexeme(),
-                expected: "an expression",
-                location: parser.current,
-            }),
-            parser.tokens,
-        )),
+        _ => {
+            parser.panic = true;
+            return Err(ParseError::new(
+                crate::error::ErrorKind::ExpectedNode(crate::error::ExpectedNode {
+                    got: token.lexeme(),
+                    expected: "an expression",
+                    location: parser.current,
+                }),
+                parser.tokens,
+            ));
+        }
     }
 }
 impl Spanned for Expression<'_> {

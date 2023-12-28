@@ -4,7 +4,7 @@ use parm_dev_macros::Spanned;
 use crate::prelude::*;
 
 #[derive(Debug, Clone, PartialEq, Spanned)]
-pub struct Variable<'a> {
+pub struct LetStmt<'a> {
     pub let_tkn: Let<'a>,
     pub ident: Identifier<'a>,
     pub initializer: Option<Initializer<'a>>,
@@ -15,7 +15,7 @@ pub struct Initializer<'a> {
     pub eq: Eq<'a>,
     pub expr: Expression<'a>,
 }
-impl<'a> Node<'a> for Variable<'a> {
+impl<'a> Node<'a> for LetStmt<'a> {
     fn parse(parser: &mut crate::parser::ParseStream<'a>) -> ParseResult<'a, Self>
     where
         Self: Sized,

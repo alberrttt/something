@@ -8,7 +8,8 @@ pub use use_stmt::*;
 pub enum Statement<'a> {
     Expression(Expression<'a>),
     ExpressionWithSemi((Expression<'a>, SemiColon<'a>)),
-    Use(UseStatement<'a>),
+    Item(Item<'a>),
+    Let(LetStmt<'a>),
 }
 impl<'a> Node<'a> for Statement<'a> {
     fn parse(parser: &mut crate::parser::ParseStream<'a>) -> ParseResult<'a, Self>
