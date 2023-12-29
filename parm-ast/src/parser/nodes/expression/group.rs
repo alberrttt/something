@@ -2,21 +2,17 @@ use std::fmt::format;
 
 use parm_dev_macros::Spanned;
 
-use crate::{parser::ast_displayer::DisplayNode, prelude::*, traits::CreateDisplayNode};
+use crate::prelude::*;
 
 use super::{expr, precedence::Precedence, Expression};
 
-#[derive(Debug, Clone, PartialEq, Spanned)]
+#[derive(Debug, Clone, PartialEq, Spanned, Tree)]
 pub struct Group<'a> {
     pub paren: Paren<'a, Box<Expression<'a>>>,
 }
-impl<'a> CreateDisplayNode for Group<'a> {
-    fn create_display_node(&self) -> DisplayNode {
-        DisplayNode::new("Group").child(self.paren.inner.create_display_node())
-    }
-}
+
 impl<'a> Node<'a> for Group<'a> {
-    fn parse(parser: &mut ParseStream<'a>) -> Result<Self, ParseError<'a>>
+    fn parse(parser: &mut ParseStream<'a>) -> ParseResult<'a, Self>
     where
         Self: Sized,
     {

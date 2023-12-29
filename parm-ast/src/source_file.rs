@@ -30,22 +30,20 @@ impl<'a> PreparsedSourceFile<'a> {
 }
 impl<'a> PreparsedSourceFile<'a> {
     pub fn parse(self) -> (SourceFile<'a>, Vec<ParseError<'a>>) {
-        let src_file: &mut UnsafeCell<PreparsedSourceFile<'_>> =
-            Box::leak(Box::new(UnsafeCell::new(self)));
-
+        let pp_src: &'a PreparsedSourceFile<'_> = Box::leak(Box::new(self));
         let mut stream = ParseStream {
-            tokens: &unsafe { &*src_file.get() }.parser.tokens,
+            tokens: &pp_src.parser.tokens,
             current: 0,
-            src_file,
+            src_file: pp_src,
             panic: false,
             attributes: Default::default(),
             errors: Default::default(),
         };
         let (ast, errors) =
-            <Vec<Item<'a>> as Node<'a, (Vec<Item<'a>>, Vec<ParseError<'a>>)>>::parse(&mut stream);
+            <Vec<Item<'a>> as Node<'a, (Vec<Item<'a>>, Vec<ParseError<'a>>)>>::parse(&mut stream);;
         (
             SourceFile {
-                preparsed: src_file,
+                preparsed: &pp_src,
                 ast,
             },
             errors,
@@ -54,6 +52,6 @@ impl<'a> PreparsedSourceFile<'a> {
 }
 #[derive(Debug)]
 pub struct SourceFile<'a> {
-    pub preparsed: &'a UnsafeCell<PreparsedSourceFile<'a>>,
+    pub preparsed: &'a PreparsedSourceFile<'a>,
     pub ast: Vec<Item<'a>>,
 }

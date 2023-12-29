@@ -1,9 +1,15 @@
 #![feature(decl_macro)]
 use std::{cell::RefCell, collections::HashMap, error::Error, rc::Rc};
 
-use parm_ast::{parser::nodes::statement, prelude::*};
+use parm_ast::{
+    parser::nodes::{
+        expression::call,
+        statement::{self, ExpressionWithSemi},
+    },
+    prelude::*,
+};
 use symbol::Symbol;
-use types::{FnSig, Type, F64, I32};
+use types::{FnSig, String, Type, F64, I32};
 mod symbol;
 mod traits;
 mod types;
@@ -42,7 +48,7 @@ impl<'a> TypeCheckedSourceFile<'a> {
                     .unwrap();
                 let mut params: Vec<Type> = Vec::new();
 
-                for param in function.params.inner.iter() {
+                for param in function.params.inner.collect_t() {
                     let ty = &param.annotation.ty;
                     let ty = Type::numeric(ty);
                     params.push(ty.unwrap());
@@ -61,8 +67,8 @@ impl<'a> TypeCheckedSourceFile<'a> {
         }
         self.typechecker.scopes.push(scope);
 
-        for item in &self.source_file.ast {
-            self.typechecker.item(item);
+        for (index, item) in self.source_file.ast.iter().enumerate() {
+            self.typechecker.item(&item);
         }
     }
 }
@@ -72,10 +78,10 @@ pub struct TypeChecker<'a> {
     pub scopes: Vec<Scope<'a>>,
 }
 /// the method to typecheck an ast node is just its name.
-impl<'a> TypeChecker<'a> {
+impl<'b, 'a: 'b> TypeChecker<'a> {
     /// typechecks an item
 
-    pub fn item(&mut self, item: &Item<'a>) {
+    pub fn item(&mut self, item: &'b Item<'a>) {
         match item {
             Item::Use(use_stmt) => self.use_stmt(use_stmt),
             Item::Function(function) => self.function(function),
@@ -83,27 +89,33 @@ impl<'a> TypeChecker<'a> {
 
             item => todo!("{:?}", item),
         }
-        return;
     }
-    pub fn scope<'b>(&'b self) -> &'b Scope<'a> {
+    pub fn scope(&'b self) -> &'b Scope<'a> {
         self.scopes.last().as_ref().unwrap()
     }
     pub fn get_symbol(&self, ident: &str) -> Option<Rc<RefCell<Symbol<'a>>>> {
         let mut scope = self.scope();
+        let mut idx: usize = self.scopes.len();
         loop {
             match scope.variables.get(ident) {
                 Some(ty) => return Some(ty.clone()),
                 None => {
-                    scope = match self.scopes.get(self.scopes.len() - 2) {
+                    if idx == 0 {
+                        return None;
+                    }
+                    idx -= 1;
+                    scope = match self.scopes.get(idx) {
                         Some(scope) => scope,
-                        None => return None,
+                        None => {
+                            return None;
+                        }
                     };
                 }
             }
         }
     }
 
-    pub fn expression<'b: 'a>(&mut self, expr: &Expression<'a>) -> Type {
+    pub fn expression(&mut self, expr: &'b Expression<'a>) -> Type {
         match expr {
             Expression::BinaryExpression(binary) => self.binary_expression(binary),
             Expression::Group(group) => self.expression(&group.paren.inner),
@@ -117,17 +129,35 @@ impl<'a> TypeChecker<'a> {
                 }
             }
             Expression::Identifier(identifier) => {
-                let symbol = self.get_symbol(identifier.lexeme).unwrap();
+                let symbol = match self.get_symbol(identifier.lexeme) {
+                    Some(symbol) => symbol,
+                    None => panic!("symbol `{}` not found", identifier.lexeme),
+                };
                 let symbol = symbol.as_ref().borrow();
                 symbol.ty.clone()
             }
             Expression::Call(call) => {
-                todo!();
+                let callee = call.callee.as_ref();
+                let callee: Type = self.expression(callee);
+                let fn_sig = match callee {
+                    Type::FnSig(fn_sig) => fn_sig,
+                    _ => todo!(),
+                };
+                let params = fn_sig.params.iter().cloned();
+                let args = call.arguments.collect_t();
+                for (param, arg) in params.zip(args) {
+                    let arg_ty = self.expression(arg);
+                    if arg_ty != param {
+                        panic!("expected {:?}, got {:?}", param, arg_ty);
+                    }
+                }
+                *fn_sig.return_type.clone()
             }
+            Expression::StringLit(string) => Type::String(String {}),
             _ => todo!(),
         }
     }
-    pub fn binary_expression(&mut self, binary: &BinaryExpression<'a>) -> Type {
+    pub fn binary_expression(&mut self, binary: &'b BinaryExpression<'a>) -> Type {
         let lhs_ty = self.expression(&binary.left);
         let rhs_ty = self.expression(&binary.right);
         if lhs_ty != rhs_ty {
@@ -136,12 +166,12 @@ impl<'a> TypeChecker<'a> {
             lhs_ty
         }
     }
-    pub fn statement(&mut self, statement: &Statement<'a>) {
+    pub fn statement(&mut self, statement: &'b Statement<'a>) {
         match statement {
             Statement::Expression(expression) => {
                 self.expression(expression);
             }
-            Statement::ExpressionWithSemi((expression, _)) => {
+            Statement::ExpressionWithSemi(ExpressionWithSemi { expression, semi }) => {
                 self.expression(expression);
             }
             Statement::Item(item) => {
@@ -152,7 +182,7 @@ impl<'a> TypeChecker<'a> {
             }
         };
     }
-    pub fn variable(&mut self, variable: &LetStmt<'a>) {
+    pub fn variable(&mut self, variable: &'b LetStmt<'a>) {
         let ty = self.expression(&variable.initializer.as_ref().unwrap().expr);
         let scope = self.scopes.last_mut().unwrap();
 
@@ -179,9 +209,7 @@ impl<'a> TypeChecker<'a> {
             })),
         );
     }
-    pub fn function(&mut self, function: &Function<'a>) {
-        let parent = self.scopes.last_mut().unwrap();
-
+    pub fn function(&mut self, function: &'b Function<'a>) {
         self.scopes.push(Scope::default());
         for (param, _) in function.params.inner.inner.iter() {
             self.param(param);

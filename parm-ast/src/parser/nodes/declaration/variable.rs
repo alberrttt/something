@@ -3,14 +3,14 @@ use parm_dev_macros::Spanned;
 
 use crate::prelude::*;
 
-#[derive(Debug, Clone, PartialEq, Spanned)]
+#[derive(Debug, Clone, PartialEq, Spanned, Tree)]
 pub struct LetStmt<'a> {
     pub let_tkn: Let<'a>,
     pub ident: Identifier<'a>,
     pub initializer: Option<Initializer<'a>>,
     pub semi: SemiColon<'a>,
 }
-#[derive(Debug, Clone, PartialEq, Spanned)]
+#[derive(Debug, Clone, PartialEq, Spanned, Tree)]
 pub struct Initializer<'a> {
     pub eq: Eq<'a>,
     pub expr: Expression<'a>,

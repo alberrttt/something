@@ -1,24 +1,17 @@
 use parm_common::Spanned;
 
-use crate::{
-    error::ExpectedToken,
-    lexer::token::{Integer, Token},
-    parser::ast_displayer::DisplayNode,
-    prelude::{ParseError, ParseResult},
-    traits::{CreateDisplayNode, Node},
-};
+use crate::prelude::*;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Number<'a> {
-    token: &'a Token<'a>,
+    pub token: &'a Token<'a>,
     pub value: f64,
 }
-impl CreateDisplayNode for Number<'_> {
-    fn create_display_node(&self) -> crate::parser::ast_displayer::DisplayNode {
-        crate::parser::ast_displayer::DisplayNode::new(self.value.to_string())
+impl<'a> TreeDisplay for Number<'a> {
+    fn tree(&self) -> Tree {
+        Tree::new("Number").lexeme(format!("{}", self.value))
     }
 }
-
 impl<'a> From<&'a Token<'a>> for Number<'a> {
     fn from(token: &'a Token<'a>) -> Self {
         Number {
@@ -39,21 +32,21 @@ impl Spanned for Number<'_> {
     }
 }
 impl<'a> Node<'a> for Number<'a> {
-    fn parse(parser: &mut crate::parser::ParseStream<'a>) -> ParseResult<'a, Self>
+    fn parse(parse_stream: &mut crate::parser::ParseStream<'a>) -> ParseResult<'a, Self>
     where
         Self: Sized,
     {
-        let num = parser.peek()?;
+        let num = parse_stream.peek()?;
         match num {
             Token::Integer(int) => {
-                parser.advance()?;
+                parse_stream.advance()?;
                 Ok(Number {
                     token: num,
                     value: int.lexeme.parse::<f64>().unwrap(),
                 })
             }
             Token::Float(float) => {
-                parser.advance()?;
+                parse_stream.advance()?;
                 Ok(Number {
                     token: num,
                     value: float.lexeme.parse::<f64>().unwrap(),
@@ -61,14 +54,15 @@ impl<'a> Node<'a> for Number<'a> {
             }
             token => {
                 dbg!(token);
-                Err(ParseError::new(
+                ParseError::err(
                     crate::error::ErrorKind::ExpectedToken(ExpectedToken {
                         expected: Token::Integer(Integer::default()),
                         got: token.clone(),
-                        location: parser.current,
+                        location: parse_stream.current,
                     }),
-                    parser.tokens,
-                ))
+                    parse_stream.tokens,
+                    parse_stream.src_file,
+                )
             }
         }
     }

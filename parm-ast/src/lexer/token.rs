@@ -1,7 +1,6 @@
 use crate::{
     error::{ErrorKind, ExpectedNode},
     prelude::*,
-    traits::CreateDisplayNode,
 };
 use parm_common::{Span, Spanned};
 use std::marker::PhantomData;
@@ -12,24 +11,25 @@ impl<'a> Spanned for Dook<'a> {
     }
 }
 impl<'a> Node<'a> for Dook<'a> {
-    fn parse(parser: &mut crate::parser::ParseStream<'a>) -> ParseResult<'a, Self>
+    fn parse(parse_stream: &mut crate::parser::ParseStream<'a>) -> ParseResult<'a, Self>
     where
         Self: Sized,
     {
-        let peeked = parser.peek()?;
+        let peeked = parse_stream.peek()?;
         if let Token::Integer(peeked) = peeked {
             let _tmp: Result<Integer<'a>, ErrorKind<'a>> = Ok(peeked.clone());
-            parser.advance()?;
+            parse_stream.advance()?;
             Ok(Dook(PhantomData::default()))
         } else {
-            Err(ParseError::new(
+            ParseError::err(
                 ErrorKind::ExpectedNode(ExpectedNode {
                     got: peeked.lexeme(),
                     expected: "Integer",
-                    location: parser.current,
+                    location: parse_stream.current,
                 }),
-                parser.tokens,
-            ))
+                parse_stream.tokens,
+                parse_stream.src_file,
+            )
         }
     }
 }
@@ -119,7 +119,6 @@ gen_token!(
     #[group(BinaryOperator, MutableBinaryOperator)]
     LessEq,
     #[lexeme = "!"]
-    #[group(BinaryOperator)]
     Bang,
     #[lexeme = "!="]
     #[group(BinaryOperator, MutableBinaryOperator)]

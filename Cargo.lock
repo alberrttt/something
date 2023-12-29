@@ -76,13 +76,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "parm-ir"
-version = "0.1.0"
-dependencies = [
- "parm-ast",
-]
-
-[[package]]
 name = "parm-typechecker"
 version = "0.1.0"
 dependencies = [

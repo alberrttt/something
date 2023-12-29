@@ -6,7 +6,7 @@ use parm_dev_macros::Spanned;
 
 use super::comment::Comment;
 
-#[derive(Debug, Clone, PartialEq, Spanned)]
+#[derive(Debug, Clone, PartialEq, Spanned, Tree)]
 pub enum Item<'a> {
     Variable(LetStmt<'a>),
     Function(Function<'a>),
@@ -15,13 +15,13 @@ pub enum Item<'a> {
 }
 
 impl<'a> Node<'a> for Item<'a> {
-    fn parse(parser: &mut super::ParseStream<'a>) -> ParseResult<'a, Self>
+    fn parse(parse_stream: &mut super::ParseStream<'a>) -> ParseResult<'a, Self>
     where
         Self: Sized,
     {
-        let attributes: Result<Vec<Attribute<'_>>, ParseError<'_>> =
-            parser.step(Vec::<Attribute>::parse);
-        for error in mem::take(&mut parser.errors) {
+        let attributes: ParseResult<'_, Vec<Attribute<'_>>> =
+            parse_stream.step(Vec::<Attribute>::parse);
+        for error in mem::take(&mut parse_stream.errors) {
             if let ErrorKind::ExpectedToken(expected) = &error.kind {
                 match &expected.expected {
                     Token::Octothorpe(_) => {}
@@ -32,42 +32,43 @@ impl<'a> Node<'a> for Item<'a> {
             }
         }
         if let Ok(mut attributes) = attributes {
-            parser.attributes.append(&mut attributes);
+            parse_stream.attributes.append(&mut attributes);
         }
-        let peeked = parser.peek()?;
+        let peeked = parse_stream.peek()?;
 
         match peeked {
-            Token::Let(_) => match <LetStmt as Node>::parse(parser) {
+            Token::Let(_) => match <LetStmt as Node>::parse(parse_stream) {
                 Ok(ok) => return Ok(Item::Variable(ok)),
                 Err(err) => {
-                    parser.panic = true;
+                    parse_stream.panic = true;
                     return Err(err);
                 }
             },
             Token::StructKeyword(_) => {
-                let struct_dec: Struct = <Struct as Node>::parse(parser)?;
+                let struct_dec: Struct = <Struct as Node>::parse(parse_stream)?;
                 return Ok(Item::Struct(struct_dec));
             }
             Token::FnKeyword(_) => {
-                let func: Function = <Function as Node>::parse(parser)?;
+                let func: Function = <Function as Node>::parse(parse_stream)?;
                 return Ok(Item::Function(func));
             }
 
             Token::Use(_) => {
-                let use_stmt: UseStatement = <UseStatement as Node>::parse(parser)?;
+                let use_stmt: UseStatement = <UseStatement as Node>::parse(parse_stream)?;
                 return Ok(Item::Use(use_stmt));
             }
             _ => {}
         }
-        parser.panic = true;
-        Err(ParseError::new(
+        parse_stream.panic = true;
+        ParseError::err(
             crate::error::ErrorKind::ExpectedNode(crate::error::ExpectedNode {
-                got: parser.peek()?.lexeme(),
+                got: parse_stream.peek()?.lexeme(),
                 expected: "an item",
-                location: parser.current,
+                location: parse_stream.current,
             }),
-            parser.tokens,
-        ))
+            parse_stream.tokens,
+            parse_stream.src_file,
+        )
     }
 }
 #[derive(Debug, Clone, PartialEq, Spanned)]
@@ -77,7 +78,7 @@ pub struct ReturnStatement<'a> {
     pub semi: SemiColon<'a>,
 }
 impl<'a> Node<'a> for ReturnStatement<'a> {
-    fn parse(parser: &mut ParseStream<'a>) -> Result<Self, ParseError<'a>>
+    fn parse(parser: &mut ParseStream<'a>) -> ParseResult<'a, Self>
     where
         Self: Sized,
     {

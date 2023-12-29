@@ -1,8 +1,9 @@
 pub use crate::error::{EndOfTokens, ErrorKind, ExpectedNode, ExpectedToken, ParseError};
 
-pub type ParseResult<'a, T> = Result<T, ParseError<'a>>;
+pub type ParseResult<'a, T> = Result<T, Box<ParseError<'a>>>;
 
 pub use super::source_file::*;
+pub use super::tree_display::{Tree, TreeDisplay};
 pub use crate::lexer::{token::*, Lexer};
 pub use crate::parser::{self, ParseStream, Parser};
 pub use crate::traits::Node;
@@ -25,7 +26,6 @@ pub use parser::nodes::{
 pub macro parse($src:expr) {{
     use crate::prelude::*;
     use crate::source_file::PreparsedSourceFile;
-    use std::cell::UnsafeCell;
     let src = $src;
     dbg!(&src);
     let tokens = Lexer::from(src).lex();
@@ -34,6 +34,6 @@ pub macro parse($src:expr) {{
         tokens,
         current: 0,
     };
-    let preparsed = UnsafeCell::new(PreparsedSourceFile::new("./test".into(), src));
+    let preparsed = PreparsedSourceFile::new("./test".into(), src);
     (parser, preparsed)
 }}

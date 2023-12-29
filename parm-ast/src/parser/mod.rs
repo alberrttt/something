@@ -8,7 +8,6 @@ use crate::{
 };
 
 pub use self::parse_stream::ParseStream;
-pub mod ast_displayer;
 pub mod nodes;
 pub mod parse_stream;
 pub mod token_stream;
@@ -25,10 +24,7 @@ impl<'a> PartialEq for Parser<'a> {
     }
 }
 impl<'a> Parser<'a> {
-    pub fn stream<'b: 'a>(
-        &'b self,
-        src_file: &'a UnsafeCell<PreparsedSourceFile<'a>>,
-    ) -> ParseStream<'b> {
+    pub fn stream<'b: 'a>(&'b self, src_file: &'a PreparsedSourceFile<'a>) -> ParseStream<'b> {
         ParseStream {
             tokens: &self.tokens,
             current: self.current,

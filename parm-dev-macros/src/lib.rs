@@ -1,12 +1,8 @@
-
-
 use proc_macro::TokenStream;
-use proc_macro2::{Ident};
-use quote::{quote};
+use proc_macro2::Ident;
+use quote::quote;
 use spanned::spanned_derive;
-use syn::{
-    parse_macro_input, LitStr,
-};
+use syn::{parse_macro_input, LitStr};
 
 #[proc_macro]
 pub fn lower_stringify(input: TokenStream) -> TokenStream {
@@ -41,4 +37,10 @@ mod parse_derive;
 #[proc_macro_derive(Parse)]
 pub fn parse(input: TokenStream) -> TokenStream {
     parse_derive::parse_derive(input)
+}
+
+mod tree;
+#[proc_macro_derive(Tree)]
+pub fn tree_display(input: TokenStream) -> TokenStream {
+    tree::tree(input)
 }

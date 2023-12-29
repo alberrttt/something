@@ -1,12 +1,12 @@
 use crate::prelude::*;
-#[derive(Debug, Clone, PartialEq, Spanned)]
+#[derive(Debug, Clone, PartialEq, Spanned, Tree)]
 pub struct Struct<'a> {
     pub struct_tkn: StructKeyword<'a>,
     pub ident: Identifier<'a>,
 }
 
 impl<'a> Node<'a> for Struct<'a> {
-    fn parse(parser: &mut ParseStream<'a>) -> Result<Self, ParseError<'a>>
+    fn parse(parser: &mut ParseStream<'a>) -> ParseResult<'a, Self>
     where
         Self: Sized,
     {

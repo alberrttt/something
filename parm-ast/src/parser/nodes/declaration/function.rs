@@ -3,13 +3,13 @@ use std::mem;
 use crate::prelude::*;
 use parm_common::Spanned;
 use parm_dev_macros::Spanned;
-#[derive(Debug, Clone, PartialEq, Spanned)]
+#[derive(Debug, Clone, PartialEq, Spanned, Tree)]
 pub struct Param<'a> {
     pub name: Identifier<'a>,
     pub annotation: TypeAnnotation<'a>,
 }
 impl<'a> Node<'a> for Param<'a> {
-    fn parse(parser: &mut ParseStream<'a>) -> Result<Self, ParseError<'a>>
+    fn parse(parser: &mut ParseStream<'a>) -> ParseResult<'a, Self>
     where
         Self: Sized,
     {
@@ -18,7 +18,7 @@ impl<'a> Node<'a> for Param<'a> {
         Ok(Self { name, annotation })
     }
 }
-#[derive(Debug, Clone, PartialEq, Spanned)]
+#[derive(Debug, Clone, PartialEq, Spanned, Tree)]
 pub struct Function<'a> {
     pub attributes: Vec<Attribute<'a>>,
     pub fn_tkn: FnKeyword<'a>,
@@ -45,7 +45,7 @@ impl<'a> Node<'a> for Function<'a> {
                         break;
                     }
                     let peeked = parser.peek()?;
-                    match parser.step(Statement::parse) {
+                    match Statement::parse(parser) {
                         Ok(res) => body.push(res),
                         Err(err) => {
                             eprintln!("{}", err);

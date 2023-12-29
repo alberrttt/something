@@ -5,7 +5,7 @@ pub struct Comment<'a> {
     pub text: &'a [Token<'a>],
 }
 impl<'a> Node<'a> for Comment<'a> {
-    fn parse(parser: &mut ParseStream<'a>) -> Result<Self, ParseError<'a>>
+    fn parse(parser: &mut ParseStream<'a>) -> ParseResult<'a, Self>
     where
         Self: Sized,
     {

@@ -3,30 +3,28 @@ use std::marker::PhantomData;
 use parm_common::Spanned;
 
 use crate::{
-    parser::{ast_displayer::DisplayNode, parse_stream::ParseStream},
+    parser::parse_stream::ParseStream,
     prelude::{ParseError, ParseResult, Token},
 };
-pub trait CreateDisplayNode {
-    fn create_display_node(&self) -> DisplayNode;
-}
+
 pub trait EscapedText {
     fn escaped_text(&self) -> String;
 }
 pub trait Node<'a, Output = ParseResult<'a, Self>>: Spanned {
-    fn parse(parser: &mut ParseStream<'a>) -> Output
+    fn parse(parse_stream: &mut ParseStream<'a>) -> Output
     where
         Self: Sized;
     fn to_tokens<'b>(&self) -> &'b [Token<'a>] {
         todo!()
     }
 }
-impl<'a, T: Node<'a> + Spanned> Node<'a, (Self, Vec<ParseError<'a>>)> for Vec<T> {
+impl<'a, T: Node<'a> + Spanned + std::fmt::Debug> Node<'a, (Self, Vec<ParseError<'a>>)> for Vec<T> {
     fn parse(parser: &mut ParseStream<'a>) -> (Self, Vec<ParseError<'a>>)
     where
         Self: Sized,
     {
         let mut vec = Vec::new();
-        let mut errors = Vec::new();
+        let mut errors: Vec<ParseError<'_>> = Vec::new();
         loop {
             if parser.at_end() {
                 break;
@@ -34,7 +32,7 @@ impl<'a, T: Node<'a> + Spanned> Node<'a, (Self, Vec<ParseError<'a>>)> for Vec<T>
             match T::parse(parser) {
                 Ok(ok) => vec.push(ok),
                 Err(err) => {
-                    errors.push(err);
+                    errors.push(*err);
                     break;
                 }
             }
@@ -43,7 +41,7 @@ impl<'a, T: Node<'a> + Spanned> Node<'a, (Self, Vec<ParseError<'a>>)> for Vec<T>
         (vec, errors)
     }
 }
-impl<'a, T: Node<'a> + Spanned> Node<'a> for Vec<T> {
+impl<'a, T: Node<'a> + Spanned + std::fmt::Debug> Node<'a> for Vec<T> {
     fn parse(parser: &mut ParseStream<'a>) -> ParseResult<'a, Self>
     where
         Self: Sized,

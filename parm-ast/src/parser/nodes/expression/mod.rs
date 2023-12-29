@@ -6,21 +6,25 @@ use crate::{
     lexer::token::{BinaryOperator, Identifier, Token},
     prelude::*,
     source_file::PreparsedSourceFile,
-    traits::{CreateDisplayNode, Node},
+    traits::Node,
 };
 
-use self::{binary::BinaryExpression, group::Group, number::Number, precedence::Precedence};
+use self::{
+    binary::BinaryExpression, group::Group, number::Number, precedence::Precedence,
+    string::StringLit,
+};
 
 use super::statement::parse;
 pub mod binary;
 pub mod call;
 pub mod group;
-pub mod literal;
 pub mod number;
-#[derive(Debug, Clone, PartialEq)]
+pub mod string;
+#[derive(Debug, Clone, PartialEq, Tree)]
 pub enum Expression<'a> {
     Identifier(Identifier<'a>),
     Number(number::Number<'a>),
+    StringLit(StringLit<'a>),
     BinaryExpression(binary::BinaryExpression<'a>),
     Group(Group<'a>),
     Call(Call<'a>),
@@ -58,43 +62,50 @@ pub fn expr<'a>(
 
     Ok(left)
 }
-pub fn atom<'a>(parser: &mut crate::parser::ParseStream<'a>) -> ParseResult<'a, Expression<'a>> {
-    let token = parser.peek()?;
+pub fn atom<'a>(
+    parse_stream: &mut crate::parser::ParseStream<'a>,
+) -> ParseResult<'a, Expression<'a>> {
+    let token = parse_stream.peek()?;
     match token {
         Token::Identifier(_) => {
-            let ident = parser.step(|parser| Identifier::parse(parser).clone())?;
+            let ident = parse_stream.step(|parser| Identifier::parse(parser).clone())?;
             let ident = Expression::Identifier(ident);
-            if let Ok(Token::LParen(_)) = parser.peek() {
+            if let Ok(Token::LParen(_)) = parse_stream.peek() {
                 return Ok(Expression::Call(Call {
                     callee: Box::new(ident),
-                    arguments: Call::args(parser)?,
+                    arguments: Call::args(parse_stream)?,
                 }));
             }
 
             Ok(ident)
         }
         Token::Integer(_) => {
-            let number = parser.step(|parser| Number::parse(parser).clone())?;
+            let number = parse_stream.step(|parser| Number::parse(parser).clone())?;
             Ok(Expression::Number(number))
         }
         Token::Float(_) => {
-            let number = parser.step(|parser| Number::parse(parser).clone())?;
+            let number = parse_stream.step(|parser| Number::parse(parser).clone())?;
             Ok(Expression::Number(number))
         }
         Token::LParen(_) => {
-            let group = parser.step(Group::parse)?;
+            let group = parse_stream.step(Group::parse)?;
             Ok(Expression::Group(group))
         }
+        Token::DoubleQuote(_) => {
+            let string = parse_stream.step(string::StringLit::parse)?;
+            Ok(Expression::StringLit(string))
+        }
         _ => {
-            parser.panic = true;
-            return Err(ParseError::new(
+            parse_stream.panic = true;
+            return ParseError::err(
                 crate::error::ErrorKind::ExpectedNode(crate::error::ExpectedNode {
                     got: token.lexeme(),
                     expected: "an expression",
-                    location: parser.current,
+                    location: parse_stream.current,
                 }),
-                parser.tokens,
-            ));
+                parse_stream.tokens,
+                parse_stream.src_file,
+            );
         }
     }
 }
@@ -107,18 +118,7 @@ impl Spanned for Expression<'_> {
             BinaryExpression(binary) => binary.span(),
             Group(group) => group.span(),
             Call(call) => call.span(),
-        }
-    }
-}
-impl CreateDisplayNode for Expression<'_> {
-    fn create_display_node(&self) -> crate::parser::ast_displayer::DisplayNode {
-        use Expression::*;
-        match self {
-            Identifier(ident) => ident.create_display_node(),
-            Number(number) => number.create_display_node(),
-            BinaryExpression(binary) => binary.create_display_node(),
-            Group(group) => group.create_display_node(),
-            Call(call) => todo!(),
+            StringLit(string) => string.span(),
         }
     }
 }
@@ -127,7 +127,6 @@ impl CreateDisplayNode for Expression<'_> {
 fn test_add() -> Result<(), Box<dyn Error>> {
     let (parser, preparsed) = parse!("1 + 2");
     let bin = <Expression as Node>::parse(&mut parser.stream(&preparsed)).unwrap();
-    bin.create_display_node().display(0);
     Ok(())
 }
 
@@ -138,7 +137,6 @@ fn test_pow() -> Result<(), Box<dyn Error>> {
     match bin {
         Ok(bin) => {
             dbg!(&bin);
-            bin.create_display_node().display(0);
         }
         Err(err) => {
             eprint!("{}", err);
@@ -152,9 +150,7 @@ fn test_group() -> Result<(), Box<dyn Error>> {
     let (parser, preparsed) = parse!("a**(1 + 2)");
     let bin = <Expression as Node>::parse(&mut parser.stream(&preparsed));
     match bin {
-        Ok(bin) => {
-            bin.create_display_node().display(0);
-        }
+        Ok(bin) => {}
         Err(err) => eprint!("{}", err),
     }
     Ok(())

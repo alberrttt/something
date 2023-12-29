@@ -1,6 +1,6 @@
 use crate::prelude::*;
 pub type Args<'a> = Paren<'a, Punctuated<Expression<'a>, Comma<'a>>>;
-#[derive(Debug, Clone, PartialEq, Spanned)]
+#[derive(Debug, Clone, PartialEq, Spanned, Tree)]
 pub struct Call<'a> {
     pub callee: Box<Expression<'a>>,
     pub arguments: Args<'a>,

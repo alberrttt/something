@@ -3,7 +3,7 @@ use crate::prelude::*;
 use super::delimiter::Angle;
 use parm_dev_macros::Spanned;
 
-#[derive(Debug, Clone, PartialEq, Spanned)]
+#[derive(Debug, Clone, PartialEq, Spanned, Tree)]
 pub struct TypeIdent<'a> {
     pub ident: Identifier<'a>,
     pub generics: Option<Angle<'a, Punctuated<Identifier<'a>, Comma<'a>>>>,
@@ -22,7 +22,7 @@ impl<'a> Node<'a> for TypeIdent<'a> {
         })
     }
 }
-#[derive(Debug, Clone, PartialEq, Spanned)]
+#[derive(Debug, Clone, PartialEq, Spanned, Tree)]
 pub struct Borrow<'a> {
     pub ampersand: Amper<'a>,
     pub mutable: Option<Mut<'a>>,
@@ -40,7 +40,7 @@ impl<'a> Node<'a> for Borrow<'a> {
         })
     }
 }
-#[derive(Debug, Clone, PartialEq, Spanned)]
+#[derive(Debug, Clone, PartialEq, Spanned, Tree)]
 pub struct TypePath<'a> {
     pub prefix: Option<ColonColon<'a>>,
     pub segments: Punctuated<TypeIdent<'a>, ColonColon<'a>>,
@@ -60,7 +60,7 @@ impl<'a> Node<'a> for TypePath<'a> {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Spanned)]
+#[derive(Debug, Clone, PartialEq, Spanned, Tree)]
 pub struct TypeExpression<'a> {
     pub borrow: Option<Borrow<'a>>,
     pub path: TypePath<'a>,
@@ -79,7 +79,7 @@ impl<'a> Node<'a> for TypeExpression<'a> {
     }
 }
 
-#[derive(Debug, Clone, Spanned, PartialEq)]
+#[derive(Debug, Clone, Spanned, PartialEq, Tree)]
 pub struct TypeAnnotation<'a> {
     pub colon: Colon<'a>,
     pub ty: TypeExpression<'a>,

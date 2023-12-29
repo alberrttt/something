@@ -8,7 +8,15 @@ pub struct Punctuated<T, P> {
     pub inner: Vec<(T, P)>,
     pub last: Option<Box<T>>,
 }
-
+impl<'a, T: TreeDisplay + Node<'a>, P: Node<'a>> TreeDisplay for Punctuated<T, P> {
+    fn tree(&self) -> Tree {
+        let mut tree = Tree::new("Punctuated::");
+        for t in self.collect_t() {
+            tree = tree.child(t.tree());
+        }
+        tree
+    }
+}
 impl<T, P> Default for Punctuated<T, P> {
     fn default() -> Self {
         Self {
@@ -44,7 +52,7 @@ impl<'a, T: Node<'a>, P: Node<'a>> Node<'a> for Punctuated<T, P> {
     }
 }
 impl<'a, T: Node<'a>, P: Node<'a>> Punctuated<T, P> {
-    pub fn iter(&self) -> Vec<&T> {
+    pub fn collect_t(&self) -> Vec<&T> {
         let mut iter = self.inner.iter().map(|(t, _)| t).collect::<Vec<_>>();
         if let Some(last) = self.last.as_ref() {
             iter.push(last)

@@ -1,9 +1,12 @@
 pub mod printer;
 use std::{backtrace::Backtrace, collections::HashMap, error::Error, fmt::Display, vec};
 
-use parm_common::Spanned;
+use parm_common::{Span, Spanned};
 
-use crate::lexer::token::{tokens_by_line, Token};
+use crate::{
+    lexer::token::{tokens_by_line, Token},
+    prelude::{ParseResult, PreparsedSourceFile},
+};
 
 use std::fmt::Write;
 #[derive(Debug, PartialEq, Clone)]
@@ -46,14 +49,15 @@ impl Annotation {
 }
 
 fn display_tokens_with_annotations<'a>(
-    tokens: &[Token<'a>],
+    tokens: &'a [Token<'a>],
     annotations: HashMap<usize, Annotation>,
-) -> Result<String, Box<dyn Error>> {
+) -> Result<(String, Token<'a>), Box<dyn Error>> {
     let mut f = String::new();
     let lines = tokens_by_line(tokens);
     let mut idx = 0;
     let mut annotation_location = HashMap::new();
     let mut used_lines = vec![];
+    let mut significant_token_span = Token::default();
     for (line, token_on_line) in lines.iter().enumerate() {
         for _token in token_on_line.iter() {
             if let Some(_annotation) = annotations.get(&idx) {
@@ -69,7 +73,12 @@ fn display_tokens_with_annotations<'a>(
             idx += token_on_line.len();
             continue;
         }
-
+        let line: String = format!(
+            "{:line$} | ",
+            _line + 1,
+            line = lines.len().to_string().len()
+        );
+        write!(f, "{line}")?;
         for (line_idx, token) in token_on_line.iter().enumerate() {
             if line_idx == 0 {
                 write!(
@@ -94,6 +103,7 @@ fn display_tokens_with_annotations<'a>(
             prev_token = token;
             if let Some(_annotation) = annotations.get(&idx) {
                 annotation_location.insert(token.span().line_start, idx);
+                significant_token_span = token.clone();
             }
             idx += 1;
         }
@@ -115,8 +125,10 @@ fn display_tokens_with_annotations<'a>(
                         annotation.size
                     }),
                     annotation.message,
-                    whitespace =
-                        *line_offset + annotation.offset + if annotation.after { len } else { 0 },
+                    whitespace = *line_offset
+                        + annotation.offset
+                        + if annotation.after { len } else { 0 }
+                        + line.len(),
                 )?;
             }
             writeln!(f)?;
@@ -124,43 +136,7 @@ fn display_tokens_with_annotations<'a>(
 
         annotation_location.clear();
     }
-    Ok(f)
-}
-fn display_tokens<'a>(tokens: &[Token<'a>]) -> Result<String, Box<dyn Error>> {
-    let mut f = String::new();
-    let lines = tokens_by_line(tokens);
-
-    for (i, line) in lines.iter().enumerate() {
-        let mut prev_token: *const Token<'_> = std::ptr::null();
-
-        for (i, token) in line.iter().enumerate() {
-            if i == 0 {
-                write!(
-                    f,
-                    "{:whitespace$}",
-                    "",
-                    whitespace = token.span().line_start
-                )?;
-            } else {
-                let prev_token = unsafe { &*prev_token };
-                write!(
-                    f,
-                    "{:whitespace$}",
-                    "",
-                    // whitespace = current token start - previous token end
-                    whitespace = token.span().line_start
-                        - (prev_token.span().line_start + prev_token.span().src_end
-                            - prev_token.span().src_start)
-                )?;
-            }
-            write!(f, "{}", token.lexeme())?;
-            prev_token = token
-        }
-        if i != lines.len() - 1 {
-            writeln!(f)?;
-        }
-    }
-    Ok(f)
+    Ok((f, significant_token_span))
 }
 
 #[test]
@@ -179,7 +155,9 @@ pub struct ParseError<'a> {
     pub kind: ErrorKind<'a>,
     pub backtrace: Option<Backtrace>,
     pub surrounding: &'a [Token<'a>],
+    pub info: &'a PreparsedSourceFile<'a>,
 }
+
 impl<'a> Error for ParseError<'a> {}
 impl<'a> PartialEq for ParseError<'a> {
     fn eq(&self, other: &Self) -> bool {
@@ -192,19 +170,31 @@ impl<'a> Clone for ParseError<'a> {
             kind: self.kind.clone(),
             backtrace: self.backtrace.as_ref().map(|_| Backtrace::capture()),
             surrounding: self.surrounding,
+            info: self.info,
         }
     }
 }
 impl<'a> ParseError<'a> {
     #[track_caller]
-    pub fn new(kind: ErrorKind<'a>, surrounding: &'a [Token<'a>]) -> Self {
+    pub fn new(
+        kind: ErrorKind<'a>,
+        surrounding: &'a [Token<'a>],
+        info: &'a PreparsedSourceFile<'a>,
+    ) -> Self {
         Self {
             kind,
             surrounding,
             backtrace: Some(Backtrace::capture()),
+            info,
         }
     }
-
+    pub fn err<T>(
+        kind: ErrorKind<'a>,
+        surrounding: &'a [Token<'a>],
+        info: &'a PreparsedSourceFile<'a>,
+    ) -> ParseResult<'a, T> {
+        Err(Box::new(Self::new(kind, surrounding, info)))
+    }
     pub fn print(&self) -> String {
         let mut result = String::new();
         let mut map: HashMap<usize, Annotation> = HashMap::new();
@@ -246,8 +236,17 @@ impl<'a> ParseError<'a> {
             }
         }
 
-        let displayed = display_tokens_with_annotations(self.surrounding, map);
-        writeln!(result, "{}", displayed.unwrap()).unwrap();
+        let (display, token) = display_tokens_with_annotations(self.surrounding, map).unwrap();
+        let span: Span = token.span();
+        writeln!(
+            result,
+            "{}:{}:{}",
+            self.info.path.to_str().unwrap(),
+            span.line + 1,
+            span.line_start + 1 + (span.src_end - span.src_start)
+        )
+        .unwrap();
+        writeln!(result, "{display}",).unwrap();
         result
     }
 }

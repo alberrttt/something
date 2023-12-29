@@ -1,15 +1,20 @@
-
-
 use crate::prelude::*;
 use parm_common::Spanned;
 use std::ops::Deref;
 macro_rules! Delimiter {
     ($name:ident,$open:ident,$close:ident) => {
         #[derive(Debug, Clone, PartialEq)]
-        pub struct $name<'a, T: Node<'a> + Spanned> {
+        pub struct $name<'a, T: Node<'a> + Spanned > {
             pub open: $open<'a>,
             pub inner: T,
             pub close: $close<'a>,
+        }
+        impl<'a, T: Spanned + Node<'a> + TreeDisplay> TreeDisplay for $name<'a, T> {
+            fn tree(&self) -> Tree {
+                Tree::new(stringify!($name))
+                    .child(self.inner.tree())
+                    .label("inner")
+            }
         }
         impl<'a, T: Node<'a>> Deref for $name<'a, T> {
             type Target = T;
@@ -45,11 +50,29 @@ macro_rules! Delimiter {
                     }
                 }
                 let mut inner_parse_stream = parser.from_range(start..parser.current);
-                let inner = inner_parse_stream.step(parsing)?;
+                let inner = match inner_parse_stream.step(parsing) {
+                    Ok(inner) => inner,
+                    Err(err) => {
+                        parser.panic = inner_parse_stream.panic;
+                        return Err(err);
+                    }
+                };
                 let close = if inner_parse_stream.at_end() {
-                    parser.step($close::parse)?
+                    match parser.step($close::parse) {
+                        Ok(close) => close,
+                        Err(err) => {
+                            parser.panic = inner_parse_stream.panic;
+                            return Err(err);
+                        }
+                    }
                 } else {
-                    inner_parse_stream.step($close::parse)?
+                    match inner_parse_stream.step($close::parse) {
+                        Ok(close) => close,
+                        Err(err) => {
+                            parser.panic = inner_parse_stream.panic;
+                            return Err(err);
+                        }
+                    }
                 };
                 Ok(Self { open, inner, close })
             }

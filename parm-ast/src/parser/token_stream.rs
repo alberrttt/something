@@ -1,10 +1,17 @@
 use parm_common::Spanned;
 
-use crate::prelude::{Node, Token};
+use crate::{
+    prelude::{Node, ParseResult, Token},
+    tree_display::TreeDisplay,
+};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct TokenStream<'a>(&'a [Token<'a>]);
-
+impl<'a> TreeDisplay for TokenStream<'a> {
+    fn tree(&self) -> crate::tree_display::Tree {
+        crate::tree_display::Tree::new("TokenStream")
+    }
+}
 impl<'a> Spanned for TokenStream<'a> {
     fn span(&self) -> parm_common::Span {
         self.0
@@ -16,9 +23,7 @@ impl<'a> Spanned for TokenStream<'a> {
 }
 
 impl<'a> Node<'a> for TokenStream<'a> {
-    fn parse(
-        parser: &mut crate::prelude::ParseStream<'a>,
-    ) -> Result<Self, crate::prelude::ParseError<'a>>
+    fn parse(parser: &mut crate::prelude::ParseStream<'a>) -> ParseResult<'a, Self>
     where
         Self: Sized,
     {

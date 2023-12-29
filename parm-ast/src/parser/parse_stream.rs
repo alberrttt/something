@@ -6,7 +6,7 @@ use crate::{prelude::*, source_file::PreparsedSourceFile};
 pub struct ParseStream<'a> {
     pub tokens: &'a [Token<'a>],
     pub current: usize,
-    pub src_file: &'a UnsafeCell<PreparsedSourceFile<'a>>,
+    pub src_file: &'a PreparsedSourceFile<'a>,
     pub panic: bool,
     pub errors: Vec<ParseError<'a>>,
     pub attributes: Vec<Attribute<'a>>,
@@ -17,23 +17,23 @@ impl<'a> PartialEq for ParseStream<'a> {
     }
 }
 impl<'a> ParseStream<'a> {
+    pub fn src_text(&self) -> &'a str {
+        self.src_file.src
+    }
     pub fn parse<T: Node<'a>>(&mut self) -> ParseResult<'a, T> {
         T::parse(self)
     }
     pub fn current_location_in_file(&self) -> usize {
-        let src_file_tokens = &unsafe { &*self.src_file.get() }.parser.tokens;
+        let src_file_tokens = &self.src_file.parser.tokens;
         let location = src_file_tokens
             .windows(self.tokens.len())
             .position(|window| window == self.tokens)
             .unwrap();
         location
     }
-    pub fn from_src_file(
-        src_file: &'a UnsafeCell<PreparsedSourceFile<'a>>,
-        range: Range<usize>,
-    ) -> Self {
+    pub fn from_src_file(src_file: &'a PreparsedSourceFile<'a>, range: Range<usize>) -> Self {
         Self {
-            tokens: &unsafe { &*src_file.get() }.parser.tokens[range],
+            tokens: &src_file.parser.tokens[range],
             src_file,
             current: Default::default(),
             panic: Default::default(),
@@ -76,28 +76,35 @@ impl<'a> ParseStream<'a> {
                 self.current += 1;
                 Ok(some)
             }
-            None => Err(ParseError::new(
+            None => ParseError::err(
                 ErrorKind::EndOfTokens(EndOfTokens { expected: None }),
                 self.tokens,
-            )),
+                self.src_file,
+            ),
         }
     }
     pub fn peek<'b: 'a>(&self) -> ParseResult<'a, &'b Token<'a>> {
         match self.tokens.get(self.current) {
             Some(some) => Ok(some),
-            None => Err(ParseError::new(
-                ErrorKind::EndOfTokens(EndOfTokens { expected: None }),
-                self.tokens,
-            )),
+            None => {
+                (ParseError::err(
+                    ErrorKind::EndOfTokens(EndOfTokens { expected: None }),
+                    self.tokens,
+                    self.src_file,
+                ))
+            }
         }
     }
     pub fn peek_next<'b: 'a>(&self) -> ParseResult<'a, &'b Token<'a>> {
         match self.tokens.get(self.current + 1) {
             Some(some) => Ok(some),
-            None => Err(ParseError::new(
-                ErrorKind::EndOfTokens(EndOfTokens { expected: None }),
-                self.tokens,
-            )),
+            None => {
+                (ParseError::err(
+                    ErrorKind::EndOfTokens(EndOfTokens { expected: None }),
+                    self.tokens,
+                    self.src_file,
+                ))
+            }
         }
     }
 }
