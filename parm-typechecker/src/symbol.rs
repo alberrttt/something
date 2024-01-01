@@ -11,10 +11,10 @@ pub struct Symbol<'a> {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum SymbolDeclaration<'a> {
-    Function(Function<'a>),
-    Struct(Struct<'a>),
-    Variable(LetStmt<'a>),
-    Param(Param<'a>),
+    Function(&'a Function<'a>),
+    Struct(&'a Struct<'a>),
+    Variable(&'a LetStmt<'a>),
+    Param(&'a Param<'a>),
 }
 
 impl<'a> SymbolDeclaration<'a> {

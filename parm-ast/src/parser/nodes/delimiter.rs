@@ -4,7 +4,7 @@ use std::ops::Deref;
 macro_rules! Delimiter {
     ($name:ident,$open:ident,$close:ident) => {
         #[derive(Debug, Clone, PartialEq)]
-        pub struct $name<'a, T: Node<'a> + Spanned > {
+        pub struct $name<'a, T: Node<'a> + Spanned> {
             pub open: $open<'a>,
             pub inner: T,
             pub close: $close<'a>,
@@ -35,8 +35,23 @@ macro_rules! Delimiter {
                 let open = parser.step($open::parse)?;
                 let mut depth = 1;
                 let start = parser.current;
+                use std::borrow::BorrowMut;
                 while depth > 0 {
-                    match parser.peek()? {
+                    match match parser.peek() {
+                        Ok(token) => token,
+                        Err(mut err) => {
+                            parser.panic = true;
+                            match err.kind.borrow_mut() {
+                                ErrorKind::EndOfTokens(ref mut eot) => {
+                                    eot.expected = Some(stringify!($close));
+                                    return Err(err);
+                                }
+                                _ => {
+                                    return Err(err);
+                                }
+                            }
+                        }
+                    } {
                         Token::$open(_) => {
                             parser.advance()?;
                             depth += 1;
@@ -50,13 +65,7 @@ macro_rules! Delimiter {
                     }
                 }
                 let mut inner_parse_stream = parser.from_range(start..parser.current);
-                let inner = match inner_parse_stream.step(parsing) {
-                    Ok(inner) => inner,
-                    Err(err) => {
-                        parser.panic = inner_parse_stream.panic;
-                        return Err(err);
-                    }
-                };
+                let inner = parsing(&mut inner_parse_stream)?;
                 let close = if inner_parse_stream.at_end() {
                     match parser.step($close::parse) {
                         Ok(close) => close,

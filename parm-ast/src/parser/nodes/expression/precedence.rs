@@ -37,6 +37,10 @@ impl<'a> From<&'a Token<'a>> for Precedence {
         match value {
             Token::Plus(_) | Token::Minus(_) => Precedence::Term,
             Token::Asterisk(_) | Token::Slash(_) | Token::AsteriskAsterisk(_) => Precedence::Factor,
+            Token::EqEq(_) | Token::BangEq(_) | Token::LessEq(_) | Token::GreaterEq(_) => {
+                Precedence::Equality
+            }
+            Token::AmperAmper(_) | Token::PipePipe(_) => Precedence::Comparison,
             _ => Precedence::None,
         }
     }

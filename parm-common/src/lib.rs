@@ -1,9 +1,21 @@
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Default, Copy)]
+use std::borrow::Borrow;
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Copy)]
 pub struct Span {
     pub src_start: usize,
     pub src_end: usize,
     pub line_start: usize,
     pub line: usize,
+}
+impl Default for Span {
+    fn default() -> Self {
+        Self {
+            src_start: usize::MAX / 2,
+            src_end: usize::MAX / 2,
+            line_start: usize::MAX / 2,
+            line: usize::MAX / 2,
+        }
+    }
 }
 impl Span {
     pub fn join(self, other: Self) -> Self {
@@ -52,7 +64,8 @@ where
     T: Spanned,
 {
     fn span(&self) -> Span {
-        todo!()
+        let inner: &T = self.borrow();
+        inner.span()
     }
 }
 

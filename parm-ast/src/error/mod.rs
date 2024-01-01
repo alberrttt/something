@@ -1,10 +1,12 @@
 pub mod printer;
-use std::{backtrace::Backtrace, collections::HashMap, error::Error, fmt::Display, vec};
+use std::{
+    backtrace::Backtrace, collections::HashMap, error::Error, fmt::Display, ops::Range, vec,
+};
 
 use parm_common::{Span, Spanned};
 
 use crate::{
-    lexer::token::{tokens_by_line, Token},
+    lexer::token::{self, tokens_by_line, Token},
     prelude::{ParseResult, PreparsedSourceFile},
 };
 
@@ -18,9 +20,9 @@ pub struct Annotation {
     pub size: usize,
 }
 impl Annotation {
-    pub fn new(message: String) -> Self {
+    pub fn new(message: impl Into<String>) -> Self {
         Annotation {
-            message,
+            message: message.into(),
             offset: 0,
             after: false,
             size: usize::MAX,
@@ -48,27 +50,32 @@ impl Annotation {
     }
 }
 
-fn display_tokens_with_annotations<'a>(
-    tokens: &'a [Token<'a>],
-    annotations: HashMap<usize, Annotation>,
+pub fn display_annotations<'a>(
+    source: &'a PreparsedSourceFile<'a>,
+    annotations: HashMap<Span, Annotation>,
 ) -> Result<(String, Token<'a>), Box<dyn Error>> {
+    dbg!(&annotations);
     let mut f = String::new();
+    let tokens = &source.lexer.tokens;
     let lines = tokens_by_line(tokens);
     let mut idx = 0;
-    let mut annotation_location = HashMap::new();
+    let mut annotation_location: HashMap<usize, Span> = HashMap::new();
     let mut used_lines = vec![];
-    let mut significant_token_span = Token::default();
-    for (line, token_on_line) in lines.iter().enumerate() {
+    let mut significant_token_span = tokens.last().unwrap().clone();
+    for (_, token_on_line) in lines.iter() {
         for _token in token_on_line.iter() {
-            if let Some(_annotation) = annotations.get(&idx) {
-                used_lines.push(line);
+            // we dont need to do this but im too lazyyt
+            let line = _token.span().line;
+            for annotation in annotations.keys() {
+                if annotation.line == line && !used_lines.contains(&line) {
+                    used_lines.push(line);
+                }
             }
-            idx += 1;
         }
     }
-    idx = 0;
-    for (_line, token_on_line) in lines.iter().enumerate() {
-        let mut prev_token: *const Token<'_> = std::ptr::null();
+    let mut accounted_annotations = vec![];
+    for (_line, token_on_line) in lines.iter() {
+        let mut prev_token: Option<&Token> = None;
         if !used_lines.contains(&_line) {
             idx += token_on_line.len();
             continue;
@@ -88,7 +95,7 @@ fn display_tokens_with_annotations<'a>(
                     whitespace = token.span().line_start
                 )?;
             } else {
-                let prev_token = unsafe { &*prev_token };
+                let prev_token = prev_token.unwrap();
                 write!(
                     f,
                     "{:whitespace$}",
@@ -100,11 +107,19 @@ fn display_tokens_with_annotations<'a>(
                 )?;
             }
             write!(f, "{}", token.lexeme())?;
-            prev_token = token;
-            if let Some(_annotation) = annotations.get(&idx) {
-                annotation_location.insert(token.span().line_start, idx);
-                significant_token_span = token.clone();
+            prev_token = Some(token);
+
+            for (i, annotation) in annotations.keys().enumerate() {
+                let matches = token.span().src_start >= annotation.src_start
+                    && annotation.line == token.span().line
+                    && token.span().src_end <= annotation.src_end;
+                if matches && !accounted_annotations.contains(&i) {
+                    accounted_annotations.push(i);
+                    annotation_location.insert(annotation.line_start, *annotation);
+                    significant_token_span = token.clone();
+                }
             }
+
             idx += 1;
         }
 
@@ -113,8 +128,7 @@ fn display_tokens_with_annotations<'a>(
         if !annotation_location.is_empty() {
             for (line_offset, annotation_idx) in annotation_location.iter() {
                 let annotation = annotations.get(annotation_idx).unwrap();
-                let token = &tokens[*annotation_idx];
-                let len = token.lexeme().len();
+                let len = annotation_idx.src_end - annotation_idx.src_start;
                 write!(
                     f,
                     "{:whitespace$}{} {}",
@@ -155,7 +169,7 @@ pub struct ParseError<'a> {
     pub kind: ErrorKind<'a>,
     pub backtrace: Option<Backtrace>,
     pub surrounding: &'a [Token<'a>],
-    pub info: &'a PreparsedSourceFile<'a>,
+    pub file: &'a PreparsedSourceFile<'a>,
 }
 
 impl<'a> Error for ParseError<'a> {}
@@ -170,7 +184,7 @@ impl<'a> Clone for ParseError<'a> {
             kind: self.kind.clone(),
             backtrace: self.backtrace.as_ref().map(|_| Backtrace::capture()),
             surrounding: self.surrounding,
-            info: self.info,
+            file: self.file,
         }
     }
 }
@@ -185,7 +199,7 @@ impl<'a> ParseError<'a> {
             kind,
             surrounding,
             backtrace: Some(Backtrace::capture()),
-            info,
+            file: info,
         }
     }
     pub fn err<T>(
@@ -195,29 +209,29 @@ impl<'a> ParseError<'a> {
     ) -> ParseResult<'a, T> {
         Err(Box::new(Self::new(kind, surrounding, info)))
     }
-    pub fn print(&self) -> String {
-        let mut result = String::new();
-        let mut map: HashMap<usize, Annotation> = HashMap::new();
+}
+impl<'a> Display for ParseError<'a> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        // check if PDB is set
+        // Display Diagnostic Backtrace
+        if std::env::var("DDB").is_ok() {
+            write!(f, "{}", self.backtrace.as_ref().unwrap())?;
+        }
+
+        let mut map: HashMap<Span, Annotation> = HashMap::new();
         match &self.kind {
             ErrorKind::EndOfTokens(eot) => {
-                map.insert(self.surrounding.len() - 1, {
-                    let mut annotation = String::from("unexpected token end");
+                map.insert(self.surrounding.last().unwrap().span(), {
+                    let mut annotation = String::from("unexpected end");
                     if let Some(expected) = eot.expected {
-                        write!(annotation, ", expected a(n) {}", expected).unwrap();
+                        write!(annotation, ", expected `{}`", expected).unwrap();
                     }
                     Annotation::new(annotation).after().size(1)
                 });
             }
             ErrorKind::ExpectedToken(expected) => {
-                let mut coresponing_token = 0usize;
-                for (i, token) in self.surrounding.iter().enumerate() {
-                    if token.span() == expected.expected.span() {
-                        coresponing_token = i;
-                        break;
-                    }
-                }
                 map.insert(
-                    coresponing_token,
+                    expected.got.span(),
                     Annotation::new(format!(
                         "Expected token {} but got {}",
                         expected.expected.lexeme(),
@@ -235,30 +249,17 @@ impl<'a> ParseError<'a> {
                 );
             }
         }
-
-        let (display, token) = display_tokens_with_annotations(self.surrounding, map).unwrap();
+        let (display, token) = display_annotations(self.file, map).unwrap();
         let span: Span = token.span();
         writeln!(
-            result,
+            f,
             "{}:{}:{}",
-            self.info.path.to_str().unwrap(),
+            self.file.path.to_str().unwrap(),
             span.line + 1,
             span.line_start + 1 + (span.src_end - span.src_start)
         )
         .unwrap();
-        writeln!(result, "{display}",).unwrap();
-        result
-    }
-}
-impl<'a> Display for ParseError<'a> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        // check if PDB is set
-        // Display Diagnostic Backtrace
-        if std::env::var("DDB").is_ok() {
-            write!(f, "{}", self.backtrace.as_ref().unwrap())?;
-        }
-
-        write!(f, "{}", self.print())
+        writeln!(f, "{display}",)
     }
 }
 #[derive(Debug, PartialEq, Clone)]
@@ -307,7 +308,7 @@ pub struct ExpectedNode<'a> {
     pub got: &'a str,
 
     /// location in the source file's tokens
-    pub location: usize,
+    pub location: Span,
 }
 
 impl<'a> Display for ExpectedNode<'a> {

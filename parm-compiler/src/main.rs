@@ -8,13 +8,13 @@ use parm_ast::{prelude::*, source_file::PreparsedSourceFile};
 use parm_compiler::Config;
 
 fn main() {
-    dbg!(env::current_dir().unwrap());
     let parm_toml = Path::new("./example/parm.toml");
 
     let file = fs::read_to_string(parm_toml).unwrap();
     let config: Config = toml::from_str(file.as_ref()).unwrap();
     let entry = PathBuf::from(config.package.bin.entry);
-    let entry = dbg!(PathBuf::from("./example").join(entry))
+    let entry = PathBuf::from("./example")
+        .join(entry)
         .canonicalize()
         .unwrap();
 
@@ -30,8 +30,9 @@ fn main() {
             println!("{}", node.tree());
         }
     }
+
     let mut typechecked = parm_typechecker::TypeCheckedSourceFile::new(src_file);
+
     typechecked.typecheck();
-    println!("done typechecking");
     // dbg!(ast);
 }

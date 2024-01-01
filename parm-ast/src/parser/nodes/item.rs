@@ -64,14 +64,14 @@ impl<'a> Node<'a> for Item<'a> {
             crate::error::ErrorKind::ExpectedNode(crate::error::ExpectedNode {
                 got: parse_stream.peek()?.lexeme(),
                 expected: "an item",
-                location: parse_stream.current,
+                location: peeked.span(),
             }),
             parse_stream.tokens,
             parse_stream.src_file,
         )
     }
 }
-#[derive(Debug, Clone, PartialEq, Spanned)]
+#[derive(Debug, Clone, PartialEq, Spanned, Tree)]
 pub struct ReturnStatement<'a> {
     pub return_tkn: Return<'a>,
     pub expr: Expression<'a>,

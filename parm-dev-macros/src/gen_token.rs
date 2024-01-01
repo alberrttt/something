@@ -210,11 +210,11 @@ pub fn gen_token(input: TokenStream) -> TokenStream {
     let StructDefsTokenItems {
         mut token_items,
         struct_defs,
-        groups,
+        groups: map_groups,
         lexemes,
     } = generate_struct_defs_token_items(&punctuation);
 
-    let groups = groups
+    let groups = map_groups
         .iter()
         .map(|(group_name, items)| {
             let group_name = format_ident!("{}", group_name);
@@ -405,7 +405,7 @@ pub fn gen_token(input: TokenStream) -> TokenStream {
             }
         })
         .collect();
-    let spanned = punctuation
+    let mut spanned = punctuation
         .0
         .iter()
         .map(|item| {
@@ -415,6 +415,12 @@ pub fn gen_token(input: TokenStream) -> TokenStream {
             }
         })
         .collect::<Vec<_>>();
+        for key in map_groups.keys() {
+            let key = format_ident!("{}", key);
+            spanned.push(quote! {
+                Token::#key(token) => token.span(),
+            })
+        }
     let spanless_equals = punctuation
         .0
         .iter()
@@ -466,7 +472,7 @@ pub fn gen_token(input: TokenStream) -> TokenStream {
             fn span(&self) -> Span {
                 match &self {
                     #(#spanned)*
-                    x => todo!()
+                    x => todo!("{:?}", x)
                 }
             }
         }

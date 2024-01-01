@@ -25,7 +25,7 @@ impl<'a> Node<'a> for Dook<'a> {
                 ErrorKind::ExpectedNode(ExpectedNode {
                     got: peeked.lexeme(),
                     expected: "Integer",
-                    location: parse_stream.current,
+                    location: peeked.span(),
                 }),
                 parse_stream.tokens,
                 parse_stream.src_file,
@@ -184,7 +184,23 @@ gen_token!(
     USelf,
     Pub
 );
-
+impl<'a> BinaryOperator<'a> {
+    pub fn is_equality(&self) -> bool {
+        matches!(
+            self,
+            BinaryOperator::EqEq(_)
+                | BinaryOperator::BangEq(_)
+                | BinaryOperator::LessEq(_)
+                | BinaryOperator::GreaterEq(_)
+        )
+    }
+    pub fn is_boolean_operator(&self) -> bool {
+        matches!(
+            self,
+            BinaryOperator::PipePipe(_) | BinaryOperator::AmperAmper(_)
+        )
+    }
+}
 #[test]
 fn test() {
     let mut lexer = Lexer::from(")( ][, || ||= && != !! &&= &= |= **= * ** %= += +");
@@ -377,8 +393,8 @@ fn test() {
 use parm_dev_macros::gen_token;
 
 use crate::{lexer::Lexer, traits::Node};
-pub fn tokens_by_line<'a, 'b: 'a>(tokens: &'b [Token<'a>]) -> Vec<&'b [Token<'a>]> {
-    let mut lines: Vec<&[Token<'a>]> = Vec::new();
+pub fn tokens_by_line<'a, 'b: 'a>(tokens: &'b [Token<'a>]) -> Vec<(usize, &'b [Token<'a>])> {
+    let mut lines: Vec<(usize, &[Token<'a>])> = Vec::new();
     let mut line_start = 0;
 
     let mut len = 0;
@@ -388,15 +404,17 @@ pub fn tokens_by_line<'a, 'b: 'a>(tokens: &'b [Token<'a>]) -> Vec<&'b [Token<'a>
 
     for (idx, token) in tokens.iter().enumerate() {
         let span = token.span();
+        dbg!(span);
+
         assert!(
             span.src_start >= prev_start && span.line >= prev_line,
             "Tokens must be in sequential order"
         );
 
         if token.span().line != current_line {
-            current_line = token.span().line;
-            lines.push(&tokens[line_start..line_start + len]);
+            lines.push((current_line, &tokens[line_start..line_start + len]));
 
+            current_line = token.span().line;
             len = 0;
             line_start = idx;
         }
@@ -406,7 +424,7 @@ pub fn tokens_by_line<'a, 'b: 'a>(tokens: &'b [Token<'a>]) -> Vec<&'b [Token<'a>
         prev_line = span.line;
     }
 
-    lines.push(&tokens[line_start..line_start + len]);
+    lines.push((prev_line, &tokens[line_start..line_start + len]));
 
     lines
 }
@@ -420,9 +438,9 @@ fn test_tokens_by_line() {
     let line3 = tokens.get(3).unwrap();
 
     assert_eq!(
-        tokens_by_line(&tokens).first().unwrap(),
+        tokens_by_line(&tokens).first().unwrap().1,
         &[line1.clone(), item2.clone()]
     );
-    assert_eq!(tokens_by_line(&tokens).get(1).unwrap(), &[line2.clone()]);
-    assert_eq!(tokens_by_line(&tokens).get(2).unwrap(), &[line3.clone()]);
+    assert_eq!(tokens_by_line(&tokens).get(1).unwrap().1, &[line2.clone()]);
+    assert_eq!(tokens_by_line(&tokens).get(2).unwrap().1, &[line3.clone()]);
 }

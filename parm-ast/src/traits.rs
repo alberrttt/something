@@ -14,9 +14,7 @@ pub trait Node<'a, Output = ParseResult<'a, Self>>: Spanned {
     fn parse(parse_stream: &mut ParseStream<'a>) -> Output
     where
         Self: Sized;
-    fn to_tokens<'b>(&self) -> &'b [Token<'a>] {
-        todo!()
-    }
+
 }
 impl<'a, T: Node<'a> + Spanned + std::fmt::Debug> Node<'a, (Self, Vec<ParseError<'a>>)> for Vec<T> {
     fn parse(parser: &mut ParseStream<'a>) -> (Self, Vec<ParseError<'a>>)

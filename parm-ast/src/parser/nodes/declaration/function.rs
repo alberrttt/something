@@ -19,14 +19,33 @@ impl<'a> Node<'a> for Param<'a> {
     }
 }
 #[derive(Debug, Clone, PartialEq, Spanned, Tree)]
+pub struct ReturnType<'a> {
+    pub arrow: RightArrow<'a>,
+    pub ret_type: TypeExpression<'a>,
+}
+impl<'a> Node<'a> for ReturnType<'a> {
+    fn parse(parser: &mut ParseStream<'a>) -> ParseResult<'a, Self>
+    where
+        Self: Sized,
+    {
+        let arrow = parser.step(|parser| RightArrow::parse(parser).clone());
+        match arrow {
+            Ok(arrow) => {
+                let ret_type = parser.step(|parser| TypeExpression::parse(parser).clone())?;
+                Ok(Self { arrow, ret_type })
+            }
+            Err(err) => return Err(err),
+        }
+    }
+}
+#[derive(Debug, Clone, PartialEq, Spanned, Tree)]
 pub struct Function<'a> {
     pub attributes: Vec<Attribute<'a>>,
     pub fn_tkn: FnKeyword<'a>,
     pub name: Identifier<'a>,
     pub params: Paren<'a, Punctuated<Param<'a>, Comma<'a>>>,
     pub body: Brace<'a, Vec<Statement<'a>>>,
-    pub arrow: RightArrow<'a>,
-    pub ret_type: TypeExpression<'a>,
+    pub ret_type: Option<ReturnType<'a>>,
 }
 impl<'a> Node<'a> for Function<'a> {
     fn parse(parser: &mut crate::parser::ParseStream<'a>) -> ParseResult<'a, Self>
@@ -49,38 +68,37 @@ impl<'a> Node<'a> for Function<'a> {
                         Ok(res) => body.push(res),
                         Err(err) => {
                             eprintln!("{}", err);
+                            match peeked {
+                                Token::If(_)
+                                | Token::Return(_)
+                                | Token::FnKeyword(_)
+                                | Token::Identifier(_)
+                                | Token::Let(_) => loop {
+                                    if let Ok(_semicolon) =
+                                        parser.step(|parser| SemiColon::parse(parser).clone())
+                                    {
+                                        break;
+                                    } else if parser.advance().is_err() {
+                                        break;
+                                    }
+                                    parser.panic = false
+                                },
+
+                                _ => {}
+                            }
                         }
                     };
-                    if parser.panic {
-                        //  lets recover
-                        match peeked {
-                            Token::FnKeyword(_) | Token::Identifier(_) | Token::Let(_) => loop {
-                                if let Ok(_semicolon) =
-                                    parser.step(|parser| SemiColon::parse(parser).clone())
-                                {
-                                    break;
-                                } else {
-                                    let _ = parser.advance();
-                                }
-                                parser.panic = false
-                            },
-
-                            _ => {}
-                        }
-                    }
                 }
                 Ok(body)
             })
         })?;
-        let arrow = parser.step(|parser| RightArrow::parse(parser).clone())?;
-        let ret_type = parser.step(TypeExpression::parse)?;
+        let ret_type = parser.step(ReturnType::parse).ok();
         Ok(Self {
             attributes: mem::take(&mut parser.attributes),
             fn_tkn: fn_token,
             name,
             params,
             body,
-            arrow,
             ret_type,
         })
     }

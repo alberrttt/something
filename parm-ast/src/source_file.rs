@@ -40,7 +40,7 @@ impl<'a> PreparsedSourceFile<'a> {
             errors: Default::default(),
         };
         let (ast, errors) =
-            <Vec<Item<'a>> as Node<'a, (Vec<Item<'a>>, Vec<ParseError<'a>>)>>::parse(&mut stream);;
+            <Vec<Item<'a>> as Node<'a, (Vec<Item<'a>>, Vec<ParseError<'a>>)>>::parse(&mut stream);
         (
             SourceFile {
                 preparsed: &pp_src,
@@ -50,7 +50,7 @@ impl<'a> PreparsedSourceFile<'a> {
         )
     }
 }
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct SourceFile<'a> {
     pub preparsed: &'a PreparsedSourceFile<'a>,
     pub ast: Vec<Item<'a>>,

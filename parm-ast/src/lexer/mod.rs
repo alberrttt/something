@@ -1,6 +1,6 @@
 pub mod token;
 
-use parm_common::Span;
+use parm_common::{Span, Spanned};
 use std::char;
 use token::Token;
 
@@ -15,6 +15,8 @@ pub struct Lexer<'src> {
     pub line_pos: usize,
     /// current line
     pub line: usize,
+
+    pub tokens: Vec<Token<'src>>,
 }
 
 fn ident_body(char: char) -> bool {
@@ -27,10 +29,29 @@ impl<'src> From<&'src str> for Lexer<'src> {
             src_pos: 0,
             line_pos: 0,
             line: 0,
+            tokens: Vec::new(),
         }
     }
 }
 impl<'src> Lexer<'src> {
+    pub fn get_token_idx_from_token(&self, token: &Token<'src>) -> Option<usize> {
+        self.tokens
+            .iter()
+            .position(|t| t.span().src_start == token.span().src_start)
+    }
+    pub fn get_token_idx_from_span(&self, span: &Span) -> Option<usize> {
+        self.tokens
+            .iter()
+            .position(|t| t.span().src_start == span.src_start)
+    }
+    pub fn get_range_from_span(&self, span: &Span) -> Option<std::ops::Range<usize>> {
+        let start = self.get_token_idx_from_span(span)?;
+        let end = self
+            .tokens
+            .iter()
+            .position(|t| t.span().src_end == span.src_end)?;
+        Some(start..end)
+    }
     /**
      * creates a new span starting at the given position and ends at the current position
      */
@@ -89,6 +110,7 @@ impl<'src> Lexer<'src> {
                 _ => tokens.push(self.lex_syntax()),
             }
         }
+        self.tokens = tokens.clone();
         tokens
     }
     pub(crate) fn number(&mut self) -> Token<'src> {

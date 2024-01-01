@@ -22,7 +22,7 @@ impl<'a> Node<'a> for BinaryExpression<'a> {
                 ErrorKind::ExpectedNode(ExpectedNode {
                     got: "Expression",
                     expected: "BinaryExpression",
-                    location: parse_stream.current,
+                    location: parse_stream.peek().unwrap().span(),
                 }),
                 parse_stream.tokens,
                 parse_stream.src_file,

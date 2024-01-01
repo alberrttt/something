@@ -1,48 +1,58 @@
+use std::fmt::Display;
+
 use parm_ast::prelude::*;
-macro_rules!  numeric_type {
-    ($($name:ident),*) => {
-        $(
-            #[allow(dead_code)]
-            #[derive(Debug,Clone,PartialEq)]
-            pub struct $name {
-            }
-
-            impl $name {
-                #[allow(clippy::new_without_default)]
-                pub fn new() -> Self {
-                    Self {}
-                }
-                pub fn name() -> &'static str {
-                    lower_stringify!($name)
-                }
-            }
-        )*
-
-        #[derive(Debug,Clone,PartialEq)]
-        pub enum Numeric {
-            $(
-                $name($name),
-            )*
-        }
+// a 64 bit float
+#[derive(Debug, Clone, PartialEq)]
+pub struct Number {}
+impl Display for Number {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "number")
     }
 }
-
-numeric_type!(U8, U16, U32, U64, U128, I8, I16, I32, I64, I128, F32, F64, F128);
-
 #[derive(Debug, Clone, PartialEq)]
-pub enum Boolean {
-    True,
-    False,
+pub struct Boolean {}
+impl Display for Boolean {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "boolean")
+    }
 }
 #[derive(Debug, Clone, PartialEq)]
 pub struct String {}
+impl Display for String {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "string")
+    }
+}
 #[derive(Debug, PartialEq, Clone)]
 pub enum Type {
-    Numeric(Numeric),
+    Number(Number),
     Boolean(Boolean),
     String(String),
     Void,
     FnSig(FnSig),
+}
+
+impl std::fmt::Display for Type {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Type::Number(num) => write!(f, "{}", num),
+            Type::Boolean(bool) => write!(f, "{}", bool),
+            Type::String(string) => write!(f, "{}", string),
+            Type::Void => write!(f, "void"),
+            Type::FnSig(fn_sig) => write!(
+                f,
+                "fn({}) -> {}",
+                fn_sig
+                    .params
+                    .iter()
+                    .map(|f| f.to_string())
+                    .collect::<Vec<_>>()
+                    .join(", "),
+                fn_sig.return_type
+            ),
+            _ => panic!(),
+        }
+    }
 }
 #[derive(Debug, PartialEq, Clone)]
 pub struct FnSig {
@@ -52,35 +62,25 @@ pub struct FnSig {
 #[derive(Debug, PartialEq, Clone)]
 pub struct FunctionSig {}
 
-impl Type {
-    pub fn boolean(type_expr: &TypeExpression) -> Option<Self> {
-        let path = &type_expr.path;
+impl Type {}
+
+impl<'a> TryFrom<&'a TypeExpression<'a>> for Type {
+    type Error = ();
+
+    fn try_from(value: &'a TypeExpression<'a>) -> Result<Self, Self::Error> {
+        let path = &value.path;
         let path = &path.segments.last;
 
         let ident = path.as_ref().unwrap();
-        Some(match ident.ident.lexeme {
-            "true" => Type::Boolean(Boolean::True),
-            "false" => Type::Boolean(Boolean::False),
-            lexeme => return None,
-        })
-    }
-    pub fn numeric(type_expr: &TypeExpression) -> Option<Self> {
-        let path = &type_expr.path;
-        let path = &path.segments.last;
+        match ident.ident.lexeme {
+            "string" => return Ok(Type::String(String {})),
+            "number" => return Ok(Type::Number(Number {})),
+            "boolean" => return Ok(Type::Boolean(Boolean {})),
+            "void" => return Ok(Type::Void),
+            _ => {}
 
-        let ident = path.as_ref().unwrap();
-        Some(match ident.ident.lexeme {
-            "u8" => Type::Numeric(Numeric::U8(U8::new())),
-            "u16" => Type::Numeric(Numeric::U16(U16::new())),
-            "u32" => Type::Numeric(Numeric::U32(U32::new())),
-            "u64" => Type::Numeric(Numeric::U64(U64::new())),
-            "u128" => Type::Numeric(Numeric::U128(U128::new())),
-            "i8" => Type::Numeric(Numeric::I8(I8::new())),
-            "i16" => Type::Numeric(Numeric::I16(I16::new())),
-            "i32" => Type::Numeric(Numeric::I32(I32::new())),
-            "i64" => Type::Numeric(Numeric::I64(I64::new())),
-            "i128" => Type::Numeric(Numeric::I128(I128::new())),
-            lexeme => return None,
-        })
+            lexeme => {}
+        };
+        todo!()
     }
 }

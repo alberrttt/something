@@ -1,4 +1,10 @@
-fn foo(x: i32) {} -> i32
+
+fn foo(x: number) {
+    let y = x + 1;
+
+    return 4;
+} -> number
+
 fn main() {
-    foo("44");
-} -> void
+    foo(3);
+} 

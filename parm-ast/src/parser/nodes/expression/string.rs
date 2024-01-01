@@ -1,3 +1,5 @@
+use std::borrow::BorrowMut;
+
 use crate::prelude::*;
 
 #[derive(Debug, Clone, PartialEq, Spanned)]
@@ -19,10 +21,20 @@ impl<'a> Node<'a> for StringLit<'a> {
         let left_quote = DoubleQuote::parse(parser)?;
         let start = parser.current;
         loop {
-            let next = parser.peek()?;
-            if let Token::DoubleQuote(_) = next {
-                break;
+            match parser.peek() {
+                Ok(Token::DoubleQuote(_)) => break,
+                Ok(_) => {}
+                Err(mut err) => match err.kind.borrow_mut() {
+                    ErrorKind::EndOfTokens(eot) => {
+                        eot.expected = Some("\"");
+                        return Err(err);
+                    }
+                    _ => {
+                        return Err(err);
+                    }
+                },
             }
+
             parser.advance()?;
         }
         let value = &parser.src_text()[start..parser.current];

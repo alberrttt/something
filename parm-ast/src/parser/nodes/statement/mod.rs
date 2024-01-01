@@ -1,6 +1,6 @@
 use parm_dev_macros::Spanned;
 
-use super::expression::Expression;
+use super::{expression::Expression, item::ReturnStatement};
 pub mod expression_statement;
 pub mod use_stmt;
 pub use use_stmt::*;
@@ -10,6 +10,7 @@ pub enum Statement<'a> {
     ExpressionWithSemi(ExpressionWithSemi<'a>),
     Item(Item<'a>),
     Let(LetStmt<'a>),
+    Return(ReturnStatement<'a>),
 }
 
 #[derive(Debug, Clone, PartialEq, Spanned, Tree)]
@@ -22,6 +23,18 @@ impl<'a> Node<'a> for Statement<'a> {
     where
         Self: Sized,
     {
+        let peek = parser.peek()?;
+        match peek {
+            Token::Let(_) => {
+                let let_stmt = parser.step(LetStmt::parse)?;
+                return Ok(Self::Let(let_stmt));
+            }
+            Token::Return(_) => {
+                let return_stmt = parser.step(ReturnStatement::parse)?;
+                return Ok(Self::Return(return_stmt));
+            }
+            _ => {}
+        }
         let expression = parser.step(Expression::parse)?;
 
         let semi = parser.step(SemiColon::parse);

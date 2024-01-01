@@ -1,21 +1,27 @@
 #![feature(decl_macro)]
 use std::{cell::RefCell, collections::HashMap, error::Error, rc::Rc};
 
+use error::{display_diagnostic, ErrorKind, InvalidOperand, Mismatch, TypeError};
 use parm_ast::{
     parser::nodes::{
         expression::call,
+        item::ReturnStatement,
         statement::{self, ExpressionWithSemi},
     },
     prelude::*,
 };
 use symbol::Symbol;
-use types::{FnSig, String, Type, F64, I32};
+use types::{FnSig, Number, String, Type};
+
+use crate::error::Incompatible;
+mod error;
 mod symbol;
 mod traits;
 mod types;
 #[derive(Debug, Default)]
 pub struct Scope<'a> {
     pub variables: HashMap<&'a str, Rc<RefCell<Symbol<'a>>>>,
+    pub should_eval_to: Option<Type>,
 }
 
 impl<'a> Scope<'a> {
@@ -27,36 +33,40 @@ impl<'a> Scope<'a> {
 
 #[derive(Debug)]
 pub struct TypeCheckedSourceFile<'a> {
-    pub source_file: SourceFile<'a>,
+    pub source_file: Rc<SourceFile<'a>>,
     pub typechecker: TypeChecker<'a>,
 }
 
 impl<'a> TypeCheckedSourceFile<'a> {
     pub fn new(source_file: SourceFile<'a>) -> Self {
+        let source_file = Rc::new(source_file);
         Self {
-            source_file,
-            typechecker: TypeChecker { scopes: vec![] },
+            source_file: source_file.clone(),
+            typechecker: TypeChecker {
+                scopes: vec![],
+                source_file: source_file.clone(),
+            },
         }
     }
-    pub fn typecheck(&mut self) {
+    pub fn typecheck(&'a mut self) {
         let mut scope = Scope::default();
         for item in &self.source_file.ast {
             if let Item::Function(function) = item {
-                let return_type = self
-                    .typechecker
-                    .ty_from_ty_expr(&function.ret_type)
-                    .unwrap();
+                let return_type = match function.ret_type.as_ref() {
+                    Some(ret) => Type::try_from(&ret.ret_type).unwrap(),
+                    None => Type::Void,
+                };
                 let mut params: Vec<Type> = Vec::new();
 
                 for param in function.params.inner.collect_t() {
                     let ty = &param.annotation.ty;
-                    let ty = Type::numeric(ty);
-                    params.push(ty.unwrap());
+                    let ty = <Type as TryFrom<&TypeExpression<'_>>>::try_from(ty).unwrap();
+                    params.push(ty);
                 }
                 scope.variables.insert(
                     function.name.lexeme,
                     Rc::new(RefCell::new(Symbol {
-                        declaration: Some(symbol::SymbolDeclaration::Function(function.clone())),
+                        declaration: Some(symbol::SymbolDeclaration::Function(&function)),
                         ty: Type::FnSig(FnSig {
                             params,
                             return_type: Box::new(return_type),
@@ -76,12 +86,13 @@ impl<'a> TypeCheckedSourceFile<'a> {
 #[derive(Debug)]
 pub struct TypeChecker<'a> {
     pub scopes: Vec<Scope<'a>>,
+    pub source_file: Rc<SourceFile<'a>>,
 }
 /// the method to typecheck an ast node is just its name.
 impl<'b, 'a: 'b> TypeChecker<'a> {
     /// typechecks an item
 
-    pub fn item(&mut self, item: &'b Item<'a>) {
+    pub fn item(&mut self, item: &'a Item<'a>) {
         match item {
             Item::Use(use_stmt) => self.use_stmt(use_stmt),
             Item::Function(function) => self.function(function),
@@ -122,16 +133,12 @@ impl<'b, 'a: 'b> TypeChecker<'a> {
             Expression::Number(number) => {
                 let value = number.value;
                 let is_integer = value.fract() == 0.0;
-                if is_integer {
-                    Type::Numeric(types::Numeric::I32(I32::new()))
-                } else {
-                    Type::Numeric(types::Numeric::F64(F64::new()))
-                }
+                Type::Number(Number {})
             }
             Expression::Identifier(identifier) => {
                 let symbol = match self.get_symbol(identifier.lexeme) {
                     Some(symbol) => symbol,
-                    None => panic!("symbol `{}` not found", identifier.lexeme),
+                    None => return Type::Void,
                 };
                 let symbol = symbol.as_ref().borrow();
                 symbol.ty.clone()
@@ -148,7 +155,15 @@ impl<'b, 'a: 'b> TypeChecker<'a> {
                 for (param, arg) in params.zip(args) {
                     let arg_ty = self.expression(arg);
                     if arg_ty != param {
-                        panic!("expected {:?}, got {:?}", param, arg_ty);
+                        let error = TypeError::new(
+                            ErrorKind::Mismatch(Mismatch {
+                                got: &arg_ty,
+                                expected: &param,
+                                location: arg.span(),
+                            }),
+                            self.source_file.as_ref(),
+                        );
+                        eprintln!("{}", error);
                     }
                 }
                 *fn_sig.return_type.clone()
@@ -160,13 +175,45 @@ impl<'b, 'a: 'b> TypeChecker<'a> {
     pub fn binary_expression(&mut self, binary: &'b BinaryExpression<'a>) -> Type {
         let lhs_ty = self.expression(&binary.left);
         let rhs_ty = self.expression(&binary.right);
-        if lhs_ty != rhs_ty {
-            todo!()
-        } else {
-            lhs_ty
+        if binary.operator.is_boolean_operator() {
+            if let (Type::Boolean(_), Type::Boolean(_)) = (&lhs_ty, &rhs_ty) {
+            } else {
+                let err = TypeError::new(
+                    ErrorKind::InvalidOperand(InvalidOperand {
+                        operand: binary.operator.lexeme(),
+                        location: binary.span(),
+                        type1: &lhs_ty,
+                        type2: Some(&rhs_ty),
+                    }),
+                    &self.source_file,
+                );
+                eprintln!("{}", err);
+            }
         }
+        if lhs_ty == rhs_ty {
+            return lhs_ty;
+        }
+        if binary.operator.is_equality() {
+            let warning = display_diagnostic(
+                &self.source_file,
+                binary.span(),
+                "Under equality, this expression will always be false",
+            );
+            println!("{}", warning.unwrap());
+        }
+        let err = TypeError::new(
+            ErrorKind::InvalidOperand(InvalidOperand {
+                operand: binary.operator.lexeme(),
+                location: binary.span(),
+                type1: &lhs_ty,
+                type2: Some(&rhs_ty),
+            }),
+            &self.source_file,
+        );
+        eprintln!("{}", err);
+        lhs_ty
     }
-    pub fn statement(&mut self, statement: &'b Statement<'a>) {
+    pub fn statement(&mut self, statement: &'a Statement<'a>) {
         match statement {
             Statement::Expression(expression) => {
                 self.expression(expression);
@@ -180,37 +227,62 @@ impl<'b, 'a: 'b> TypeChecker<'a> {
             Statement::Let(let_) => {
                 self.variable(let_);
             }
+            Statement::Return(return_) => {
+                self.return_stmt(return_);
+            }
         };
     }
-    pub fn variable(&mut self, variable: &'b LetStmt<'a>) {
+    pub fn return_stmt(&mut self, stmt: &'b ReturnStatement<'a>) {
+        let ty = self.expression(&stmt.expr);
+        let scope = self.scope();
+        let should_eval_to = scope.should_eval_to.as_ref().unwrap();
+        if ty != *should_eval_to {
+            let err = TypeError::new(
+                ErrorKind::Incompatible(Incompatible {
+                    type1: &ty,
+                    type2: should_eval_to,
+                    location: stmt.span(),
+                }),
+                self.source_file.as_ref(),
+            );
+            eprintln!("{}", err);
+        }
+    }
+    pub fn variable(&mut self, variable: &'a LetStmt<'a>) {
         let ty = self.expression(&variable.initializer.as_ref().unwrap().expr);
         let scope = self.scopes.last_mut().unwrap();
 
         scope.variables.insert(
             variable.ident.lexeme,
             Rc::new(RefCell::new(Symbol {
-                declaration: Some(symbol::SymbolDeclaration::Variable(variable.clone())),
+                declaration: Some(symbol::SymbolDeclaration::Variable(&variable)),
                 ty,
             })),
         );
     }
     pub fn struct_(&mut self, struct_: &Struct) {}
     pub fn use_stmt(&mut self, use_stmt: &UseStatement<'a>) {}
-    pub fn param(&mut self, param: &Param<'a>) {
+    pub fn param(&mut self, param: &'a Param<'a>) {
         let ty = &param.annotation.ty;
-        let ty = self.ty_from_ty_expr(ty).unwrap();
+        let ty = Type::try_from(ty).unwrap();
 
         let scope = self.scopes.last_mut().unwrap();
         scope.variables.insert(
             param.name.lexeme,
             Rc::new(RefCell::new(Symbol {
-                declaration: Some(symbol::SymbolDeclaration::Param(param.clone())),
+                declaration: Some(symbol::SymbolDeclaration::Param(&param)),
                 ty,
             })),
         );
     }
-    pub fn function(&mut self, function: &'b Function<'a>) {
-        self.scopes.push(Scope::default());
+    pub fn function(&mut self, function: &'a Function<'a>) {
+        self.scopes.push(Scope {
+            variables: HashMap::default(),
+            should_eval_to: Some(match function.ret_type.as_ref() {
+                Some(ret) => Type::try_from(&ret.ret_type).unwrap(),
+                None => Type::Void,
+            }),
+        });
         for (param, _) in function.params.inner.inner.iter() {
             self.param(param);
         }
@@ -221,29 +293,5 @@ impl<'b, 'a: 'b> TypeChecker<'a> {
             self.statement(statement);
         }
         self.scopes.pop();
-    }
-
-    pub fn ty_from_ty_expr(&self, ty_expr: &TypeExpression<'a>) -> Result<Type, Box<dyn Error>> {
-        let path = &ty_expr.path;
-        let path = &path.segments.last;
-
-        let ident = path.as_ref().unwrap();
-        let ident = &ident.ident;
-
-        let numeric = Type::numeric(ty_expr);
-        if let Some(numeric) = numeric {
-            return Ok(numeric);
-        }
-
-        let boolean = Type::boolean(ty_expr);
-        if let Some(boolean) = boolean {
-            return Ok(boolean);
-        }
-
-        if ident.lexeme == "void" {
-            return Ok(Type::Void);
-        }
-
-        todo!()
     }
 }

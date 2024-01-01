@@ -1,4 +1,4 @@
-use std::slice::Iter;
+use std::{fmt::Debug, slice::Iter};
 
 use crate::prelude::*;
 use parm_common::Spanned;
@@ -8,7 +8,7 @@ pub struct Punctuated<T, P> {
     pub inner: Vec<(T, P)>,
     pub last: Option<Box<T>>,
 }
-impl<'a, T: TreeDisplay + Node<'a>, P: Node<'a>> TreeDisplay for Punctuated<T, P> {
+impl<'a, T: TreeDisplay + Node<'a> + Debug, P: Node<'a>> TreeDisplay for Punctuated<T, P> {
     fn tree(&self) -> Tree {
         let mut tree = Tree::new("Punctuated::");
         for t in self.collect_t() {
@@ -42,7 +42,7 @@ impl<T: Spanned, P: Spanned> Spanned for Punctuated<T, P> {
         (start, end).into()
     }
 }
-impl<'a, T: Node<'a>, P: Node<'a>> Node<'a> for Punctuated<T, P> {
+impl<'a, T: Node<'a> + Debug, P: Node<'a>> Node<'a> for Punctuated<T, P> {
     /// the default parsing strategy is parse terminated
     fn parse(parser: &mut ParseStream<'a>) -> ParseResult<'a, Self>
     where
@@ -51,7 +51,7 @@ impl<'a, T: Node<'a>, P: Node<'a>> Node<'a> for Punctuated<T, P> {
         Self::parse_terminated(parser)
     }
 }
-impl<'a, T: Node<'a>, P: Node<'a>> Punctuated<T, P> {
+impl<'a, T: Node<'a> + Debug, P: Node<'a>> Punctuated<T, P> {
     pub fn collect_t(&self) -> Vec<&T> {
         let mut iter = self.inner.iter().map(|(t, _)| t).collect::<Vec<_>>();
         if let Some(last) = self.last.as_ref() {

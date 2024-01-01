@@ -95,13 +95,13 @@ pub fn atom<'a>(
             let string = parse_stream.step(string::StringLit::parse)?;
             Ok(Expression::StringLit(string))
         }
-        _ => {
+        token => {
             parse_stream.panic = true;
             return ParseError::err(
                 crate::error::ErrorKind::ExpectedNode(crate::error::ExpectedNode {
                     got: token.lexeme(),
                     expected: "an expression",
-                    location: parse_stream.current,
+                    location: token.span(),
                 }),
                 parse_stream.tokens,
                 parse_stream.src_file,

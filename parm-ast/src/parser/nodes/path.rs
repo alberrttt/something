@@ -22,7 +22,7 @@ impl<'a> Node<'a> for SimpleSegment<'a> {
                 crate::error::ErrorKind::ExpectedNode(crate::error::ExpectedNode {
                     got: parse_stream.peek()?.lexeme(),
                     expected: "a path segment",
-                    location: parse_stream.current,
+                    location: peeked.span(),
                 }),
                 parse_stream.tokens,
                 parse_stream.src_file,
