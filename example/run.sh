@@ -1,1 +1,1 @@
-RUSTFLAGS="-Z threads=16" cargo run --bin parm-compiler 
+RUSTFLAGS="-Z threads=16" cargo run --bin parm_compiler 
