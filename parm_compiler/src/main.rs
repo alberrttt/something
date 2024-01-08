@@ -6,6 +6,7 @@ use std::{
 
 use parm_ast::{prelude::*, source_file::PreparsedSourceFile};
 use parm_compiler::Config;
+use parm_ir::LoweringCtx;
 
 fn main() {
     let parm_toml = Path::new("./example/parm.toml");
@@ -39,5 +40,7 @@ fn main() {
     let mut typechecked = parm_typechecker::TypeCheckedSourceFile::new(src_file);
 
     typechecked.typecheck();
+
+    // let mut lowering_ctx = LoweringCtx::new(&typechecked.typechecker);
     // dbg!(ast);
 }

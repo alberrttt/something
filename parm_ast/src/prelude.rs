@@ -17,10 +17,10 @@ pub use parser::nodes::{
         variable::LetStatement,
     },
     delimiter::{Brace, Bracket, Paren},
-    expression::{binary::BinaryExpression, call::Call, number::Number, Expression},
-    item::Item,
+    expression::{binary::BinaryExpression, block::Block, call::Call, number::Number, Expression},
+    item::{Item, ReturnStatement},
     punctuated::Punctuated,
-    statement::{expression_statement::ExpressionStatement, use_stmt::UseStatement, Statement},
+    statement::{use_stmt::UseStatement, ExpressionWithSemi, Statement},
     type_nodes::*,
 };
 pub macro parse($src:expr) {{

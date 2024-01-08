@@ -61,6 +61,7 @@ name = "parm_compiler"
 version = "0.1.0"
 dependencies = [
  "parm_ast",
+ "parm_ir",
  "parm_typechecker",
  "serde",
  "toml",
@@ -73,6 +74,14 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.43",
+]
+
+[[package]]
+name = "parm_ir"
+version = "0.1.0"
+dependencies = [
+ "parm_ast",
+ "parm_typechecker",
 ]
 
 [[package]]

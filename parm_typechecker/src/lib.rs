@@ -1,49 +1,48 @@
 #![feature(decl_macro)]
+pub mod prelude;
 
-pub type TypeResult<'a, T> = Result<T, TypeError<'a>>;
-
-mod error;
-mod symbol;
-mod traits;
-mod types;
-
-use std::{cell::RefCell, collections::HashMap, error::Error, f32::consts::E, rc::Rc};
+use ast::*;
+use prelude::*;
+pub mod error;
+pub mod symbol;
+pub mod traits;
+pub mod types;
+use std::{
+    borrow::BorrowMut, cell::RefCell, collections::HashMap, error::Error, f32::consts::E, rc::Rc,
+};
 
 use error::{display_diagnostic, ErrorKind, InvalidOperand, Mismatch, TypeError, UndefinedSymbol};
-use parm_ast::{
-    parser::nodes::{
-        expression::{block::Block, call},
-        item::ReturnStatement,
-        statement::{self, ExpressionWithSemi},
-    },
-    prelude::*,
-};
-use symbol::Symbol;
+
+use symbol::{Symbol, SymbolDeclaration};
 use types::{FnSig, Number, String, Type};
 
 use crate::error::Incompatible;
 
 #[derive(Debug, Default)]
-pub struct Scope<'a> {
-    pub variables: HashMap<&'a str, Rc<RefCell<Symbol<'a>>>>,
+pub struct Scope<'a, 'b> {
+    pub variables: HashMap<&'b str, Rc<RefCell<Symbol<'a, 'b>>>>,
     pub should_eval_to: Option<Rc<Type>>,
     pub evals_to: Option<Rc<Type>>,
     pub expression_types: Vec<Rc<Type>>,
 }
 
-impl<'a> Scope<'a> {
-    pub fn get(&self, name: impl Into<&'a str>) -> Option<Rc<RefCell<Symbol<'a>>>> {
+impl<'a, 'b: 'a> Scope<'a, 'b> {
+    pub fn get(&self, name: impl Into<&'a str>) -> Option<Rc<RefCell<Symbol<'a, 'b>>>> {
         self.variables.get(name.into()).cloned()
+    }
+
+    pub fn insert(&mut self, name: &'b str, symbol: Rc<RefCell<Symbol<'a, 'b>>>) {
+        self.variables.insert(name, symbol);
     }
 }
 
 #[derive(Debug)]
-pub struct TypeCheckedSourceFile<'a> {
+pub struct TypeCheckedSourceFile<'a, 'b: 'a> {
     pub source_file: Rc<SourceFile<'a>>,
-    pub typechecker: TypeChecker<'a>,
+    pub typechecker: TypeChecker<'a, 'b>,
 }
 
-impl<'a> TypeCheckedSourceFile<'a> {
+impl<'a, 'b: 'a> TypeCheckedSourceFile<'a, 'b> {
     pub fn new(source_file: SourceFile<'a>) -> Self {
         let source_file = Rc::new(source_file);
         Self {
@@ -55,6 +54,32 @@ impl<'a> TypeCheckedSourceFile<'a> {
         }
     }
     pub fn typecheck(&'a mut self) {
+        self.typechecker.typecheck();
+    }
+}
+
+#[derive(Debug)]
+pub struct TypeChecker<'a, 'b: 'a> {
+    pub scopes: RefCell<Vec<Scope<'a, 'b>>>,
+    pub source_file: Rc<SourceFile<'a>>,
+}
+/// the method to typecheck an ast node is just its name.
+impl<'b, 'a: 'b> TypeChecker<'a, 'b> {
+    pub fn load_stdlib(&self) {
+        let mut scopes = self.scopes.borrow_mut();
+        let scope = scopes.last_mut().unwrap();
+        scope.insert(
+            "println",
+            Rc::new(RefCell::new(Symbol {
+                declaration: Some(SymbolDeclaration::None),
+                ty: Rc::new(Type::FnSig(FnSig {
+                    params: vec![],
+                    return_type: Rc::new(Type::Void),
+                })),
+            })),
+        )
+    }
+    pub fn typecheck(&'b mut self) {
         let mut scope = Scope::default();
         for item in &self.source_file.ast {
             if let Item::Function(function) = item {
@@ -72,7 +97,7 @@ impl<'a> TypeCheckedSourceFile<'a> {
                 scope.variables.insert(
                     function.name.lexeme,
                     Rc::new(RefCell::new(Symbol {
-                        declaration: Some(symbol::SymbolDeclaration::Function(&function)),
+                        declaration: Some(symbol::SymbolDeclaration::Function(function)),
                         ty: Rc::new(Type::FnSig(FnSig {
                             params,
                             return_type: Rc::new(return_type),
@@ -81,24 +106,13 @@ impl<'a> TypeCheckedSourceFile<'a> {
                 );
             }
         }
-        self.typechecker.scopes.borrow_mut().push(scope);
-
+        self.scopes.borrow_mut().push(scope);
+        self.load_stdlib();
         for (index, item) in self.source_file.ast.iter().enumerate() {
-            self.typechecker.item(&item);
+            self.item(&item);
         }
     }
-}
-
-#[derive(Debug)]
-pub struct TypeChecker<'a> {
-    pub scopes: RefCell<Vec<Scope<'a>>>,
-    pub source_file: Rc<SourceFile<'a>>,
-}
-/// the method to typecheck an ast node is just its name.
-impl<'b, 'a: 'b> TypeChecker<'a> {
-    /// typechecks an item
-
-    pub fn item(&self, item: &'a Item<'a>) {
+    pub fn item(&'b self, item: &'b Item<'a>) {
         match item {
             Item::Use(use_stmt) => self.use_stmt(use_stmt),
             Item::Function(function) => self.function(function),
@@ -107,14 +121,14 @@ impl<'b, 'a: 'b> TypeChecker<'a> {
             item => todo!("{:?}", item),
         }
     }
-    pub fn scope(&'b self) -> &'b Scope<'a> {
+    pub fn scope<'c>(&'c self) -> &'c Scope<'a, 'b> {
         unsafe { &*self.scopes.as_ptr() }.last().unwrap()
     }
-    pub fn scopes(&'b self) -> &'b Vec<Scope<'a>> {
+    pub fn scopes<'c>(&'c self) -> &'c Vec<Scope<'a, 'b>> {
         unsafe { &*self.scopes.as_ptr() }
     }
 
-    pub fn get_symbol(&self, ident: &str) -> Option<Rc<RefCell<Symbol<'a>>>> {
+    pub fn get_symbol(&'b self, ident: &str) -> Option<Rc<RefCell<Symbol<'a, 'b>>>> {
         let mut scope = self.scope();
         let mut idx: usize = self.scopes.borrow().len();
         loop {
@@ -212,7 +226,7 @@ impl<'b, 'a: 'b> TypeChecker<'a> {
     }
 
     /// this expects that a scope has already been created for the new block
-    pub fn block(&self, block: &'a Block<'a>) -> TypeResult<'_, Rc<Type>> {
+    pub fn block(&'b self, block: &'b Block<'a>) -> TypeResult<'_, Rc<Type>> {
         let mut iter = block.statements.iter().enumerate();
         for (idx, statement) in iter {
             match self.statement(statement) {
@@ -363,7 +377,7 @@ impl<'b, 'a: 'b> TypeChecker<'a> {
             })),
         );
     }
-    pub fn function(&self, function: &'a Function<'a>) {
+    pub fn function(&'b self, function: &'b Function<'a>) {
         self.scopes.borrow_mut().push(Scope {
             variables: HashMap::default(),
             should_eval_to: Some(

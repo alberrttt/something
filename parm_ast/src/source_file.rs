@@ -1,5 +1,5 @@
 use crate::prelude::*;
-use std::{cell::UnsafeCell, path::PathBuf};
+use std::{cell::UnsafeCell, path::PathBuf, rc::Rc};
 
 use crate::{lexer::Lexer, parser::Parser, prelude::Node};
 
@@ -30,11 +30,11 @@ impl<'a> PreparsedSourceFile<'a> {
 }
 impl<'a> PreparsedSourceFile<'a> {
     pub fn parse(self) -> (SourceFile<'a>, Vec<ParseError<'a>>) {
-        let pp_src: &'a PreparsedSourceFile<'_> = Box::leak(Box::new(self));
+        let pp_src: &PreparsedSourceFile<'_> = Box::leak(Box::new(self));
         let mut stream = ParseStream {
             tokens: &pp_src.parser.tokens,
             current: 0,
-            src_file: pp_src,
+            src_file: &pp_src,
             panic: false,
             attributes: Default::default(),
             errors: Default::default(),

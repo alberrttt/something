@@ -33,6 +33,15 @@ impl<'a> Node<'a> for Dook<'a> {
         }
     }
 }
+pub static COMPILER_IDENT: Identifier<'static> = Identifier {
+    lexeme: "COMPILER IDENT",
+    span: Span {
+        src_start: 123321456654,
+        src_end: 123321456654,
+        line_start: 123321456654,
+        line: 123321456654,
+    },
+};
 gen_token!(
     Integer,
     Float,

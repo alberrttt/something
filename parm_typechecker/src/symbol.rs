@@ -5,27 +5,29 @@ use parm_ast::prelude::*;
 use crate::types::Type;
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct Symbol<'a> {
-    pub declaration: Option<SymbolDeclaration<'a>>,
+pub struct Symbol<'a, 'b: 'a> {
+    pub declaration: Option<SymbolDeclaration<'a, 'b>>,
 
     pub ty: Rc<Type>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum SymbolDeclaration<'a> {
-    Function(&'a Function<'a>),
-    Struct(&'a Struct<'a>),
-    Variable(&'a LetStatement<'a>),
-    Param(&'a Param<'a>),
+pub enum SymbolDeclaration<'a, 'b: 'a> {
+    Function(&'b Function<'a>),
+    Struct(&'b Struct<'a>),
+    Variable(&'b LetStatement<'a>),
+    Param(&'b Param<'a>),
+    None,
 }
 
-impl<'a> SymbolDeclaration<'a> {
+impl<'a, 'b: 'a> SymbolDeclaration<'a, 'b> {
     pub fn name(&self) -> &'a Identifier {
         match self {
             SymbolDeclaration::Function(function) => &function.name,
             SymbolDeclaration::Struct(struct_) => &struct_.ident,
             SymbolDeclaration::Variable(variable) => &variable.ident,
             SymbolDeclaration::Param(param) => &param.name,
+            SymbolDeclaration::None => &COMPILER_IDENT,
         }
     }
 }

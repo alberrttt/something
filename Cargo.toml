@@ -5,6 +5,6 @@ members = [
     "parm_common",
     "parm_compiler",
     "alfredo"
-,  "parm_typechecker"]
+,  "parm_typechecker", "parm_ir"]
 resolver = "2"
 default-members = ["parm_compiler"]

@@ -1,0 +1,10 @@
+[package]
+name = "parm_ir"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+parm_ast = {path = "../parm_ast"}
+parm_typechecker = {path = "../parm_typechecker"}
