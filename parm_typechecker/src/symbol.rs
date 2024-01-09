@@ -11,7 +11,7 @@ pub struct Symbol<'a, 'b: 'a> {
     pub ty: Rc<Type>,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Clone, PartialEq)]
 pub enum SymbolDeclaration<'a, 'b: 'a> {
     Function(&'b Function<'a>),
     Struct(&'b Struct<'a>),
@@ -19,7 +19,17 @@ pub enum SymbolDeclaration<'a, 'b: 'a> {
     Param(&'b Param<'a>),
     None,
 }
-
+impl std::fmt::Debug for SymbolDeclaration<'_, '_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Function(arg0) => f.debug_tuple("Function").finish(),
+            Self::Struct(arg0) => f.debug_tuple("Struct").finish(),
+            Self::Variable(arg0) => f.debug_tuple("Variable").finish(),
+            Self::Param(arg0) => f.debug_tuple("Param").finish(),
+            Self::None => write!(f, "None"),
+        }
+    }
+}
 impl<'a, 'b: 'a> SymbolDeclaration<'a, 'b> {
     pub fn name(&self) -> &'a Identifier {
         match self {

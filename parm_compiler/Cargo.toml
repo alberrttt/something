@@ -10,4 +10,3 @@ serde = { version = "1", features = ["serde_derive"] }
 toml = "0.8.8"
 parm_ast = { path = "../parm_ast" }
 parm_typechecker = { path = "../parm_typechecker" }
-parm_ir = { path = "../parm_ir" }

@@ -1,12 +1,14 @@
 use std::{
+    cell::RefCell,
     env,
     fs::{self},
     path::{Path, PathBuf},
+    rc::Rc,
 };
 
 use parm_ast::{prelude::*, source_file::PreparsedSourceFile};
 use parm_compiler::Config;
-use parm_ir::LoweringCtx;
+use parm_typechecker::{Scope, TypeChecker};
 
 fn main() {
     let parm_toml = Path::new("./example/parm.toml");
@@ -36,11 +38,12 @@ fn main() {
             println!("{}", node.tree());
         }
     }
-
-    let mut typechecked = parm_typechecker::TypeCheckedSourceFile::new(src_file);
-
-    typechecked.typecheck();
-
+    let src_file = Rc::new(src_file);
+    let mut typechecker = TypeChecker {
+        source_file: src_file,
+        scope: RefCell::new(Scope::default()),
+    };
+    let typechecked = typechecker.typecheck();
     // let mut lowering_ctx = LoweringCtx::new(&typechecked.typechecker);
     // dbg!(ast);
 }

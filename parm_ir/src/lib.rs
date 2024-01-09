@@ -60,8 +60,7 @@ impl<'a, 'b> LoweringCtx<'a, 'b> {
         stmt: &LetStatement<'a>,
     ) -> Vec<IR> {
         let mut code: Vec<IR> = Vec::new();
-        let scopes = self.type_checker.scopes.borrow();
-        let scope = scopes.get(self.scope_idx).unwrap();
+        let scope = self.type_checker.current_scope();
         let symbol = scope.get(stmt.ident.lexeme);
         let symbol = symbol.as_ref().unwrap();
         let symbol = symbol.borrow();

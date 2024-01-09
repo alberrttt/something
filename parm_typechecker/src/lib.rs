@@ -8,7 +8,13 @@ pub mod symbol;
 pub mod traits;
 pub mod types;
 use std::{
-    borrow::BorrowMut, cell::RefCell, collections::HashMap, error::Error, f32::consts::E, rc::Rc,
+    backtrace::Backtrace,
+    borrow::{Borrow, BorrowMut},
+    cell::RefCell,
+    collections::HashMap,
+    error::Error,
+    f32::consts::E,
+    rc::Rc,
 };
 
 use error::{display_diagnostic, ErrorKind, InvalidOperand, Mismatch, TypeError, UndefinedSymbol};
@@ -23,7 +29,8 @@ pub struct Scope<'a, 'b> {
     pub variables: HashMap<&'b str, Rc<RefCell<Symbol<'a, 'b>>>>,
     pub should_eval_to: Option<Rc<Type>>,
     pub evals_to: Option<Rc<Type>>,
-    pub expression_types: Vec<Rc<Type>>,
+    pub scopes: Vec<Scope<'a, 'b>>,
+    pub current_sub_scope: usize,
 }
 
 impl<'a, 'b: 'a> Scope<'a, 'b> {
@@ -37,37 +44,32 @@ impl<'a, 'b: 'a> Scope<'a, 'b> {
 }
 
 #[derive(Debug)]
-pub struct TypeCheckedSourceFile<'a, 'b: 'a> {
-    pub source_file: Rc<SourceFile<'a>>,
-    pub typechecker: TypeChecker<'a, 'b>,
-}
-
-impl<'a, 'b: 'a> TypeCheckedSourceFile<'a, 'b> {
-    pub fn new(source_file: SourceFile<'a>) -> Self {
-        let source_file = Rc::new(source_file);
-        Self {
-            source_file: source_file.clone(),
-            typechecker: TypeChecker {
-                scopes: RefCell::new(vec![]),
-                source_file: source_file.clone(),
-            },
-        }
-    }
-    pub fn typecheck(&'a mut self) {
-        self.typechecker.typecheck();
-    }
-}
-
-#[derive(Debug)]
 pub struct TypeChecker<'a, 'b: 'a> {
-    pub scopes: RefCell<Vec<Scope<'a, 'b>>>,
+    pub scope: RefCell<Scope<'a, 'b>>,
     pub source_file: Rc<SourceFile<'a>>,
 }
 /// the method to typecheck an ast node is just its name.
 impl<'b, 'a: 'b> TypeChecker<'a, 'b> {
+    pub fn current_scope<'c: 'b>(&'c self) -> &'c Scope<'a, 'b> {
+        &*self.mut_current_scope()
+    }
+    /// lol 😂
+    #[allow(clippy::mut_from_ref)]
+    pub fn mut_current_scope(&self) -> &mut Scope<'a, 'b> {
+        let mut scope = unsafe { &mut *self.scope.as_ptr() };
+        loop {
+            println!("hello");
+            if !scope.scopes.is_empty() {
+                scope = &mut scope.scopes[scope.current_sub_scope]
+            } else {
+                break;
+            }
+        }
+
+        scope
+    }
     pub fn load_stdlib(&self) {
-        let mut scopes = self.scopes.borrow_mut();
-        let scope = scopes.last_mut().unwrap();
+        let scope = self.mut_current_scope();
         scope.insert(
             "println",
             Rc::new(RefCell::new(Symbol {
@@ -79,37 +81,38 @@ impl<'b, 'a: 'b> TypeChecker<'a, 'b> {
             })),
         )
     }
-    pub fn typecheck(&'b mut self) {
-        let mut scope = Scope::default();
-        for item in &self.source_file.ast {
+    pub fn typecheck(&'b self) {
+        self.scope.borrow_mut().scopes.push(Scope::default());
+        self.load_stdlib();
+        self.hoist_functions(
+            &self.source_file.ast,
+            self.scope.borrow_mut().scopes.last_mut().unwrap(),
+        );
+        for (index, item) in self.source_file.ast.iter().enumerate() {
+            self.item(item);
+        }
+    }
+    pub fn hoist_functions(&'b self, items: &'b [Item<'a>], scope: &mut Scope<'a, 'b>) {
+        for item in items {
             if let Item::Function(function) = item {
-                let return_type = match function.ret_type.as_ref() {
+                let params = function.params.inner.inner.iter().map(|(param, _)| {
+                    let ty = Type::try_from(&param.annotation.ty).unwrap();
+                    (param.name.lexeme, ty)
+                });
+                let return_ty = match function.ret_type.as_ref() {
                     Some(ret) => Type::try_from(&ret.ret_type).unwrap(),
                     None => Type::Void,
                 };
-                let mut params: Vec<Type> = Vec::new();
-
-                for param in function.params.inner.collect_t() {
-                    let ty = &param.annotation.ty;
-                    let ty = <Type as TryFrom<&TypeExpression<'_>>>::try_from(ty).unwrap();
-                    params.push(ty);
-                }
-                scope.variables.insert(
-                    function.name.lexeme,
-                    Rc::new(RefCell::new(Symbol {
-                        declaration: Some(symbol::SymbolDeclaration::Function(function)),
-                        ty: Rc::new(Type::FnSig(FnSig {
-                            params,
-                            return_type: Rc::new(return_type),
-                        })),
-                    })),
-                );
+                let fn_sig = FnSig {
+                    params: params.map(|(_, ty)| ty).collect(),
+                    return_type: Rc::new(return_ty),
+                };
+                let symbol = Rc::new(RefCell::new(Symbol {
+                    declaration: Some(SymbolDeclaration::Function(function)),
+                    ty: Rc::new(Type::FnSig(fn_sig)),
+                }));
+                scope.insert(function.name.lexeme, symbol);
             }
-        }
-        self.scopes.borrow_mut().push(scope);
-        self.load_stdlib();
-        for (index, item) in self.source_file.ast.iter().enumerate() {
-            self.item(&item);
         }
     }
     pub fn item(&'b self, item: &'b Item<'a>) {
@@ -121,34 +124,27 @@ impl<'b, 'a: 'b> TypeChecker<'a, 'b> {
             item => todo!("{:?}", item),
         }
     }
-    pub fn scope<'c>(&'c self) -> &'c Scope<'a, 'b> {
-        unsafe { &*self.scopes.as_ptr() }.last().unwrap()
-    }
-    pub fn scopes<'c>(&'c self) -> &'c Vec<Scope<'a, 'b>> {
-        unsafe { &*self.scopes.as_ptr() }
-    }
 
     pub fn get_symbol(&'b self, ident: &str) -> Option<Rc<RefCell<Symbol<'a, 'b>>>> {
-        let mut scope = self.scope();
-        let mut idx: usize = self.scopes.borrow().len();
+        let mut scope = &*self.scope.borrow();
+        dbg!(&scope);
+        let mut possible: Option<Rc<RefCell<Symbol<'_, '_>>>> = None;
         loop {
+            println!("fix thiss");
             match scope.variables.get(ident) {
-                Some(ty) => return Some(ty.clone()),
+                Some(ty) => {
+                    possible = Some(ty.clone());
+                }
                 None => {
-                    if idx == 0 {
-                        return None;
+                    if !scope.scopes.is_empty() {
+                        scope = &scope.scopes[scope.current_sub_scope]
+                    } else {
+                        return possible;
                     }
-                    idx -= 1;
-                    let scopes = self.scopes();
-                    scope = match scopes.get(idx) {
-                        Some(scope) => scope,
-                        None => {
-                            return None;
-                        }
-                    };
                 }
             }
         }
+        possible
     }
 
     pub fn expression(&'b self, expr: &'a Expression<'a>) -> TypeResult<'b, Rc<Type>> {
@@ -174,7 +170,7 @@ impl<'b, 'a: 'b> TypeChecker<'a, 'b> {
                         return Err(error);
                     }
                 };
-                let symbol = symbol.borrow();
+                let symbol = (*symbol).borrow();
                 Ok(symbol.ty.clone())
             }
             Expression::Call(call) => {
@@ -225,8 +221,8 @@ impl<'b, 'a: 'b> TypeChecker<'a, 'b> {
         }
     }
 
-    /// this expects that a scope has already been created for the new block
-    pub fn block(&'b self, block: &'b Block<'a>) -> TypeResult<'_, Rc<Type>> {
+    // this expects that a scope has already been created for the new block
+    pub fn block_manual_scope(&'b self, block: &'b Block<'a>) -> TypeResult<'_, Rc<Type>> {
         let mut iter = block.statements.iter().enumerate();
         for (idx, statement) in iter {
             match self.statement(statement) {
@@ -237,12 +233,26 @@ impl<'b, 'a: 'b> TypeChecker<'a, 'b> {
             }
             let is_last = idx == block.statements.len() - 1;
             if is_last {
-                let scope = self.scope();
+                let scope = self.current_scope();
                 let evals_to = scope.evals_to.clone().unwrap_or(Rc::new(Type::Void));
                 return Ok(evals_to);
             }
         }
         panic!()
+    }
+
+    /// this creates a scope for the new block
+
+    pub fn block(&'b self, block: &'b Block<'a>) -> TypeResult<'_, Rc<Type>> {
+        let current_scope = self.mut_current_scope();
+        let prev_scope = current_scope.current_sub_scope;
+        current_scope.current_sub_scope = current_scope.scopes.len();
+        current_scope.scopes.push(Scope::default());
+        return {
+            let tmp = self.block_manual_scope(block);
+            current_scope.current_sub_scope = prev_scope;
+            tmp
+        };
     }
     pub fn binary_expression(
         &'b self,
@@ -308,12 +318,6 @@ impl<'b, 'a: 'b> TypeChecker<'a, 'b> {
         match statement {
             Statement::Expression(expression) => {
                 let ty = self.expression(expression)?;
-                self.scopes
-                    .borrow_mut()
-                    .last_mut()
-                    .unwrap()
-                    .expression_types
-                    .push(ty);
             }
             Statement::ExpressionWithSemi(ExpressionWithSemi { expression, semi }) => {
                 self.expression(expression)?;
@@ -332,7 +336,7 @@ impl<'b, 'a: 'b> TypeChecker<'a, 'b> {
     }
     pub fn return_stmt(&'b self, stmt: &'a ReturnStatement<'a>) -> TypeResult<'b, ()> {
         let ty = self.expression(&stmt.expr)?;
-        let scope = self.scope();
+        let scope = self.mut_current_scope();
         let should_eval_to = scope.should_eval_to.as_ref().unwrap();
         if *ty != **should_eval_to {
             let err = TypeError::new(
@@ -345,13 +349,12 @@ impl<'b, 'a: 'b> TypeChecker<'a, 'b> {
             );
             return Err(err);
         }
-        self.scopes.borrow_mut().last_mut().unwrap().evals_to = Some(ty);
+        scope.evals_to = Some(ty);
         Ok(())
     }
     pub fn variable(&'b self, variable: &'a LetStatement<'a>) -> TypeResult<'b, ()> {
         let ty = self.expression(&variable.initializer.as_ref().unwrap().expr)?;
-        let mut scopes = self.scopes.borrow_mut();
-        let scope = scopes.last_mut().unwrap();
+        let scope = self.mut_current_scope();
 
         scope.variables.insert(
             variable.ident.lexeme,
@@ -367,18 +370,20 @@ impl<'b, 'a: 'b> TypeChecker<'a, 'b> {
     pub fn param(&self, param: &'a Param<'a>) {
         let ty = &param.annotation.ty;
         let ty = Type::try_from(ty).unwrap();
-        let mut scopes = self.scopes.borrow_mut();
-        let scope = scopes.last_mut().unwrap();
+        let scope = self.mut_current_scope();
         scope.variables.insert(
             param.name.lexeme,
             Rc::new(RefCell::new(Symbol {
-                declaration: Some(symbol::SymbolDeclaration::Param(&param)),
+                declaration: Some(symbol::SymbolDeclaration::Param(param)),
                 ty: Rc::new(ty),
             })),
         );
     }
     pub fn function(&'b self, function: &'b Function<'a>) {
-        self.scopes.borrow_mut().push(Scope {
+        let mut scope = self.mut_current_scope();
+        let tmp = scope.current_sub_scope;
+        scope.current_sub_scope = scope.scopes.len();
+        scope.scopes.push(Scope {
             variables: HashMap::default(),
             should_eval_to: Some(
                 match function.ret_type.as_ref() {
@@ -388,7 +393,8 @@ impl<'b, 'a: 'b> TypeChecker<'a, 'b> {
                 .into(),
             ),
             evals_to: None,
-            expression_types: Vec::new(),
+            scopes: Vec::new(),
+            current_sub_scope: 0,
         });
         for (param, _) in function.params.inner.inner.iter() {
             self.param(param);
@@ -396,7 +402,7 @@ impl<'b, 'a: 'b> TypeChecker<'a, 'b> {
         if let Some(last_param) = function.params.last.as_ref() {
             self.param(last_param);
         }
-        self.block(&function.body);
-        self.scopes.borrow_mut().pop();
+        self.block_manual_scope(&function.body);
+        scope.current_sub_scope = tmp;
     }
 }
