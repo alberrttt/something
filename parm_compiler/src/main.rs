@@ -45,5 +45,5 @@ fn main() {
     };
     let typechecked = typechecker.typecheck();
     // let mut lowering_ctx = LoweringCtx::new(&typechecked.typechecker);
-    // dbg!(ast);
+    dbg!(&typechecker.scope);
 }

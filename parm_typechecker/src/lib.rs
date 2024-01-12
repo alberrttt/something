@@ -19,7 +19,7 @@ use std::{
 
 use error::{display_diagnostic, ErrorKind, InvalidOperand, Mismatch, TypeError, UndefinedSymbol};
 
-use symbol::{Symbol, SymbolDeclaration};
+use symbol::{FunctionSymbol, Symbol, SymbolDeclaration};
 use types::{FnSig, Number, String, Type};
 
 use crate::error::Incompatible;
@@ -29,7 +29,7 @@ pub struct Scope<'a, 'b> {
     pub variables: HashMap<&'b str, Rc<RefCell<Symbol<'a, 'b>>>>,
     pub should_eval_to: Option<Rc<Type>>,
     pub evals_to: Option<Rc<Type>>,
-    pub scopes: Vec<Scope<'a, 'b>>,
+    pub scopes: Vec<Rc<RefCell<Scope<'a, 'b>>>>,
     pub current_sub_scope: usize,
 }
 
@@ -50,6 +50,11 @@ pub struct TypeChecker<'a, 'b: 'a> {
 }
 /// the method to typecheck an ast node is just its name.
 impl<'b, 'a: 'b> TypeChecker<'a, 'b> {
+    pub fn push_scope(&'b self) {
+        let mut scope = self.mut_current_scope();
+        scope.current_sub_scope = scope.scopes.len();
+        scope.scopes.push(Rc::new(RefCell::new(Scope::default())));
+    }
     pub fn current_scope<'c: 'b>(&'c self) -> &'c Scope<'a, 'b> {
         &*self.mut_current_scope()
     }
@@ -58,9 +63,9 @@ impl<'b, 'a: 'b> TypeChecker<'a, 'b> {
     pub fn mut_current_scope(&self) -> &mut Scope<'a, 'b> {
         let mut scope = unsafe { &mut *self.scope.as_ptr() };
         loop {
-            println!("hello");
             if !scope.scopes.is_empty() {
-                scope = &mut scope.scopes[scope.current_sub_scope]
+                let mut borrowed = scope.scopes[scope.current_sub_scope].as_ptr();
+                scope = unsafe { &mut *borrowed };
             } else {
                 break;
             }
@@ -82,12 +87,8 @@ impl<'b, 'a: 'b> TypeChecker<'a, 'b> {
         )
     }
     pub fn typecheck(&'b self) {
-        self.scope.borrow_mut().scopes.push(Scope::default());
         self.load_stdlib();
-        self.hoist_functions(
-            &self.source_file.ast,
-            self.scope.borrow_mut().scopes.last_mut().unwrap(),
-        );
+        self.hoist_functions(&self.source_file.ast, self.mut_current_scope());
         for (index, item) in self.source_file.ast.iter().enumerate() {
             self.item(item);
         }
@@ -108,7 +109,10 @@ impl<'b, 'a: 'b> TypeChecker<'a, 'b> {
                     return_type: Rc::new(return_ty),
                 };
                 let symbol = Rc::new(RefCell::new(Symbol {
-                    declaration: Some(SymbolDeclaration::Function(function)),
+                    declaration: Some(SymbolDeclaration::Function(FunctionSymbol {
+                        declaration: function,
+                        scope: None,
+                    })),
                     ty: Rc::new(Type::FnSig(fn_sig)),
                 }));
                 scope.insert(function.name.lexeme, symbol);
@@ -118,7 +122,7 @@ impl<'b, 'a: 'b> TypeChecker<'a, 'b> {
     pub fn item(&'b self, item: &'b Item<'a>) {
         match item {
             Item::Use(use_stmt) => self.use_stmt(use_stmt),
-            Item::Function(function) => self.function(function),
+            Item::Function(function) => self.function(function).unwrap(),
             Item::Struct(struct_) => self.struct_(struct_),
 
             item => todo!("{:?}", item),
@@ -127,17 +131,17 @@ impl<'b, 'a: 'b> TypeChecker<'a, 'b> {
 
     pub fn get_symbol(&'b self, ident: &str) -> Option<Rc<RefCell<Symbol<'a, 'b>>>> {
         let mut scope = &*self.scope.borrow();
-        dbg!(&scope);
         let mut possible: Option<Rc<RefCell<Symbol<'_, '_>>>> = None;
         loop {
-            println!("fix thiss");
             match scope.variables.get(ident) {
                 Some(ty) => {
                     possible = Some(ty.clone());
+                    break;
                 }
                 None => {
                     if !scope.scopes.is_empty() {
-                        scope = &scope.scopes[scope.current_sub_scope]
+                        let tmp = scope.scopes[scope.current_sub_scope].as_ptr();
+                        scope = unsafe { &*tmp };
                     } else {
                         return possible;
                     }
@@ -246,8 +250,7 @@ impl<'b, 'a: 'b> TypeChecker<'a, 'b> {
     pub fn block(&'b self, block: &'b Block<'a>) -> TypeResult<'_, Rc<Type>> {
         let current_scope = self.mut_current_scope();
         let prev_scope = current_scope.current_sub_scope;
-        current_scope.current_sub_scope = current_scope.scopes.len();
-        current_scope.scopes.push(Scope::default());
+        self.push_scope();
         return {
             let tmp = self.block_manual_scope(block);
             current_scope.current_sub_scope = prev_scope;
@@ -379,11 +382,11 @@ impl<'b, 'a: 'b> TypeChecker<'a, 'b> {
             })),
         );
     }
-    pub fn function(&'b self, function: &'b Function<'a>) {
+    pub fn function(&'b self, function: &'b Function<'a>) -> Result<(), TypeError> {
         let mut scope = self.mut_current_scope();
         let tmp = scope.current_sub_scope;
         scope.current_sub_scope = scope.scopes.len();
-        scope.scopes.push(Scope {
+        let new_scope = Rc::new(RefCell::new(Scope {
             variables: HashMap::default(),
             should_eval_to: Some(
                 match function.ret_type.as_ref() {
@@ -395,14 +398,26 @@ impl<'b, 'a: 'b> TypeChecker<'a, 'b> {
             evals_to: None,
             scopes: Vec::new(),
             current_sub_scope: 0,
-        });
+        }));
+        let corresponding_symbol = scope.variables.get_mut(function.name.lexeme).unwrap();
+        let corresponding_symbol = &mut *corresponding_symbol.as_ref().borrow_mut();
+        let corresponding_declaration = corresponding_symbol.declaration.as_mut().unwrap();
+        if let SymbolDeclaration::Function(function_symbol) = corresponding_declaration {
+            function_symbol.scope = Some(new_scope.clone());
+        }
+        scope.scopes.push(new_scope);
+
         for (param, _) in function.params.inner.inner.iter() {
             self.param(param);
         }
         if let Some(last_param) = function.params.last.as_ref() {
             self.param(last_param);
         }
-        self.block_manual_scope(&function.body);
+        self.block_manual_scope(&function.body)?;
+        // running in miri will result in a stacked borrow error
+        // idk how this fixes it but it does
+        let scope = self.mut_current_scope();
         scope.current_sub_scope = tmp;
+        Ok(())
     }
 }
