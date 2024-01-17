@@ -1,4 +1,4 @@
-use std::{cell::RefCell, rc::Rc};
+use std::{cell::RefCell, fmt::Debug, rc::Rc};
 
 use parm_ast::prelude::*;
 
@@ -19,10 +19,29 @@ pub enum SymbolDeclaration<'a, 'b: 'a> {
     Param(&'b Param<'a>),
     None,
 }
-#[derive(Clone, Debug)]
+impl<'a, 'b: 'a> Debug for SymbolDeclaration<'a, 'b> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Function(arg0) => f.debug_tuple("Function").field(arg0).finish(),
+            Self::Struct(arg0) => f.debug_tuple("Struct").finish(),
+            Self::Variable(arg0) => f.debug_tuple("Variable").finish(),
+            Self::Param(arg0) => f.debug_tuple("Param").finish(),
+            Self::None => write!(f, "None"),
+        }
+    }
+}
+#[derive(Clone)]
 pub struct FunctionSymbol<'a, 'b: 'a> {
     pub declaration: &'b Function<'a>,
     pub scope: Option<Rc<RefCell<Scope<'a, 'b>>>>,
+}
+impl<'a, 'b: 'a> Debug for FunctionSymbol<'a, 'b> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("FunctionSymbol")
+            .field("declaration", &self.declaration.name)
+            .field("scope", &self.scope)
+            .finish()
+    }
 }
 impl<'a, 'b: 'a> std::ops::Deref for FunctionSymbol<'a, 'b> {
     type Target = Function<'a>;
@@ -36,17 +55,7 @@ impl<'a, 'b: 'a> PartialEq for FunctionSymbol<'a, 'b> {
         self.declaration == other.declaration
     }
 }
-impl std::fmt::Debug for SymbolDeclaration<'_, '_> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::Function(arg0) => f.debug_tuple("Function").finish(),
-            Self::Struct(arg0) => f.debug_tuple("Struct").finish(),
-            Self::Variable(arg0) => f.debug_tuple("Variable").finish(),
-            Self::Param(arg0) => f.debug_tuple("Param").finish(),
-            Self::None => write!(f, "None"),
-        }
-    }
-}
+
 impl<'a, 'b: 'a> SymbolDeclaration<'a, 'b> {
     pub fn name(&self) -> &'a Identifier {
         match self {
