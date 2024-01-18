@@ -47,6 +47,7 @@ impl<'a, 'b: 'a> Scope<'a, 'b> {
 pub struct TypeChecker<'a, 'b: 'a> {
     pub scope: RefCell<Scope<'a, 'b>>,
     pub source_file: Rc<SourceFile<'a>>,
+    pub panic: RefCell<bool>,
 }
 /// the method to typecheck an ast node is just its name.
 impl<'b, 'a: 'b> TypeChecker<'a, 'b> {
@@ -233,6 +234,7 @@ impl<'b, 'a: 'b> TypeChecker<'a, 'b> {
                 Ok(_) => {}
                 Err(err) => {
                     eprintln!("{}", err);
+                    *self.panic.borrow_mut() = true;
                 }
             }
             let is_last = idx == block.statements.len() - 1;

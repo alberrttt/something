@@ -8,7 +8,8 @@ use std::{
 
 use parm_ast::{prelude::*, source_file::PreparsedSourceFile};
 use parm_compiler::Config;
-use parm_typechecker::{Scope, TypeChecker};
+use parm_ir::LoweringCtx;
+use parm_typechecker::{symbol::SymbolDeclaration, Scope, TypeChecker};
 
 fn main() {
     let parm_toml = Path::new("./example/parm.toml");
@@ -42,8 +43,23 @@ fn main() {
     let mut typechecker = TypeChecker {
         source_file: src_file,
         scope: RefCell::new(Scope::default()),
+        panic: RefCell::new(false),
     };
-    let typechecked = typechecker.typecheck();
-    // let mut lowering_ctx = LoweringCtx::new(&typechecked.typechecker);
-    dbg!(&typechecker.scope);
+    typechecker.typecheck();
+    if *typechecker.panic.borrow() {
+        return;
+    }
+    let mut lowering = LoweringCtx::new(&typechecker);
+    for (idx, symbol) in &typechecker.scope.borrow().variables {
+        let symbol = symbol.borrow();
+        let Some(SymbolDeclaration::Function(function)) = &symbol.declaration else {
+            continue;
+        };
+        let ir = lowering.lower_fn(function.declaration, {
+            let tmp = function.scope.as_ref();
+            // lol
+            unsafe { &*tmp.unwrap().as_ptr() }
+        });
+        println!("{:?}", ir);
+    }
 }

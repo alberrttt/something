@@ -16,6 +16,20 @@ pub struct Registers {
     pub registers: [Register; 8],
 }
 use std::ops::{Index, IndexMut};
+impl Registers {
+    pub fn get_unused(&mut self) -> Option<RegIdx> {
+        for (i, reg) in self.registers.iter_mut().enumerate() {
+            if !reg.used {
+                reg.used = true;
+                return Some(RegIdx { index: i as u8 });
+            }
+        }
+        None
+    }
+    pub fn free(&mut self, idx: RegIdx) {
+        self.registers[idx.index as usize].used = false;
+    }
+}
 impl Index<RegIdx> for Registers {
     type Output = Register;
     fn index(&self, index: RegIdx) -> &Self::Output {

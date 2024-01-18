@@ -9,6 +9,9 @@ pub enum IR {
     Pop {
         into: RegIdx,
     },
+
+    /// pops into nowhere
+    PopNoWhere,
     Move {
         from: IRValue,
         into: RegIdx,
@@ -40,5 +43,5 @@ pub enum IR {
 #[derive(Debug, Clone, PartialEq)]
 pub enum IRValue {
     Register(RegIdx),
-    Constant(f64),
+    Float(f64),
 }

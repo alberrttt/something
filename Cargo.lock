@@ -61,6 +61,7 @@ name = "parm_compiler"
 version = "0.1.0"
 dependencies = [
  "parm_ast",
+ "parm_ir",
  "parm_typechecker",
  "serde",
  "toml",
