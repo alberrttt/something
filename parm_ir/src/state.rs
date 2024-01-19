@@ -13,21 +13,40 @@ pub struct RegIdx {
 }
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct Registers {
-    pub registers: [Register; 8],
+    pub registers: [Register; 16],
 }
 use std::ops::{Index, IndexMut};
 impl Registers {
-    pub fn get_unused(&mut self) -> Option<RegIdx> {
-        for (i, reg) in self.registers.iter_mut().enumerate() {
-            if !reg.used {
-                reg.used = true;
-                return Some(RegIdx { index: i as u8 });
+    pub fn get_unused(&self) -> Option<RegIdx> {
+        for (idx, register) in self.registers.iter().enumerate() {
+            if !register.used {
+                return Some(RegIdx { index: idx as u8 });
             }
         }
         None
     }
-    pub fn free(&mut self, idx: RegIdx) {
-        self.registers[idx.index as usize].used = false;
+    pub fn is_unused(&self, idx: RegIdx) -> bool {
+        !self.registers[idx.index as usize].used
+    }
+    pub fn get(&self, idx: RegIdx) -> &Register {
+        &self.registers[idx.index as usize]
+    }
+
+    pub fn free(&mut self, idx: RegIdx) -> Result<(), ()> {
+        let register = &mut self.registers[idx.index as usize];
+        if !register.used {
+            return Err(());
+        }
+        register.used = false;
+        Ok(())
+    }
+    pub fn use_reg(&mut self, idx: RegIdx) -> Result<(), ()> {
+        let register = &mut self.registers[idx.index as usize];
+        if register.used {
+            return Err(());
+        }
+        register.used = true;
+        Ok(())
     }
 }
 impl Index<RegIdx> for Registers {

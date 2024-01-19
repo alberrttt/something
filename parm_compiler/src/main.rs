@@ -8,7 +8,10 @@ use std::{
 
 use parm_ast::{prelude::*, source_file::PreparsedSourceFile};
 use parm_compiler::Config;
-use parm_ir::LoweringCtx;
+use parm_ir::{
+    ir_scope::{IRScope, ScopeDeclaration},
+    LoweringCtx,
+};
 use parm_typechecker::{symbol::SymbolDeclaration, Scope, TypeChecker};
 
 fn main() {
@@ -50,16 +53,22 @@ fn main() {
         return;
     }
     let mut lowering = LoweringCtx::new(&typechecker);
-    for (idx, symbol) in &typechecker.scope.borrow().variables {
-        let symbol = symbol.borrow();
+    let scope = unsafe { &*typechecker.scope.as_ptr() };
+    for (idx, symbol) in scope.variables.iter() {
+        let symbol = unsafe { &*symbol.as_ptr() };
         let Some(SymbolDeclaration::Function(function)) = &symbol.declaration else {
             continue;
         };
-        let ir = lowering.lower_fn(function.declaration, {
-            let tmp = function.scope.as_ref();
-            // lol
-            unsafe { &*tmp.unwrap().as_ptr() }
-        });
+        let scope = unsafe { &*function.scope.as_ref().unwrap().as_ptr() };
+        let mut ir_scope = IRScope {
+            scope,
+            declaration: ScopeDeclaration::FunctionDeclaration(function),
+            children: vec![],
+            prologue: vec![],
+            epilogue: vec![],
+            variables: Default::default(),
+        };
+        let ir = lowering.lower_fn(function.declaration, &mut ir_scope);
         println!("{:?}", ir);
     }
 }

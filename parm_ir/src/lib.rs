@@ -1,10 +1,11 @@
 use ast::*;
 use parm_typechecker::Scope;
 use prelude::*;
-mod function;
-mod ir;
-mod prelude;
-mod state;
+pub mod function;
+pub mod ir;
+pub mod ir_scope;
+pub mod prelude;
+pub mod state;
 
 pub struct LoweringCtx<'a, 'b: 'a> {
     pub type_checker: &'b TypeChecker<'a, 'b>,
@@ -36,7 +37,7 @@ impl<'a, 'b> LoweringCtx<'a, 'b> {
     pub fn lower_fn(
         &mut self,
         function: &'b Function<'a>,
-        scope: &Scope<'a, 'b>,
+        scope: &mut IRScope<'a, 'b, '_>,
     ) -> FunctionIR<'_> {
         let mut function_ir = FunctionIR::new(function.name.lexeme);
 
@@ -44,7 +45,7 @@ impl<'a, 'b> LoweringCtx<'a, 'b> {
             let code = self.lower_stmt(&function_ir, scope, stmt);
             function_ir.code.extend(code);
         }
-
+        function_ir.code.append(&mut scope.epilogue);
         function_ir
     }
     pub fn inc_stack(&mut self, size: u32) -> u32 {
@@ -56,13 +57,13 @@ impl<'a, 'b> LoweringCtx<'a, 'b> {
     pub fn lower_stmt(
         &mut self,
         function_ir: &FunctionIR<'_>,
-        scope: &Scope<'a, 'b>,
+        scope: &mut IRScope<'a, 'b, '_>,
         stmt: &Statement<'a>,
     ) -> Vec<IR> {
         let mut code: Vec<IR> = Vec::new();
         match stmt {
             Statement::Let(let_statement) => {
-                let mut statement_code = self.lower_let_stmt(function_ir, let_statement);
+                let mut statement_code = self.lower_let_stmt(function_ir, scope, let_statement);
                 code.extend(statement_code);
             }
             Statement::ExpressionWithSemi(stmt) => {
@@ -79,14 +80,13 @@ impl<'a, 'b> LoweringCtx<'a, 'b> {
         let mut code = Vec::new();
         match expr {
             Expression::Number(number) => {
-                self.inc_stack(8);
-                code.push(IR::Push {
-                    value: IRValue::Float(number.value),
+                let register = self.state.registers.get_unused().unwrap();
+                code.push(IR::Move {
+                    from: IRValue::Float(number.value),
+                    into: register,
                 });
             }
-            Expression::Call(call) => {
-
-            }
+            Expression::Call(call) => {}
             _ => {}
         }
         return code;
@@ -94,10 +94,10 @@ impl<'a, 'b> LoweringCtx<'a, 'b> {
     pub fn lower_let_stmt(
         &mut self,
         function_ir: &FunctionIR<'_>,
+        scope: &mut IRScope<'a, 'b, '_>,
         stmt: &LetStatement<'a>,
     ) -> Vec<IR> {
         let mut code: Vec<IR> = Vec::new();
-        let scope = self.type_checker.current_scope();
         let symbol = scope.get(stmt.ident.lexeme);
         let symbol = symbol.as_ref().unwrap();
         let symbol = symbol.borrow();
@@ -110,11 +110,16 @@ impl<'a, 'b> LoweringCtx<'a, 'b> {
         let Expression::Number(number) = value else {
             todo!()
         };
-        self.inc_stack(8);
 
-        code.push(IR::Push {
-            value: IRValue::Float(number.value),
+        code.extend(self.lower_expression(value));
+        scope.epilogue.push(IR::Move {
+            from: IRValue::Register(self.state.registers.get_unused().unwrap()),
+            into: RegIdx { index: 23 },
         });
+        scope.variables.insert(
+            stmt.ident.lexeme,
+            ir_scope::Location::Register(RegIdx { index: 23 }),
+        );
         code
     }
 }
