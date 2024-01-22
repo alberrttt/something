@@ -3,9 +3,7 @@
     "lldb.showDisassembly": "auto",
     "lldb.dereferencePointers": true,
     "lldb.consoleMode": "evaluate",
-    "rust-analyzer.linkedProjects": [
-        "./parm_ir/Cargo.toml"
-    ],
+
     "files.associations": {
         "*.mng": "mng",
         "stdio.h": "c"

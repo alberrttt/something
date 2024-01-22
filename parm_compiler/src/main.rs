@@ -1,18 +1,19 @@
 use std::{
     cell::RefCell,
-    env,
-    fs::{self},
+    env, fs,
     path::{Path, PathBuf},
     rc::Rc,
 };
 
-use parm_ast::{prelude::*, source_file::PreparsedSourceFile};
-use parm_compiler::Config;
-use parm_ir::{
-    ir_scope::{IRScope, ScopeDeclaration},
-    LoweringCtx,
+use parm_compiler::{
+    ast::{source_file::PreparsedSourceFile, tree_display::TreeDisplay},
+    ir::{
+        ir_scope::{IRScope, ScopeDeclaration},
+        LoweringCtx,
+    },
+    opts::*,
+    typechecker::{symbol::SymbolDeclaration, Scope, TypeChecker},
 };
-use parm_typechecker::{symbol::SymbolDeclaration, Scope, TypeChecker};
 
 fn main() {
     let parm_toml = Path::new("./example/parm.toml");

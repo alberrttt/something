@@ -1,18 +1,7 @@
-use serde::Deserialize;
+#![feature(associated_type_defaults)]
+#![feature(decl_macro)]
 
-#[derive(Debug, Clone)]
-pub struct Compiler {}
-
-#[derive(Debug, Clone, Deserialize)]
-pub struct Config {
-    pub package: Package,
-}
-#[derive(Debug, Clone, Deserialize)]
-pub struct Package {
-    pub name: String,
-    pub bin: Bin,
-}
-#[derive(Debug, Clone, Deserialize)]
-pub struct Bin {
-    pub entry: String,
-}
+pub mod ast;
+pub mod ir;
+pub mod opts;
+pub mod typechecker;

@@ -1,10 +1,8 @@
 [workspace]
 members = [
-    "parm_ast",
     "parm_dev_macros",
     "parm_common",
     "parm_compiler",
-    "alfredo"
-,  "parm_typechecker", "parm_ir"]
+    "alfredo"]
 resolver = "2"
 default-members = ["parm_compiler"]
