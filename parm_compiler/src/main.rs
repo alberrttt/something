@@ -7,12 +7,7 @@ use std::{
 
 use parm_compiler::{
     ast::{source_file::PreparsedSourceFile, tree_display::TreeDisplay},
-    ir::{
-        ir_scope::{IRScope, ScopeDeclaration},
-        LoweringCtx,
-    },
     opts::*,
-    typechecker::{symbol::SymbolDeclaration, Scope, TypeChecker},
 };
 
 fn main() {
@@ -44,32 +39,4 @@ fn main() {
         }
     }
     let src_file = Rc::new(src_file);
-    let mut typechecker = TypeChecker {
-        source_file: src_file,
-        scope: RefCell::new(Scope::default()),
-        panic: RefCell::new(false),
-    };
-    typechecker.typecheck();
-    if *typechecker.panic.borrow() {
-        return;
-    }
-    let mut lowering = LoweringCtx::new(&typechecker);
-    let scope = unsafe { &*typechecker.scope.as_ptr() };
-    for (idx, symbol) in scope.variables.iter() {
-        let symbol = unsafe { &*symbol.as_ptr() };
-        let Some(SymbolDeclaration::Function(function)) = &symbol.declaration else {
-            continue;
-        };
-        let scope = unsafe { &*function.scope.as_ref().unwrap().as_ptr() };
-        let mut ir_scope = IRScope {
-            scope,
-            declaration: ScopeDeclaration::FunctionDeclaration(function),
-            children: vec![],
-            prologue: vec![],
-            epilogue: vec![],
-            variables: Default::default(),
-        };
-        let ir = lowering.lower_fn(function.declaration, &mut ir_scope);
-        println!("{:?}", ir);
-    }
 }
