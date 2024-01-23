@@ -11,7 +11,7 @@ pub enum Item<'a> {
     LetStatement(LetStatement<'a>),
     Function(Function<'a>),
     Use(UseStatement<'a>),
-    Struct(Struct<'a>),
+    Struct(StructDeclaration<'a>),
 }
 
 impl<'a> Node<'a> for Item<'a> {
@@ -45,7 +45,8 @@ impl<'a> Node<'a> for Item<'a> {
                 }
             },
             Token::StructKeyword(_) => {
-                let struct_dec: Struct = <Struct as Node>::parse(parse_stream)?;
+                let struct_dec: StructDeclaration =
+                    <StructDeclaration as Node>::parse(parse_stream)?;
                 return Ok(Item::Struct(struct_dec));
             }
             Token::FnKeyword(_) => {

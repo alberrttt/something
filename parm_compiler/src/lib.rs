@@ -3,3 +3,4 @@
 
 pub mod ast;
 pub mod opts;
+pub mod typechecker;

@@ -12,7 +12,7 @@ pub use parser::nodes::{
     attribute::Attribute,
     declaration::{
         function::{Function, Param},
-        struct_dec::Struct,
+        struct_dec::StructDeclaration,
         variable::LetStatement,
     },
     delimiter::{Brace, Bracket, Paren},

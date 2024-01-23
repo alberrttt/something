@@ -1,6 +1,7 @@
 pub mod binary;
 pub mod block;
 pub mod call;
+pub mod expr_struct;
 pub mod group;
 pub mod if_expr;
 pub mod number;
@@ -17,12 +18,14 @@ use crate::ast::{
 };
 
 use self::{
-    binary::BinaryExpression, block::Block, group::Group, number::Number, precedence::Precedence,
+    binary::BinaryExpression, block::Block, expr_struct::StructExpression, group::Group,
+    number::Number, precedence::Precedence,
 };
 
 #[derive(Debug, Clone, PartialEq, Tree)]
 pub enum Expression<'a> {
     Identifier(Identifier<'a>),
+    StructExpression(StructExpression<'a>),
     Number(number::Number<'a>),
     StringLit(StringLiteral<'a>),
     BinaryExpression(binary::BinaryExpression<'a>),
@@ -72,11 +75,23 @@ pub fn atom<'a>(
         Token::Identifier(_) => {
             let ident = parse_stream.step(|parser| Identifier::parse(parser).clone())?;
             let ident = Expression::Identifier(ident);
-            if let Ok(Token::LParen(_)) = parse_stream.peek() {
-                return Ok(Expression::Call(Call {
-                    callee: Box::new(ident),
-                    arguments: Call::args(parse_stream)?,
-                }));
+            if let Ok(token) = parse_stream.peek() {
+                match token {
+                    Token::LParen(_) => {
+                        let call = parse_stream.step(call::Call::parse)?;
+                        return Ok(Expression::Call(call));
+                    }
+                    Token::LBrace(_) => {
+                        return Ok(Expression::StructExpression(StructExpression {
+                            ident: match ident {
+                                Expression::Identifier(ident) => ident,
+                                _ => unreachable!(),
+                            },
+                            body: parse_stream.step(|parser| parser.parse())?,
+                        }))
+                    }
+                    _ => {}
+                }
             }
 
             Ok(ident)
@@ -123,6 +138,7 @@ impl Spanned for Expression<'_> {
     fn span(&self) -> parm_common::Span {
         use Expression::*;
         match self {
+            StructExpression(struct_expr) => struct_expr.span(),
             Identifier(ident) => ident.span(),
             Number(number) => number.span(),
             BinaryExpression(binary) => binary.span(),
