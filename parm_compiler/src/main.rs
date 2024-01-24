@@ -8,6 +8,7 @@ use std::{
 use parm_compiler::{
     ast::{source_file::PreparsedSourceFile, tree_display::TreeDisplay},
     opts::*,
+    typechecker::{scope::ScopeArena, Typechecker},
 };
 
 fn main() {
@@ -24,7 +25,7 @@ fn main() {
     let entry_src = fs::read_to_string(entry.clone()).unwrap();
 
     let preparsed_src_file = PreparsedSourceFile::new(entry, &entry_src);
-    let (src_file, errors) = preparsed_src_file.parse();
+    let (mut src_file, errors) = preparsed_src_file.parse();
     if env::var("TOKENS").is_ok() {
         for token in &src_file.preparsed.parser.tokens {
             println!("{:?}", token);
@@ -38,5 +39,11 @@ fn main() {
             println!("{}", node.tree());
         }
     }
-    let src_file = Rc::new(src_file);
+
+    let mut typechecker = Typechecker {
+        source_file: &mut src_file,
+        scopes: ScopeArena::new(),
+    };
+
+    typechecker.check().unwrap();
 }

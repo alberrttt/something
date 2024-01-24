@@ -1,5 +1,5 @@
 use std::cell::UnsafeCell;
-mod scope;
+pub mod scope;
 
 use crate::ast::prelude::{Expression, Function, Item, SourceFile, Statement};
 

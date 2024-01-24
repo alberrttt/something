@@ -17,8 +17,10 @@ impl<'a> Node<'a> for StructMemberInitialization<'a> {
         Self: Sized,
     {
         let ident = parser.step(|parser| Identifier::parse(parser).clone())?;
+        parser.panic = true;
         let colon = parser.step(|parser| Colon::parse(parser).clone())?;
         let expr = parser.step(|parser| Expression::parse(parser).clone())?;
+        parser.panic = false;
         Ok(Self { ident, colon, expr })
     }
 }

@@ -76,10 +76,14 @@ pub fn atom<'a>(
             let ident = parse_stream.step(|parser| Identifier::parse(parser).clone())?;
             let ident = Expression::Identifier(ident);
             if let Ok(token) = parse_stream.peek() {
+                parse_stream.panic = true;
                 match token {
                     Token::LParen(_) => {
-                        let call = parse_stream.step(call::Call::parse)?;
-                        return Ok(Expression::Call(call));
+                        let call = parse_stream.step(call::Call::args)?;
+                        return Ok(Expression::Call(Call {
+                            callee: Box::new(ident),
+                            arguments: call,
+                        }));
                     }
                     Token::LBrace(_) => {
                         return Ok(Expression::StructExpression(StructExpression {
@@ -92,6 +96,7 @@ pub fn atom<'a>(
                     }
                     _ => {}
                 }
+                parse_stream.panic = false;
             }
 
             Ok(ident)
