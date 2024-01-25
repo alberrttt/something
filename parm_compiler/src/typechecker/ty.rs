@@ -8,6 +8,7 @@ pub enum TypeData {
     String,
     Boolean,
 }
+
 impl Type {
     pub fn ty_expr<'a>(ty: &TypeExpression<'a>) -> Self {
         let name = ty.path.segments.last.as_ref().unwrap().ident.lexeme;
@@ -52,13 +53,33 @@ pub struct TypeArena {
     pub types: Vec<Type>,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Clone, PartialEq)]
 pub struct TypeRef<'a> {
     pub idx: usize,
     pub arena: *mut TypeArena,
     pub _marker: std::marker::PhantomData<&'a ()>,
 }
-use std::ops::*;
+// Recursive expansion of Debug macro
+// ===================================
+
+impl std::fmt::Debug for TypeRef<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let TypeRef {
+            idx,
+            arena,
+            _marker,
+        } = self;
+        f.debug_struct("TypeRef")
+            .field("idx", &idx)
+            .field("arena", &arena)
+            .field("data", &**self)
+            .finish()
+    }
+}
+use std::{
+    fmt::{self, Debug},
+    ops::*,
+};
 
 use crate::ast::prelude::TypeExpression;
 impl<'a> Deref for TypeRef<'a> {

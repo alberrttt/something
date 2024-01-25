@@ -44,9 +44,7 @@ impl<'a> MutScopeRef<'a> {
 impl<'a> Deref for MutScopeRef<'a> {
     type Target = Scope<'a>;
     fn deref(&self) -> &Self::Target {
-        let scope = unsafe { &(*self.arena).arena[self.idx] };
-
-        scope
+        (unsafe { &(*self.arena).arena[self.idx] }) as _
     }
 }
 impl<'a> DerefMut for MutScopeRef<'a> {
@@ -67,7 +65,7 @@ impl<'a> ScopeArena<'a> {
         Self::default()
     }
     /// scope: the parent of the new scope
-    pub fn insert(&mut self, scope: usize) -> MutScopeRef<'a> {
+    pub fn insert(&'a mut self, scope: usize) -> MutScopeRef<'a> {
         let arena_len = self.arena.len();
         let child = Scope::new(arena_len, Some(scope));
         self.arena[scope].children.push(child.idx);

@@ -2,11 +2,13 @@ use std::{cell::UnsafeCell, rc::Rc, slice::Windows};
 pub mod scope;
 pub mod symbol;
 pub mod ty;
-use crate::ast::prelude::{Expression, Function, Item, SourceFile, Statement};
+use crate::ast::prelude::{
+    Expression, ExpressionWithSemi, Function, Identifier, Item, LetStatement, SourceFile, Statement,
+};
 
 use self::{
     scope::{MutScopeRef, Scope, ScopeArena},
-    ty::{Type, TypeArena, TypeData},
+    ty::{Type, TypeArena, TypeData, TypeRef},
 };
 
 #[derive(Debug)]
@@ -34,7 +36,7 @@ impl<'a> Typechecker<'a> {
 }
 
 impl<'a> Item<'a> {
-    fn check(&mut self, tc: &'a mut Typechecker<'a>, with: MutScopeRef<'a>) -> () {
+    fn check<'b: 'a>(&'b mut self, tc: &'b mut Typechecker<'a>, with: MutScopeRef<'a>) -> () {
         match self {
             Item::Function(func) => func.check(tc, with),
             _ => panic!(),
@@ -42,13 +44,35 @@ impl<'a> Item<'a> {
     }
 }
 impl<'a> Expression<'a> {
-    fn check(&mut self, tc: &mut Typechecker, with: ()) -> () {}
+    fn check(&mut self, tc: &mut Typechecker<'a>, with: &MutScopeRef<'a>) -> () {}
+    pub fn get_ty<'b: 'a>(
+        &self,
+        tc: &'b mut Typechecker<'a>,
+        with: MutScopeRef<'a>,
+    ) -> TypeRef<'_> {
+        match self {
+            Expression::Identifier(ident) => ident.get_ty(tc, with),
+            Expression::Number(_) => Type {
+                data: TypeData::Number,
+            }
+            .allocate(&mut tc.ty_arena),
+            _ => todo!(),
+        }
+    }
+}
+impl<'a> Identifier<'a> {
+    pub fn get_ty(&self, tc: &Typechecker, with: MutScopeRef<'a>) -> TypeRef<'_> {
+        let scope = &*with;
+        let symbol = scope.vars.get(self.lexeme).unwrap();
+        symbol.inner.ty.clone()
+    }
 }
 
 impl<'a> Function<'a> {
-    fn check<'b: 'a>(&mut self, tc: &'b mut Typechecker<'a>, with: MutScopeRef<'b>) -> () {
-        let mut scope = tc.scopes.insert(with.idx);
-        let mut tc = UnsafeCell::new(tc);
+    fn check<'b: 'a>(&'b mut self, tc: &'b mut Typechecker<'a>, with: MutScopeRef<'b>) {
+        let tc = UnsafeCell::new(tc);
+
+        let mut scope = unsafe { &mut *tc.get() }.scopes.insert(with.idx);
         for param in self.params.collect_t() {
             let mut tc = unsafe { &mut *tc.get() };
             let ty = Type::ty_expr(&param.annotation.ty);
@@ -63,13 +87,39 @@ impl<'a> Function<'a> {
             scope.vars.insert(param.name.lexeme, symbol);
         }
 
-        let mut tc = unsafe { &mut *tc.get() };
         for stmt in &mut self.body.statements.inner {
-            stmt.check(tc, ());
+            let mut tc = unsafe { &mut *tc.get() };
+
+            stmt.check(tc, &scope);
         }
     }
 }
+impl<'a> LetStatement<'a> {
+    fn check<'b: 'a>(&'b mut self, tc: &'b mut Typechecker<'a>, mut with: MutScopeRef<'a>) {
+        let tc = UnsafeCell::new(tc);
+        let init = self.initializer.as_ref().unwrap();
+        let ty = init.expr.get_ty(unsafe { &mut *tc.get() }, with.clone());
+        let name = self.ident;
+        let symbol = symbol::Symbol {
+            inner: Rc::new(symbol::InnerSymbol {
+                source_file: unsafe { &**tc.get() }.source_file,
+                name: name.lexeme,
+                ty,
+            }),
+        };
 
+        with.vars.insert(name.lexeme, symbol);
+    }
+}
 impl<'a> Statement<'a> {
-    fn check(&mut self, tc: &mut Typechecker, with: ()) -> () {}
+    fn check<'b: 'a>(&'b mut self, tc: &'b mut Typechecker<'a>, with: &MutScopeRef<'a>) -> () {
+        match self {
+            Statement::Expression(expr) => expr.check(tc, with),
+            Statement::ExpressionWithSemi(ExpressionWithSemi { expression, semi }) => {
+                expression.check(tc, with)
+            }
+            Statement::Let(let_stmt) => let_stmt.check(tc, with.clone()),
+            x => panic!("{:#?}", x),
+        }
+    }
 }
