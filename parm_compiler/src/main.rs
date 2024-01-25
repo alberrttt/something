@@ -43,6 +43,7 @@ fn main() {
     let mut typechecker = Typechecker {
         source_file: &mut src_file,
         scopes: ScopeArena::new(),
+        ty_arena: Default::default(),
     };
 
     typechecker.check().unwrap();
