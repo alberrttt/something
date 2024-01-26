@@ -1,6 +1,7 @@
 use crate::{
     ast::error::{ErrorKind, ExpectedNode},
     ast::prelude::*,
+    typechecker::symbol::Symbol,
 };
 use parm_common::{Span, Spanned};
 use std::marker::PhantomData;
@@ -41,10 +42,12 @@ pub static COMPILER_IDENT: Identifier<'static> = Identifier {
         line_start: 123321456654,
         line: 123321456654,
     },
+    symbol: None,
 };
 gen_token!(
     Integer,
     Float,
+    #[no_impl]
     Identifier,
     // syntax
     #[lexeme = "("]
@@ -193,7 +196,78 @@ gen_token!(
     #[no_impl]
     StringLiteral,
 );
+#[derive(Clone, PartialEq, Debug)]
+pub struct Identifier<'a> {
+    pub lexeme: &'a str,
+    pub symbol: Option<Symbol<'a>>,
+    pub span: Span,
+}
+impl<'a> TreeDisplay for Identifier<'a> {
+    fn tree(&self) -> Tree {
+        Tree::new(format!("ident<\"{}\">", self.lexeme))
+    }
+}
+impl Default for Identifier<'_> {
+    fn default() -> Self {
+        Self {
+            lexeme: "<identifier>",
+            symbol: None,
+            span: Span::default(),
+        }
+    }
+}
 
+impl<'a> Identifier<'a> {
+    fn spanless_eq(&self, other: &Identifier) -> bool {
+        self.lexeme == other.lexeme
+    }
+}
+impl<'a> Spanned for Identifier<'a> {
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+impl<'a> Node<'a> for Identifier<'a> {
+    fn parse(
+        parse_stream: &mut crate::ast::parser::parse_stream::ParseStream<'a>,
+    ) -> ParseResult<'a, Self>
+    where
+        Self: Sized,
+    {
+        let peeked = match parse_stream.peek() {
+            Ok(peeked) => peeked,
+            Err(err) => {
+                return ParseError::err(
+                    ErrorKind::EndOfTokens(EndOfTokens {
+                        expected: Some("identifier"),
+                    }),
+                    parse_stream.tokens,
+                    parse_stream.src_file,
+                )
+            }
+        };
+        if let Token::Identifier(peeked) = peeked {
+            let tmp = Ok(peeked.clone());
+            parse_stream.advance()?;
+            tmp
+        } else {
+            ParseError::err(
+                ErrorKind::ExpectedToken(ExpectedToken {
+                    got: peeked.to_owned(),
+                    expected: Token::Identifier(Self::default()),
+                    location: parse_stream.current,
+                }),
+                parse_stream.tokens,
+                parse_stream.src_file,
+            )
+        }
+    }
+}
+impl<'a> From<Identifier<'a>> for Token<'a> {
+    fn from(value: Identifier<'a>) -> Token<'a> {
+        Token::Identifier(value)
+    }
+}
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct StringLiteral<'a> {
     pub lexeme: &'a str,

@@ -1,8 +1,9 @@
 use std::{
-    cell::UnsafeCell,
+    cell::{RefCell, UnsafeCell},
     collections::HashMap,
     default,
     ops::{Deref, DerefMut},
+    rc::Rc,
 };
 
 use super::symbol::Symbol;
@@ -26,38 +27,9 @@ impl<'a> Scope<'a> {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
-pub struct MutScopeRef<'a> {
-    pub idx: usize,
-    pub arena: *mut ScopeArena<'a>,
-    pub _marker: std::marker::PhantomData<&'a ()>,
-}
-impl<'a> MutScopeRef<'a> {
-    pub fn new(idx: usize, arena: *mut ScopeArena<'a>) -> Self {
-        Self {
-            idx,
-            arena,
-            _marker: std::marker::PhantomData,
-        }
-    }
-}
-impl<'a> Deref for MutScopeRef<'a> {
-    type Target = Scope<'a>;
-    fn deref(&self) -> &Self::Target {
-        (unsafe { &(*self.arena).arena[self.idx] }) as _
-    }
-}
-impl<'a> DerefMut for MutScopeRef<'a> {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        let scope = unsafe { &mut (*self.arena).arena[self.idx] };
-
-        scope
-    }
-}
-
 #[derive(Debug, Default)]
 pub struct ScopeArena<'a> {
-    arena: Vec<Scope<'a>>,
+    arena: Vec<Rc<RefCell<Scope<'a>>>>,
 }
 
 impl<'a> ScopeArena<'a> {
@@ -65,17 +37,23 @@ impl<'a> ScopeArena<'a> {
         Self::default()
     }
     /// scope: the parent of the new scope
-    pub fn insert(&'a mut self, scope: usize) -> MutScopeRef<'a> {
+    pub fn insert(&'a mut self, scope: usize) -> Rc<RefCell<Scope<'a>>> {
         let arena_len = self.arena.len();
         let child = Scope::new(arena_len, Some(scope));
-        self.arena[scope].children.push(child.idx);
-        self.arena.push(child);
-        MutScopeRef::new(arena_len, self as *mut Self)
+        {
+            let mut scope = &self.arena[scope];
+            let mut scope = scope.borrow_mut();
+            scope.children.push(child.idx);
+        }
+        let reference = Rc::new(RefCell::new(child));
+        self.arena.push(reference.clone());
+        reference
     }
 
-    pub fn push(&mut self) -> MutScopeRef<'a> {
+    pub fn push(&mut self) -> Rc<RefCell<Scope<'a>>> {
         let scope = Scope::new(self.arena.len(), None);
-        self.arena.push(scope);
-        MutScopeRef::new(self.arena.len() - 1, self as *mut Self)
+        let reference = Rc::new(RefCell::new(scope));
+        self.arena.push(reference.clone());
+        reference
     }
 }

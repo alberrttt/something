@@ -224,7 +224,12 @@ impl<'src> Lexer<'src> {
             "pub" => Pub { lexeme, span }.into(),
             "self" => LSelf { lexeme, span }.into(),
             "Self" => USelf { lexeme, span }.into(),
-            _ => Identifier { lexeme, span }.into(),
+            _ => Identifier {
+                lexeme,
+                span,
+                symbol: None,
+            }
+            .into(),
         }
     }
 }

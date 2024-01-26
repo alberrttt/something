@@ -1,12 +1,18 @@
-use std::rc::Rc;
+use std::{fmt::Debug, rc::Rc};
 
 use crate::ast::prelude::SourceFile;
 
 use super::ty::TypeRef;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Clone, PartialEq)]
 pub struct Symbol<'a> {
     pub inner: Rc<InnerSymbol<'a>>,
+}
+unsafe impl Sync for Symbol<'_> {}
+impl<'a> Debug for Symbol<'a> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:#?}", self.inner)
+    }
 }
 impl<'a> std::ops::Deref for Symbol<'a> {
     type Target = InnerSymbol<'a>;

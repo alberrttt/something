@@ -1,13 +1,19 @@
-use std::{cell::UnsafeCell, rc::Rc, slice::Windows};
+use std::{
+    cell::{RefCell, UnsafeCell},
+    rc::Rc,
+    slice::Windows,
+};
 pub mod scope;
 pub mod symbol;
 pub mod ty;
+type RF<T> = Rc<RefCell<T>>;
 use crate::ast::prelude::{
-    Expression, ExpressionWithSemi, Function, Identifier, Item, LetStatement, SourceFile, Statement,
+    Call, Expression, ExpressionWithSemi, Function, Identifier, Item, LetStatement, SourceFile,
+    Statement,
 };
 
 use self::{
-    scope::{MutScopeRef, Scope, ScopeArena},
+    scope::{Scope, ScopeArena},
     ty::{Type, TypeArena, TypeData, TypeRef},
 };
 
@@ -27,52 +33,87 @@ impl<'a> Typechecker<'a> {
         let scope = sself.scopes.push();
         for item in &mut unsafe { &mut *u_self.get() }.source_file.ast {
             let sself = unsafe { &mut *u_self.get() };
-            item.check(sself, scope.clone());
+            item.check(sself, &scope);
         }
         let sself = unsafe { &mut *u_self.get() };
-        dbg!(&sself.scopes);
         Ok(())
     }
 }
 
 impl<'a> Item<'a> {
-    fn check<'b: 'a>(&'b mut self, tc: &'b mut Typechecker<'a>, with: MutScopeRef<'a>) -> () {
+    fn check<'b: 'a>(&'b mut self, tc: &'b mut Typechecker<'a>, with: &RF<Scope<'a>>) -> () {
         match self {
             Item::Function(func) => func.check(tc, with),
             _ => panic!(),
         }
     }
 }
+impl<'a> Call<'a> {
+    fn check<'b: 'a>(&'b mut self, tc: &'b mut Typechecker<'a>, with: &RF<Scope<'a>>) -> () {
+        let tc = UnsafeCell::new(tc);
+        let mut scope = unsafe { &mut *tc.get() }.scopes.insert({
+            let mut with = with.borrow();
+            with.idx
+        });
+        let mut args = self
+            .arguments
+            .inner
+            .inner
+            .iter_mut()
+            .map(|f| &mut f.0)
+            .collect::<Vec<_>>();
+        if let Some(mut arg) = &self.arguments.last {
+            args.push(arg.as_mut());
+        }
+        for arg in args {
+            let mut tc = unsafe { &mut *tc.get() };
+            arg.check(tc, &scope);
+        }
+    }
+}
 impl<'a> Expression<'a> {
-    fn check(&mut self, tc: &mut Typechecker<'a>, with: &MutScopeRef<'a>) -> () {}
-    pub fn get_ty<'b: 'a>(
-        &self,
-        tc: &'b mut Typechecker<'a>,
-        with: MutScopeRef<'a>,
-    ) -> TypeRef<'_> {
+    fn check<'b: 'a>(&mut self, tc: &'b mut Typechecker<'a>, with: &RF<Scope<'a>>) -> TypeRef<'b> {
         match self {
-            Expression::Identifier(ident) => ident.get_ty(tc, with),
+            Expression::Identifier(ident) => {
+                let scope = &*with;
+                let binding = scope.borrow_mut();
+                let symbol = binding.vars.get(ident.lexeme).unwrap();
+                ident.symbol = Some(symbol.clone());
+                dbg!(&symbol);
+                symbol.inner.ty.clone()
+            }
             Expression::Number(_) => Type {
                 data: TypeData::Number,
             }
             .allocate(&mut tc.ty_arena),
-            _ => todo!(),
+            Expression::BinaryExpression(_) => Type {
+                data: TypeData::Number,
+            }
+            .allocate(&mut tc.ty_arena),
+            Expression::Call(call) => Type {
+                data: TypeData::Number,
+            }
+            .allocate(&mut tc.ty_arena),
+
+            _ => todo!("{:#?}", self),
         }
     }
 }
 impl<'a> Identifier<'a> {
-    pub fn get_ty(&self, tc: &Typechecker, with: MutScopeRef<'a>) -> TypeRef<'_> {
-        let scope = &*with;
-        let symbol = scope.vars.get(self.lexeme).unwrap();
-        symbol.inner.ty.clone()
+    pub fn get_symbol(&self) -> Option<&symbol::Symbol<'_>> {
+        return self.symbol.as_ref();
     }
 }
 
 impl<'a> Function<'a> {
-    fn check<'b: 'a>(&'b mut self, tc: &'b mut Typechecker<'a>, with: MutScopeRef<'b>) {
+    fn check<'b: 'a>(&'b mut self, tc: &'b mut Typechecker<'a>, with: &RF<Scope<'b>>) {
         let tc = UnsafeCell::new(tc);
 
-        let mut scope = unsafe { &mut *tc.get() }.scopes.insert(with.idx);
+        let mut scope = unsafe { &mut *tc.get() }.scopes.insert({
+            let mut with = with.borrow();
+            with.idx
+        });
+
         for param in self.params.collect_t() {
             let mut tc = unsafe { &mut *tc.get() };
             let ty = Type::ty_expr(&param.annotation.ty);
@@ -84,7 +125,7 @@ impl<'a> Function<'a> {
                     ty,
                 }),
             };
-            scope.vars.insert(param.name.lexeme, symbol);
+            scope.borrow_mut().vars.insert(param.name.lexeme, symbol);
         }
 
         for stmt in &mut self.body.statements.inner {
@@ -95,11 +136,11 @@ impl<'a> Function<'a> {
     }
 }
 impl<'a> LetStatement<'a> {
-    fn check<'b: 'a>(&'b mut self, tc: &'b mut Typechecker<'a>, mut with: MutScopeRef<'a>) {
+    fn check<'b: 'a>(&'b mut self, tc: &'b mut Typechecker<'a>, mut with: &RF<Scope<'a>>) {
         let tc = UnsafeCell::new(tc);
-        let init = self.initializer.as_ref().unwrap();
-        let ty = init.expr.get_ty(unsafe { &mut *tc.get() }, with.clone());
-        let name = self.ident;
+        let init = self.initializer.as_mut().unwrap();
+        let ty = init.expr.check(unsafe { &mut *tc.get() }, with);
+        let name = &self.ident;
         let symbol = symbol::Symbol {
             inner: Rc::new(symbol::InnerSymbol {
                 source_file: unsafe { &**tc.get() }.source_file,
@@ -108,17 +149,19 @@ impl<'a> LetStatement<'a> {
             }),
         };
 
-        with.vars.insert(name.lexeme, symbol);
+        with.borrow_mut().vars.insert(name.lexeme, symbol);
     }
 }
 impl<'a> Statement<'a> {
-    fn check<'b: 'a>(&'b mut self, tc: &'b mut Typechecker<'a>, with: &MutScopeRef<'a>) -> () {
+    fn check<'b: 'a>(&'b mut self, tc: &'b mut Typechecker<'a>, with: &RF<Scope<'a>>) -> () {
         match self {
-            Statement::Expression(expr) => expr.check(tc, with),
-            Statement::ExpressionWithSemi(ExpressionWithSemi { expression, semi }) => {
-                expression.check(tc, with)
+            Statement::Expression(expr) => {
+                expr.check(tc, with);
             }
-            Statement::Let(let_stmt) => let_stmt.check(tc, with.clone()),
+            Statement::ExpressionWithSemi(ExpressionWithSemi { expression, semi }) => {
+                expression.check(tc, with);
+            }
+            Statement::Let(let_stmt) => let_stmt.check(tc, with),
             x => panic!("{:#?}", x),
         }
     }

@@ -264,7 +264,7 @@ pub fn gen_token(input: TokenStream) -> TokenStream {
                 .map(|member| quote! {#group_name::#member(token) => token.tree(),})
                 .collect::<Vec<_>>();
             quote! {
-                #[derive(Debug, Clone, PartialEq,Eq,Default)]
+                #[derive(Debug, Clone, PartialEq,Default)]
                 pub enum #group_name<'a> {
                     #[default]
                     None,
@@ -449,7 +449,7 @@ pub fn gen_token(input: TokenStream) -> TokenStream {
     quote! {
         #(#struct_defs)*
         #groups
-        #[derive(Debug, Clone, PartialEq, Eq, Default)]
+        #[derive(Debug, Clone, PartialEq, Default)]
         pub enum Token<'a> {
             #[default]
             None,

@@ -1,5 +1,5 @@
 use std::{
-    cell::RefCell,
+    cell::{RefCell, UnsafeCell},
     env, fs,
     path::{Path, PathBuf},
     rc::Rc,
@@ -34,11 +34,6 @@ fn main() {
     for error in errors {
         eprintln!("{}", error);
     }
-    if env::var("AST").is_ok() {
-        for node in &src_file.ast {
-            println!("{}", node.tree());
-        }
-    }
 
     let mut typechecker = Typechecker {
         source_file: &mut src_file,
@@ -46,5 +41,14 @@ fn main() {
         ty_arena: Default::default(),
     };
 
-    typechecker.check().unwrap();
+    let typechecker = UnsafeCell::new(typechecker);
+    unsafe {
+        (*typechecker.get()).check().unwrap();
+
+        if env::var("AST").is_ok() {
+            for node in &(*typechecker.get()).source_file.ast {
+                println!("{:#?}", node);
+            }
+        }
+    }
 }
