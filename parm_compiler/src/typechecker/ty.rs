@@ -1,16 +1,21 @@
 #[derive(Debug, Clone, PartialEq)]
-pub struct Type {
-    pub data: TypeData,
+pub struct Type<'a> {
+    pub data: TypeData<'a>,
 }
 #[derive(Debug, Clone, PartialEq)]
-pub enum TypeData {
+pub enum TypeData<'a> {
     Number,
     String,
     Boolean,
+    None,
+    Function {
+        params: Vec<TypeRef<'a>>,
+        ret: Box<TypeRef<'a>>,
+    },
 }
 
-impl Type {
-    pub fn ty_expr<'a>(ty: &TypeExpression<'a>) -> Self {
+impl<'a> Type<'a> {
+    pub fn ty_expr(ty: &TypeExpression<'a>) -> Self {
         let name = ty.path.segments.last.as_ref().unwrap().ident.lexeme;
         match name {
             "number" => Self {
@@ -26,8 +31,8 @@ impl Type {
         }
     }
 }
-impl Type {
-    pub fn allocate(self, arena: &mut TypeArena) -> TypeRef {
+impl<'a> Type<'a> {
+    pub fn allocate(self, arena: &mut TypeArena<'a>) -> TypeRef<'a> {
         // first, lets see if we already have this type
         for (idx, ty) in arena.types.iter().enumerate() {
             if ty == &self {
@@ -49,14 +54,14 @@ impl Type {
     }
 }
 #[derive(Debug, Clone, PartialEq, Default)]
-pub struct TypeArena {
-    pub types: Vec<Type>,
+pub struct TypeArena<'a> {
+    pub types: Vec<Type<'a>>,
 }
 
 #[derive(Clone, PartialEq)]
 pub struct TypeRef<'a> {
     pub idx: usize,
-    pub arena: *mut TypeArena,
+    pub arena: *mut TypeArena<'a>,
     pub _marker: std::marker::PhantomData<&'a ()>,
 }
 // Recursive expansion of Debug macro
@@ -83,7 +88,7 @@ use std::{
 
 use crate::ast::prelude::TypeExpression;
 impl<'a> Deref for TypeRef<'a> {
-    type Target = Type;
+    type Target = Type<'a>;
     fn deref(&self) -> &Self::Target {
         unsafe { &(*self.arena).types[self.idx] }
     }

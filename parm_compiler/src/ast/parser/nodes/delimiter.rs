@@ -1,6 +1,6 @@
 use crate::ast::prelude::*;
 use parm_common::Spanned;
-use std::ops::Deref;
+use std::ops::{Deref, DerefMut};
 macro_rules! Delimiter {
     ($name:ident,$open:ident,$close:ident) => {
         #[derive(Debug, Clone, PartialEq)]
@@ -22,6 +22,13 @@ macro_rules! Delimiter {
                 &self.inner
             }
         }
+
+        impl<'a, T: Node<'a>> DerefMut for $name<'a, T> {
+            fn deref_mut(&mut self) -> &mut Self::Target {
+                &mut self.inner
+            }
+        }
+
         impl<'a, T: Spanned + Node<'a>> Spanned for $name<'a, T> {
             fn span(&self) -> parm_common::Span {
                 (self.open.span(), self.close.span()).into()
@@ -119,6 +126,11 @@ impl<'a, T: Node<'a>> Deref for Brace<'a, T> {
     type Target = T;
     fn deref(&self) -> &Self::Target {
         &self.inner
+    }
+}
+impl<'a, T: Node<'a>> DerefMut for Brace<'a, T> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.inner
     }
 }
 impl<'a, T: Spanned + Node<'a>> Spanned for Brace<'a, T> {

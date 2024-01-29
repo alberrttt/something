@@ -71,7 +71,7 @@ impl<'a> ParseStream<'a> {
     pub fn at_end(&self) -> bool {
         self.current >= self.tokens.len()
     }
-    pub fn advance<'b>(&mut self) -> ParseResult<'b, &'b Token<'a>> {
+    pub fn advance<'b: 'a>(&mut self) -> ParseResult<'b, &'b Token<'a>> {
         match self.tokens.get(self.current) {
             Some(some) => {
                 self.current += 1;

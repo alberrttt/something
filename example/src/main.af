@@ -4,4 +4,6 @@ fn foo ( x : number ) {
     println(x*2);
 }
 
- fn main() {}
+ fn main() {
+    foo(1);
+ }

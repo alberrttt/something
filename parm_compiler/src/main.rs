@@ -8,7 +8,7 @@ use std::{
 use parm_compiler::{
     ast::{source_file::PreparsedSourceFile, tree_display::TreeDisplay},
     opts::*,
-    typechecker::{scope::ScopeArena, Typechecker},
+    typechecker::{scope::ScopeArena, ty, Typechecker},
 };
 
 fn main() {
@@ -44,9 +44,10 @@ fn main() {
     let typechecker = UnsafeCell::new(typechecker);
     unsafe {
         (*typechecker.get()).check().unwrap();
-
+        let tc = &(*typechecker.get());
+        dbg!(&tc.scopes);
         if env::var("AST").is_ok() {
-            for node in &(*typechecker.get()).source_file.ast {
+            for node in &tc.source_file.ast {
                 println!("{:#?}", node);
             }
         }

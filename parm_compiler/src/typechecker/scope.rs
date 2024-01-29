@@ -6,7 +6,7 @@ use std::{
     rc::Rc,
 };
 
-use super::symbol::Symbol;
+use super::{symbol::Symbol, ty::TypeRef};
 
 #[derive(Debug)]
 pub struct Scope<'a> {
@@ -55,5 +55,21 @@ impl<'a> ScopeArena<'a> {
         let reference = Rc::new(RefCell::new(scope));
         self.arena.push(reference.clone());
         reference
+    }
+
+    pub fn get_variable(&self, from: usize, name: &str) -> Option<TypeRef<'a>> {
+        let scope = &self.arena[from];
+        let scope = scope.borrow();
+        for (variable, symbol) in &scope.vars {
+            dbg!(variable);
+            if variable.eq(&name) {
+                return Some(symbol.ty.clone());
+            }
+        }
+        if let Some(parent) = scope.parent {
+            self.get_variable(parent, name)
+        } else {
+            None
+        }
     }
 }

@@ -14,13 +14,14 @@ use crate::ast::prelude::{
 
 use self::{
     scope::{Scope, ScopeArena},
+    symbol::{InnerSymbol, Symbol},
     ty::{Type, TypeArena, TypeData, TypeRef},
 };
 
 #[derive(Debug)]
 pub struct Typechecker<'a> {
     pub source_file: &'a mut SourceFile<'a>,
-    pub ty_arena: TypeArena,
+    pub ty_arena: TypeArena<'a>,
     pub scopes: ScopeArena<'a>,
 }
 
@@ -31,6 +32,29 @@ impl<'a> Typechecker<'a> {
         // lol
         let sself = unsafe { &mut *u_self.get() };
         let scope = sself.scopes.push();
+        {
+            scope.borrow_mut().vars.insert(
+                "println",
+                Symbol {
+                    inner: Rc::new(InnerSymbol {
+                        source_file: sself.source_file,
+                        name: "println",
+                        ty: Type {
+                            data: TypeData::Function {
+                                params: Vec::new(),
+                                ret: Box::new(
+                                    Type {
+                                        data: TypeData::None,
+                                    }
+                                    .allocate(&mut sself.ty_arena),
+                                ),
+                            },
+                        }
+                        .allocate(&mut sself.ty_arena),
+                    }),
+                },
+            );
+        }
         for item in &mut unsafe { &mut *u_self.get() }.source_file.ast {
             let sself = unsafe { &mut *u_self.get() };
             item.check(sself, &scope);
@@ -49,25 +73,44 @@ impl<'a> Item<'a> {
     }
 }
 impl<'a> Call<'a> {
-    fn check<'b: 'a>(&'b mut self, tc: &'b mut Typechecker<'a>, with: &RF<Scope<'a>>) -> () {
+    fn check<'b: 'a>(&mut self, tc: &'b mut Typechecker<'a>, with: &RF<Scope<'a>>) -> TypeRef<'b> {
         let tc = UnsafeCell::new(tc);
-        let mut scope = unsafe { &mut *tc.get() }.scopes.insert({
-            let mut with = with.borrow();
+        let scope = unsafe { &mut *tc.get() }.scopes.insert({
+            let with = with.borrow();
             with.idx
         });
-        let mut args = self
+
+        let sself = UnsafeCell::new(self);
+        let mut args = unsafe { &mut *sself.get() }
             .arguments
             .inner
             .inner
             .iter_mut()
             .map(|f| &mut f.0)
             .collect::<Vec<_>>();
-        if let Some(mut arg) = &self.arguments.last {
+        let sself = unsafe { &mut *sself.get() };
+        if let Some(arg) = sself.arguments.last.as_mut() {
             args.push(arg.as_mut());
         }
-        for arg in args {
-            let mut tc = unsafe { &mut *tc.get() };
-            arg.check(tc, &scope);
+        let s_tc = unsafe { &mut *tc.get() };
+        let Expression::Identifier(callee) = sself.callee.as_ref() else {
+            panic!()
+        };
+
+        let function_decl = s_tc
+            .scopes
+            .get_variable(with.borrow().idx, callee.lexeme)
+            .unwrap();
+        for arg in args.iter_mut() {
+            let tc = unsafe { &mut *tc.get() };
+            let arg_ty = arg.check(tc, &scope);
+        }
+        match &function_decl.data {
+            TypeData::Function { params, ret } => {
+                todo!();
+                return *ret.clone();
+            }
+            _ => panic!(),
         }
     }
 }
@@ -90,17 +133,14 @@ impl<'a> Expression<'a> {
                 data: TypeData::Number,
             }
             .allocate(&mut tc.ty_arena),
-            Expression::Call(call) => Type {
-                data: TypeData::Number,
-            }
-            .allocate(&mut tc.ty_arena),
+            Expression::Call(call) => call.check(tc, with),
 
             _ => todo!("{:#?}", self),
         }
     }
 }
 impl<'a> Identifier<'a> {
-    pub fn get_symbol(&self) -> Option<&symbol::Symbol<'_>> {
+    pub fn get_symbol(&self) -> Option<&symbol::Symbol<'a>> {
         return self.symbol.as_ref();
     }
 }
@@ -113,11 +153,12 @@ impl<'a> Function<'a> {
             let mut with = with.borrow();
             with.idx
         });
-
+        let mut params = Vec::new();
         for param in self.params.collect_t() {
             let mut tc = unsafe { &mut *tc.get() };
             let ty = Type::ty_expr(&param.annotation.ty);
             let ty = ty.allocate(&mut tc.ty_arena);
+            params.push(ty.clone());
             let symbol = symbol::Symbol {
                 inner: Rc::new(symbol::InnerSymbol {
                     source_file: tc.source_file,
@@ -127,9 +168,31 @@ impl<'a> Function<'a> {
             };
             scope.borrow_mut().vars.insert(param.name.lexeme, symbol);
         }
-
+        let mut s_tc = unsafe { &mut *tc.get() };
+        let function_symbol = Symbol {
+            inner: Rc::new(symbol::InnerSymbol {
+                source_file: s_tc.source_file,
+                name: self.name.lexeme,
+                ty: Type {
+                    data: TypeData::Function {
+                        params,
+                        ret: Box::new(
+                            Type {
+                                data: TypeData::None,
+                            }
+                            .allocate(&mut s_tc.ty_arena),
+                        ),
+                    },
+                }
+                .allocate(&mut s_tc.ty_arena),
+            }),
+        };
+        with.borrow_mut()
+            .vars
+            .insert(self.name.lexeme, function_symbol.clone());
+        self.name.symbol = Some(function_symbol.clone());
         for stmt in &mut self.body.statements.inner {
-            let mut tc = unsafe { &mut *tc.get() };
+            let tc = unsafe { &mut *tc.get() };
 
             stmt.check(tc, &scope);
         }
