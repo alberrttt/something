@@ -6,7 +6,13 @@ use std::{
 };
 
 use parm_compiler::{
-    ast::{source_file::PreparsedSourceFile, tree_display::TreeDisplay},
+    ast::{
+        error::ParseError,
+        parser::{nodes::item::Item, ParseStream},
+        source_file::{PreparsedSourceFile, SourceFile},
+        traits::Node,
+        tree_display::TreeDisplay,
+    },
     opts::*,
     typechecker::{scope::ScopeArena, ty, Typechecker},
 };
@@ -25,7 +31,25 @@ fn main() {
     let entry_src = fs::read_to_string(entry.clone()).unwrap();
 
     let preparsed_src_file = PreparsedSourceFile::new(entry, &entry_src);
-    let (mut src_file, errors) = preparsed_src_file.parse();
+    let (mut src_file, errors) = {
+        let mut stream = ParseStream {
+            tokens: &preparsed_src_file.parser.tokens,
+            current: 0,
+            src_file: &preparsed_src_file,
+            panic: false,
+            attributes: Default::default(),
+            errors: Default::default(),
+        };
+        let (ast, errors) =
+            <Vec<Item<'_>> as Node<'_, (Vec<Item<'_>>, Vec<ParseError<'_>>)>>::parse(&mut stream);
+        (
+            SourceFile {
+                preparsed: &preparsed_src_file,
+                ast,
+            },
+            errors,
+        )
+    };
     if env::var("TOKENS").is_ok() {
         for token in &src_file.preparsed.parser.tokens {
             println!("{:?}", token);
@@ -45,7 +69,6 @@ fn main() {
     unsafe {
         (*typechecker.get()).check().unwrap();
         let tc = &(*typechecker.get());
-        dbg!(&tc.scopes);
         if env::var("AST").is_ok() {
             for node in &tc.source_file.ast {
                 println!("{:#?}", node);

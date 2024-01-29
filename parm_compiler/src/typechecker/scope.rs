@@ -29,7 +29,7 @@ impl<'a> Scope<'a> {
 
 #[derive(Debug, Default)]
 pub struct ScopeArena<'a> {
-    arena: Vec<Rc<RefCell<Scope<'a>>>>,
+    pub arena: Vec<Rc<RefCell<Scope<'a>>>>,
 }
 
 impl<'a> ScopeArena<'a> {
@@ -61,7 +61,6 @@ impl<'a> ScopeArena<'a> {
         let scope = &self.arena[from];
         let scope = scope.borrow();
         for (variable, symbol) in &scope.vars {
-            dbg!(variable);
             if variable.eq(&name) {
                 return Some(symbol.ty.clone());
             }

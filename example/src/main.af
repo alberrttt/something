@@ -1,7 +1,7 @@
 
 fn foo ( x : number ) {
     let hello = 1;
-    println(x*2);
+    println("hello");
 }
 
  fn main() {

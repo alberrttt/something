@@ -4,8 +4,10 @@ use std::{
     slice::Windows,
 };
 pub mod scope;
+pub mod stdlib;
 pub mod symbol;
 pub mod ty;
+
 type RF<T> = Rc<RefCell<T>>;
 use crate::ast::prelude::{
     Call, Expression, ExpressionWithSemi, Function, Identifier, Item, LetStatement, SourceFile,
@@ -28,37 +30,16 @@ pub struct Typechecker<'a> {
 impl<'a> Typechecker<'a> {
     pub fn check(&'a mut self) -> Result<(), &'static str> {
         let u_self = UnsafeCell::new(self);
-
         // lol
         let sself = unsafe { &mut *u_self.get() };
         let scope = sself.scopes.push();
-        {
-            scope.borrow_mut().vars.insert(
-                "println",
-                Symbol {
-                    inner: Rc::new(InnerSymbol {
-                        source_file: sself.source_file,
-                        name: "println",
-                        ty: Type {
-                            data: TypeData::Function {
-                                params: Vec::new(),
-                                ret: Box::new(
-                                    Type {
-                                        data: TypeData::None,
-                                    }
-                                    .allocate(&mut sself.ty_arena),
-                                ),
-                            },
-                        }
-                        .allocate(&mut sself.ty_arena),
-                    }),
-                },
-            );
-        }
+        unsafe { &mut (*u_self.get()) }.load_stdlib();
+
         for item in &mut unsafe { &mut *u_self.get() }.source_file.ast {
             let sself = unsafe { &mut *u_self.get() };
             item.check(sself, &scope);
         }
+
         let sself = unsafe { &mut *u_self.get() };
         Ok(())
     }
@@ -96,19 +77,33 @@ impl<'a> Call<'a> {
         let Expression::Identifier(callee) = sself.callee.as_ref() else {
             panic!()
         };
-
-        let function_decl = s_tc
-            .scopes
-            .get_variable(with.borrow().idx, callee.lexeme)
-            .unwrap();
-        for arg in args.iter_mut() {
-            let tc = unsafe { &mut *tc.get() };
-            let arg_ty = arg.check(tc, &scope);
+        if callee.lexeme != "println" {
+            panic!()
         }
+        let function_decl = s_tc.scopes.get_variable(with.borrow().idx, callee.lexeme);
+        let function_decl = match function_decl {
+            Some(function_decl) => function_decl,
+            None => panic!("Function `{}` not found", callee.lexeme),
+        };
         match &function_decl.data {
             TypeData::Function { params, ret } => {
-                todo!();
-                return *ret.clone();
+                let mut params = params.iter();
+                let mut args = args.iter_mut();
+
+                loop {
+                    let Some(param) = params.next() else {
+                        break;
+                    };
+                    let Some(arg) = args.next() else {
+                        panic!("Not enough arguments")
+                    };
+                    let tc = unsafe { &mut *tc.get() };
+                    let ty = arg.check(tc, with);
+                    if dbg!(ty.ne(param)) {
+                        panic!("Type mismatch")
+                    }
+                }
+                *ret.clone()
             }
             _ => panic!(),
         }
@@ -147,6 +142,7 @@ impl<'a> Identifier<'a> {
 
 impl<'a> Function<'a> {
     fn check<'b: 'a>(&'b mut self, tc: &'b mut Typechecker<'a>, with: &RF<Scope<'b>>) {
+        println!("checking {}", self.name.lexeme);
         let tc = UnsafeCell::new(tc);
 
         let mut scope = unsafe { &mut *tc.get() }.scopes.insert({
@@ -180,11 +176,11 @@ impl<'a> Function<'a> {
                             Type {
                                 data: TypeData::None,
                             }
-                            .allocate(&mut s_tc.ty_arena),
+                            .allocate(&mut unsafe { &mut *tc.get() }.ty_arena),
                         ),
                     },
                 }
-                .allocate(&mut s_tc.ty_arena),
+                .allocate(&mut unsafe { &mut *tc.get() }.ty_arena),
             }),
         };
         with.borrow_mut()

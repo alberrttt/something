@@ -32,7 +32,7 @@ impl<'a> Type<'a> {
     }
 }
 impl<'a> Type<'a> {
-    pub fn allocate(self, arena: &mut TypeArena<'a>) -> TypeRef<'a> {
+    pub fn allocate<'b: 'a>(self, arena: &'b mut TypeArena<'a>) -> TypeRef<'b> {
         // first, lets see if we already have this type
         for (idx, ty) in arena.types.iter().enumerate() {
             if ty == &self {
@@ -44,7 +44,6 @@ impl<'a> Type<'a> {
             }
         }
         let idx = arena.types.len();
-
         arena.types.push(self);
         TypeRef {
             idx,
