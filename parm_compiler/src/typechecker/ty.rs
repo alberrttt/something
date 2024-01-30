@@ -12,6 +12,7 @@ pub enum TypeData<'a> {
         params: Vec<TypeRef<'a>>,
         ret: Box<TypeRef<'a>>,
     },
+    Any,
 }
 
 impl<'a> Type<'a> {

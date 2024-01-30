@@ -2,7 +2,7 @@ use std::{cell::UnsafeCell, rc::Rc};
 
 use super::{
     symbol::{InnerSymbol, Symbol},
-    ty::Type,
+    ty::{Type, TypeData},
     Typechecker,
 };
 
@@ -23,7 +23,10 @@ impl<'a> Typechecker<'a> {
                     name: "println",
                     ty: Type {
                         data: super::ty::TypeData::Function {
-                            params: Vec::new(),
+                            params: vec![Type {
+                                data: TypeData::Any,
+                            }
+                            .allocate(&mut unsafe { &mut *tc.get() }.ty_arena)],
                             ret: Box::new(ret),
                         },
                     }

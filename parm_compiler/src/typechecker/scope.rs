@@ -57,18 +57,22 @@ impl<'a> ScopeArena<'a> {
         reference
     }
 
-    pub fn get_variable(&self, from: usize, name: &str) -> Option<TypeRef<'a>> {
+    pub fn get_symbol(&self, from: usize, name: &str) -> Option<Symbol<'a>> {
         let scope = &self.arena[from];
         let scope = scope.borrow();
         for (variable, symbol) in &scope.vars {
             if variable.eq(&name) {
-                return Some(symbol.ty.clone());
+                return Some(symbol.clone());
             }
         }
         if let Some(parent) = scope.parent {
-            self.get_variable(parent, name)
+            self.get_symbol(parent, name)
         } else {
             None
         }
+    }
+    pub fn get_ty(&self, from: usize, name: &str) -> Option<TypeRef<'a>> {
+        self.get_symbol(from, name)
+            .map(|symbol| symbol.inner.ty.clone())
     }
 }

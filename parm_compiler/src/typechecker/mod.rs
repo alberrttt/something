@@ -3,11 +3,12 @@ use std::{
     rc::Rc,
     slice::Windows,
 };
+pub mod impls;
 pub mod scope;
 pub mod stdlib;
 pub mod symbol;
+pub mod tests;
 pub mod ty;
-
 type RF<T> = Rc<RefCell<T>>;
 use crate::ast::prelude::{
     Call, Expression, ExpressionWithSemi, Function, Identifier, Item, LetStatement, SourceFile,
@@ -45,183 +46,6 @@ impl<'a> Typechecker<'a> {
     }
 }
 
-impl<'a> Item<'a> {
-    fn check<'b: 'a>(&'b mut self, tc: &'b mut Typechecker<'a>, with: &RF<Scope<'a>>) -> () {
-        match self {
-            Item::Function(func) => func.check(tc, with),
-            _ => panic!(),
-        }
-    }
-}
-impl<'a> Call<'a> {
-    fn check<'b: 'a>(&mut self, tc: &'b mut Typechecker<'a>, with: &RF<Scope<'a>>) -> TypeRef<'b> {
-        let tc = UnsafeCell::new(tc);
-        let scope = unsafe { &mut *tc.get() }.scopes.insert({
-            let with = with.borrow();
-            with.idx
-        });
-
-        let sself = UnsafeCell::new(self);
-        let mut args = unsafe { &mut *sself.get() }
-            .arguments
-            .inner
-            .inner
-            .iter_mut()
-            .map(|f| &mut f.0)
-            .collect::<Vec<_>>();
-        let sself = unsafe { &mut *sself.get() };
-        if let Some(arg) = sself.arguments.last.as_mut() {
-            args.push(arg.as_mut());
-        }
-        let s_tc = unsafe { &mut *tc.get() };
-        let Expression::Identifier(callee) = sself.callee.as_ref() else {
-            panic!()
-        };
-        if callee.lexeme != "println" {
-            panic!()
-        }
-        let function_decl = s_tc.scopes.get_variable(with.borrow().idx, callee.lexeme);
-        let function_decl = match function_decl {
-            Some(function_decl) => function_decl,
-            None => panic!("Function `{}` not found", callee.lexeme),
-        };
-        match &function_decl.data {
-            TypeData::Function { params, ret } => {
-                let mut params = params.iter();
-                let mut args = args.iter_mut();
-
-                loop {
-                    let Some(param) = params.next() else {
-                        break;
-                    };
-                    let Some(arg) = args.next() else {
-                        panic!("Not enough arguments")
-                    };
-                    let tc = unsafe { &mut *tc.get() };
-                    let ty = arg.check(tc, with);
-                    if dbg!(ty.ne(param)) {
-                        panic!("Type mismatch")
-                    }
-                }
-                *ret.clone()
-            }
-            _ => panic!(),
-        }
-    }
-}
-impl<'a> Expression<'a> {
-    fn check<'b: 'a>(&mut self, tc: &'b mut Typechecker<'a>, with: &RF<Scope<'a>>) -> TypeRef<'b> {
-        match self {
-            Expression::Identifier(ident) => {
-                let scope = &*with;
-                let binding = scope.borrow_mut();
-                let symbol = binding.vars.get(ident.lexeme).unwrap();
-                ident.symbol = Some(symbol.clone());
-                dbg!(&symbol);
-                symbol.inner.ty.clone()
-            }
-            Expression::Number(_) => Type {
-                data: TypeData::Number,
-            }
-            .allocate(&mut tc.ty_arena),
-            Expression::BinaryExpression(_) => Type {
-                data: TypeData::Number,
-            }
-            .allocate(&mut tc.ty_arena),
-            Expression::Call(call) => call.check(tc, with),
-
-            _ => todo!("{:#?}", self),
-        }
-    }
-}
-impl<'a> Identifier<'a> {
-    pub fn get_symbol(&self) -> Option<&symbol::Symbol<'a>> {
-        return self.symbol.as_ref();
-    }
-}
-
-impl<'a> Function<'a> {
-    fn check<'b: 'a>(&'b mut self, tc: &'b mut Typechecker<'a>, with: &RF<Scope<'b>>) {
-        println!("checking {}", self.name.lexeme);
-        let tc = UnsafeCell::new(tc);
-
-        let mut scope = unsafe { &mut *tc.get() }.scopes.insert({
-            let mut with = with.borrow();
-            with.idx
-        });
-        let mut params = Vec::new();
-        for param in self.params.collect_t() {
-            let mut tc = unsafe { &mut *tc.get() };
-            let ty = Type::ty_expr(&param.annotation.ty);
-            let ty = ty.allocate(&mut tc.ty_arena);
-            params.push(ty.clone());
-            let symbol = symbol::Symbol {
-                inner: Rc::new(symbol::InnerSymbol {
-                    source_file: tc.source_file,
-                    name: param.name.lexeme,
-                    ty,
-                }),
-            };
-            scope.borrow_mut().vars.insert(param.name.lexeme, symbol);
-        }
-        let mut s_tc = unsafe { &mut *tc.get() };
-        let function_symbol = Symbol {
-            inner: Rc::new(symbol::InnerSymbol {
-                source_file: s_tc.source_file,
-                name: self.name.lexeme,
-                ty: Type {
-                    data: TypeData::Function {
-                        params,
-                        ret: Box::new(
-                            Type {
-                                data: TypeData::None,
-                            }
-                            .allocate(&mut unsafe { &mut *tc.get() }.ty_arena),
-                        ),
-                    },
-                }
-                .allocate(&mut unsafe { &mut *tc.get() }.ty_arena),
-            }),
-        };
-        with.borrow_mut()
-            .vars
-            .insert(self.name.lexeme, function_symbol.clone());
-        self.name.symbol = Some(function_symbol.clone());
-        for stmt in &mut self.body.statements.inner {
-            let tc = unsafe { &mut *tc.get() };
-
-            stmt.check(tc, &scope);
-        }
-    }
-}
-impl<'a> LetStatement<'a> {
-    fn check<'b: 'a>(&'b mut self, tc: &'b mut Typechecker<'a>, mut with: &RF<Scope<'a>>) {
-        let tc = UnsafeCell::new(tc);
-        let init = self.initializer.as_mut().unwrap();
-        let ty = init.expr.check(unsafe { &mut *tc.get() }, with);
-        let name = &self.ident;
-        let symbol = symbol::Symbol {
-            inner: Rc::new(symbol::InnerSymbol {
-                source_file: unsafe { &**tc.get() }.source_file,
-                name: name.lexeme,
-                ty,
-            }),
-        };
-
-        with.borrow_mut().vars.insert(name.lexeme, symbol);
-    }
-}
-impl<'a> Statement<'a> {
-    fn check<'b: 'a>(&'b mut self, tc: &'b mut Typechecker<'a>, with: &RF<Scope<'a>>) -> () {
-        match self {
-            Statement::Expression(expr) => {
-                expr.check(tc, with);
-            }
-            Statement::ExpressionWithSemi(ExpressionWithSemi { expression, semi }) => {
-                expression.check(tc, with);
-            }
-            Statement::Let(let_stmt) => let_stmt.check(tc, with),
-            x => panic!("{:#?}", x),
-        }
-    }
+pub trait GetSymbol {
+    fn get_symbol(&self) -> Option<&Symbol>;
 }
