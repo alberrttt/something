@@ -13,6 +13,7 @@ use parm_compiler::{
         traits::Node,
         tree_display::TreeDisplay,
     },
+    ir::lower::Lowering,
     opts::*,
     typechecker::{scope::ScopeArena, ty, Typechecker},
 };
@@ -74,5 +75,15 @@ fn main() {
                 println!("{:#?}", node);
             }
         }
+    }
+
+    let mut lower = Lowering {
+        registers: Default::default(),
+        vars: Default::default(),
+        tc: unsafe { &*typechecker.get() },
+    };
+    let ir_function = lower.lower();
+    if env::var("IR").is_ok() {
+        println!("{:#?}", ir_function);
     }
 }

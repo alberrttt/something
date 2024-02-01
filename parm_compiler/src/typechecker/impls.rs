@@ -188,17 +188,17 @@ impl<'a> LetStatement<'a> {
     ) {
         let tc = UnsafeCell::new(tc);
         let init = self.initializer.as_mut().unwrap();
-        let ty = init.expr.check(unsafe { &mut *tc.get() }, with);
-        let name = &self.ident;
+        let ty = init.expr.check(unsafe { *tc.get() }, with);
+        let name = &self.ident.lexeme;
         let symbol = symbol::Symbol {
             inner: Rc::new(symbol::InnerSymbol {
                 source_file: unsafe { &**tc.get() }.source_file,
-                name: name.lexeme,
+                name,
                 ty,
             }),
         };
-
-        with.borrow_mut().vars.insert(name.lexeme, symbol);
+        self.ident.symbol = Some(symbol.clone());
+        with.borrow_mut().vars.insert(name, symbol);
     }
 }
 impl<'a> Statement<'a> {

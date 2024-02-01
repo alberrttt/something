@@ -15,24 +15,22 @@ impl<'a> Typechecker<'a> {
         .allocate(&mut unsafe { &mut *tc.get() }.ty_arena);
         let top = unsafe { &mut *tc.get() }.scopes.arena.get_mut(0).unwrap();
         let mut top = top.borrow_mut();
-        top.vars.insert(
-            "println",
-            Symbol {
-                inner: Rc::new(InnerSymbol {
-                    source_file: unsafe { &mut *tc.get() }.source_file,
-                    name: "println",
-                    ty: Type {
-                        data: super::ty::TypeData::Function {
-                            params: vec![Type {
-                                data: TypeData::Any,
-                            }
-                            .allocate(&mut unsafe { &mut *tc.get() }.ty_arena)],
-                            ret: Box::new(ret),
-                        },
-                    }
-                    .allocate(&mut unsafe { &mut *tc.get() }.ty_arena),
-                }),
-            },
-        );
+        let symbol = Symbol {
+            inner: Rc::new(InnerSymbol {
+                source_file: unsafe { &mut *tc.get() }.source_file,
+                name: "println",
+                ty: Type {
+                    data: super::ty::TypeData::Function {
+                        params: vec![Type {
+                            data: TypeData::Any,
+                        }
+                        .allocate(&mut unsafe { &mut *tc.get() }.ty_arena)],
+                        ret: Box::new(ret),
+                    },
+                }
+                .allocate(&mut unsafe { &mut *tc.get() }.ty_arena),
+            }),
+        };
+        top.vars.insert("println", symbol);
     }
 }
