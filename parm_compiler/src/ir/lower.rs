@@ -33,18 +33,24 @@ impl<'a> Lowering<'a> {
         ir_function
     }
     /// assuming that you've already allocated `into` if provided
-    pub fn lower_expression(&mut self, expression: &Expression, into: u8) -> Vec<IRCode> {
+    pub fn lower_expression(
+        &mut self,
+        expression: &Expression,
+        into: Option<u8>,
+    ) -> (Vec<IRCode>, u8) {
         let mut ir_code = vec![];
+        let mut result_register = into.unwrap_or(self.registers.allocate().unwrap());
         match expression {
             Expression::Number(number) => ir_code.push(IRCode::LoadValue {
                 from: Box::new(Value::Float(number.value)),
-                into,
+                into: result_register,
             }),
             Expression::BinaryExpression(binary_expr) => {
-                let lhs = self.registers.allocate().unwrap();
-                ir_code.extend(self.lower_expression(&binary_expr.left, lhs));
-                let rhs = self.registers.allocate().unwrap();
-                ir_code.extend(self.lower_expression(&binary_expr.right, rhs));
+                let (code, lhs) = self.lower_expression(&binary_expr.left, None);
+                ir_code.extend(code);
+                let (code, rhs) = self.lower_expression(&binary_expr.right, None);
+                ir_code.extend(code);
+                let into = into.unwrap_or(self.registers.allocate().unwrap());
                 ir_code.push(IRCode::Add { lhs, rhs, into });
                 self.registers.deallocate(lhs);
                 self.registers.deallocate(rhs);
@@ -58,37 +64,33 @@ impl<'a> Lowering<'a> {
                 if symbol.name != "println" {
                     panic!()
                 }
-                let arg = self.registers.allocate().unwrap();
-                ir_code.extend(self.lower_expression(call_expr.arguments.collect_t()[0], arg));
+                let (result, arg) = self.lower_expression(call_expr.arguments.collect_t()[0], None);
+                ir_code.extend(result);
                 ir_code.push(IRCode::Print { value: arg });
             }
             Expression::Identifier(ident) => {
                 let register = self.vars.get(ident.lexeme).unwrap();
-                ir_code.push(IRCode::Move {
-                    from: *register,
-                    into,
-                });
+                result_register = *register;
             }
             _ => {}
         }
-        ir_code
+        (ir_code, result_register)
     }
     pub fn lower_statement(&mut self, statement: &Statement<'a>) -> Vec<IRCode> {
         let mut ir_code = vec![];
         match statement {
             Statement::Let(let_stmt) => {
-                let free_register = self.registers.allocate().unwrap();
-                ir_code.extend(
-                    self.lower_expression(
-                        &let_stmt.initializer.as_ref().unwrap().expr,
-                        free_register,
-                    ),
-                );
-                self.vars.insert(let_stmt.ident.lexeme, free_register);
+                let (code, reg) =
+                    self.lower_expression(&let_stmt.initializer.as_ref().unwrap().expr, None);
+                ir_code.extend(code);
+                self.vars.insert(let_stmt.ident.lexeme, reg);
             }
             Statement::ExpressionWithSemi(expr) => {
                 let free_register = self.registers.allocate().unwrap();
-                ir_code.extend(self.lower_expression(&expr.expression, free_register));
+                ir_code.extend(
+                    self.lower_expression(&expr.expression, Some(free_register))
+                        .0,
+                );
                 self.registers.deallocate(free_register);
             }
             _ => {
