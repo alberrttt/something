@@ -25,6 +25,7 @@ impl Registers {
         for (i, register) in self.registers.iter_mut().enumerate() {
             if !register.used {
                 register.used = true;
+
                 return Some(i as u8);
             }
         }
@@ -46,7 +47,10 @@ impl Registers {
         None
     }
     pub fn deallocate(&mut self, register: u8) {
-        self.registers[register as usize].used = false;
+        if self.registers[register as usize].used {
+            self.registers[register as usize].used = false;
+        } else {
+        }
     }
 }
 #[derive(Debug, Clone, Copy, PartialEq)]

@@ -50,8 +50,39 @@ impl<'a> Lowering<'a> {
                 ir_code.extend(code);
                 let (code, rhs) = self.lower_expression(&binary_expr.right, None);
                 ir_code.extend(code);
-                let into = into.unwrap_or(self.registers.allocate().unwrap());
-                ir_code.push(IRCode::Add { lhs, rhs, into });
+                match binary_expr.operator {
+                    BinaryOperator::Eq(_) => {
+                        ir_code.push(IRCode::Reassign {
+                            from: rhs,
+                            into: lhs,
+                        });
+                        result_register = lhs;
+                    }
+                    BinaryOperator::Asterisk(_) => {
+                        ir_code.push(IRCode::Mul {
+                            lhs,
+                            rhs,
+                            into: result_register,
+                        });
+                    }
+                    BinaryOperator::Minus(_) => {
+                        ir_code.push(IRCode::Sub {
+                            lhs,
+                            rhs,
+                            into: result_register,
+                        });
+                    }
+                    BinaryOperator::Plus(_) => {
+                        ir_code.push(IRCode::Add {
+                            lhs,
+                            rhs,
+                            into: result_register,
+                        });
+                    }
+                    _ => {}
+                }
+                dbg!(lhs);
+                dbg!(rhs);
                 self.registers.deallocate(lhs);
                 self.registers.deallocate(rhs);
             }
@@ -70,6 +101,7 @@ impl<'a> Lowering<'a> {
             }
             Expression::Identifier(ident) => {
                 let register = self.vars.get(ident.lexeme).unwrap();
+                self.registers.deallocate(result_register);
                 result_register = *register;
             }
             _ => {}
@@ -86,12 +118,9 @@ impl<'a> Lowering<'a> {
                 self.vars.insert(let_stmt.ident.lexeme, reg);
             }
             Statement::ExpressionWithSemi(expr) => {
-                let free_register = self.registers.allocate().unwrap();
-                ir_code.extend(
-                    self.lower_expression(&expr.expression, Some(free_register))
-                        .0,
-                );
-                self.registers.deallocate(free_register);
+                let (code, register) = self.lower_expression(&expr.expression, None);
+                ir_code.extend(code);
+                self.registers.deallocate(register);
             }
             _ => {
                 panic!();

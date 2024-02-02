@@ -10,6 +10,17 @@ pub enum IRCode {
         from: u8,
         into: u8,
     },
+    Reassign {
+        from: u8,
+        into: u8,
+    },
+    Allocate {
+        register: u8,
+    },
+    Deallocate {
+        register: u8,
+    },
+
     Print {
         value: u8,
     },
@@ -18,6 +29,22 @@ pub enum IRCode {
         rhs: u8,
         into: u8,
     },
+    Mul {
+        lhs: u8,
+        rhs: u8,
+        into: u8,
+    },
+    Sub {
+        lhs: u8,
+        rhs: u8,
+        into: u8,
+    },
+    Div {
+        lhs: u8,
+        rhs: u8,
+        into: u8,
+    },
+
     /// Add the value of `rhs` to `lhs` and store the result in `lhs`
     AddInPlace {
         lhs: u8,

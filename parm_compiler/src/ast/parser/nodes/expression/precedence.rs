@@ -35,9 +35,11 @@ impl Precedence {
 impl<'a> From<&'a Token<'a>> for Precedence {
     fn from(value: &'a Token<'a>) -> Self {
         match value {
-            Token::PlusEq(_) | Token::DashEq(_) | Token::StarEq(_) | Token::SlashEq(_) => {
-                Precedence::Assignment
-            }
+            Token::PlusEq(_)
+            | Token::DashEq(_)
+            | Token::StarEq(_)
+            | Token::SlashEq(_)
+            | Token::Eq(_) => Precedence::Assignment,
             Token::Plus(_) | Token::Minus(_) => Precedence::Term,
             Token::Asterisk(_) | Token::Slash(_) | Token::AsteriskAsterisk(_) => Precedence::Factor,
             Token::EqEq(_)

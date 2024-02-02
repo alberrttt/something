@@ -2,5 +2,6 @@
 
 fn main() {
     let value = 23 + 34;
+    value = value * 2 - 1;
     println(value);
 }
