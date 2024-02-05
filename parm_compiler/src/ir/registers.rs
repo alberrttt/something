@@ -25,7 +25,6 @@ impl Registers {
         for (i, register) in self.registers.iter_mut().enumerate() {
             if !register.used {
                 register.used = true;
-
                 return Some(i as u8);
             }
         }
@@ -57,4 +56,10 @@ impl Registers {
 pub struct Register {
     pub used: bool,
     pub register: u8,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct RegisterRef {
+    pub register: u8,
+    pub is_value: bool,
 }
