@@ -36,7 +36,7 @@ impl<'a> Expression<'a> {
                     panic!()
                 };
                 let symbol = ident.get_symbol().unwrap();
-                if symbol.name != "println" {
+                if symbol.inner.borrow().name != "println" {
                     return (code, target_register);
                 }
                 let (arg_code, arg_register) = call.arguments.collect_t()[0].lower(lowering, None);

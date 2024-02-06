@@ -73,6 +73,6 @@ impl<'a> ScopeArena<'a> {
     }
     pub fn get_ty(&self, from: usize, name: &str) -> Option<TypeRef<'a>> {
         self.get_symbol(from, name)
-            .map(|symbol| symbol.inner.ty.clone())
+            .map(|symbol| symbol.inner.borrow().ty.clone())
     }
 }

@@ -1,4 +1,7 @@
-use std::{cell::UnsafeCell, rc::Rc};
+use std::{
+    cell::{RefCell, UnsafeCell},
+    rc::Rc,
+};
 
 use super::{
     symbol::{InnerSymbol, Symbol},
@@ -16,7 +19,7 @@ impl<'a> Typechecker<'a> {
         let top = unsafe { &mut *tc.get() }.scopes.arena.get_mut(0).unwrap();
         let mut top = top.borrow_mut();
         let symbol = Symbol {
-            inner: Rc::new(InnerSymbol {
+            inner: Rc::new(RefCell::new(InnerSymbol {
                 source_file: unsafe { &mut *tc.get() }.source_file,
                 name: "println",
                 ty: Type {
@@ -29,7 +32,7 @@ impl<'a> Typechecker<'a> {
                     },
                 }
                 .allocate(&mut unsafe { &mut *tc.get() }.ty_arena),
-            }),
+            })),
         };
         top.vars.insert("println", symbol);
     }

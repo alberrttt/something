@@ -1,3 +1,5 @@
+use std::borrow::Borrow;
+
 use crate::typechecker::*;
 impl<'a> Item<'a> {
     pub(super) fn check<'b: 'a>(
@@ -18,8 +20,8 @@ impl<'a> Call<'a> {
         with: &RF<Scope<'a>>,
     ) -> TypeRef<'b> {
         let tc = UnsafeCell::new(tc);
-        let scope = unsafe { &mut *tc.get() }.scopes.insert({
-            let with = with.borrow();
+        let scope: Rc<RefCell<Scope<'_>>> = unsafe { &mut *tc.get() }.scopes.insert({
+            let with: &Scope<'_> = &with.as_ref().borrow();
             with.idx
         });
 
@@ -40,13 +42,17 @@ impl<'a> Call<'a> {
             panic!()
         };
 
-        let function_decl = s_tc.scopes.get_symbol(with.borrow().idx, callee.lexeme);
+        let function_decl = s_tc
+            .scopes
+            .get_symbol(with.as_ref().borrow().idx, callee.lexeme);
         let function_decl = match function_decl {
             Some(function_decl) => function_decl,
             None => panic!("Function `{}` not found", callee.lexeme),
         };
         callee.symbol = Some(function_decl.clone());
-        match &function_decl.ty.data {
+        let function_decl = function_decl.borrow();
+        let inner = &function_decl.inner.as_ref().borrow();
+        match &inner.ty.data {
             TypeData::Function { params, ret } => {
                 let mut index = 0;
                 loop {
@@ -102,7 +108,8 @@ impl<'a> Expression<'a> {
                 let symbol = binding.vars.get(ident.lexeme).unwrap();
                 ident.symbol = Some(symbol.clone());
                 dbg!(&symbol);
-                symbol.inner.ty.clone()
+                let inner = symbol.inner.as_ref().borrow();
+                inner.ty.clone()
             }
             Expression::Number(_) => Type {
                 data: TypeData::Number,
@@ -132,7 +139,7 @@ impl<'a> Function<'a> {
         let tc = UnsafeCell::new(tc);
 
         let mut scope = unsafe { &mut *tc.get() }.scopes.insert({
-            let mut with = with.borrow();
+            let mut with = with.as_ref().borrow();
             with.idx
         });
         let mut params = Vec::new();
@@ -142,17 +149,17 @@ impl<'a> Function<'a> {
             let ty = ty.allocate(&mut tc.ty_arena);
             params.push(ty.clone());
             let symbol = symbol::Symbol {
-                inner: Rc::new(symbol::InnerSymbol {
+                inner: Rc::new(RefCell::new(symbol::InnerSymbol {
                     source_file: tc.source_file,
                     name: param.name.lexeme,
                     ty,
-                }),
+                })),
             };
             scope.borrow_mut().vars.insert(param.name.lexeme, symbol);
         }
         let mut s_tc = unsafe { &mut *tc.get() };
         let function_symbol = Symbol {
-            inner: Rc::new(symbol::InnerSymbol {
+            inner: Rc::new(RefCell::new(symbol::InnerSymbol {
                 source_file: s_tc.source_file,
                 name: self.name.lexeme,
                 ty: Type {
@@ -167,7 +174,7 @@ impl<'a> Function<'a> {
                     },
                 }
                 .allocate(&mut unsafe { &mut *tc.get() }.ty_arena),
-            }),
+            })),
         };
         with.borrow_mut()
             .vars
@@ -191,11 +198,11 @@ impl<'a> LetStatement<'a> {
         let ty = init.expr.check(unsafe { *tc.get() }, with);
         let name = &self.ident.lexeme;
         let symbol = symbol::Symbol {
-            inner: Rc::new(symbol::InnerSymbol {
+            inner: Rc::new(RefCell::new(symbol::InnerSymbol {
                 source_file: unsafe { &**tc.get() }.source_file,
                 name,
                 ty,
-            }),
+            })),
         };
         self.ident.symbol = Some(symbol.clone());
         with.borrow_mut().vars.insert(name, symbol);
