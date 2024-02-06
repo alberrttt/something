@@ -1,6 +1,8 @@
 use std::borrow::Borrow;
 
 use crate::typechecker::*;
+
+use self::symbol::SymbolDeclaration;
 impl<'a> Item<'a> {
     pub(super) fn check<'b: 'a>(
         &'b mut self,
@@ -148,34 +150,32 @@ impl<'a> Function<'a> {
             let ty = Type::ty_expr(&param.annotation.ty);
             let ty = ty.allocate(&mut tc.ty_arena);
             params.push(ty.clone());
-            let symbol = symbol::Symbol {
-                inner: Rc::new(RefCell::new(symbol::InnerSymbol {
-                    source_file: tc.source_file,
-                    name: param.name.lexeme,
-                    ty,
-                })),
-            };
+            let symbol = Symbol::from_declaration(
+                param.name.lexeme,
+                ty,
+                tc.source_file,
+                SymbolDeclaration::Param(param),
+            );
             scope.borrow_mut().vars.insert(param.name.lexeme, symbol);
         }
         let mut s_tc = unsafe { &mut *tc.get() };
-        let function_symbol = Symbol {
-            inner: Rc::new(RefCell::new(symbol::InnerSymbol {
-                source_file: s_tc.source_file,
-                name: self.name.lexeme,
-                ty: Type {
-                    data: TypeData::Function {
-                        params,
-                        ret: Box::new(
-                            Type {
-                                data: TypeData::None,
-                            }
-                            .allocate(&mut unsafe { &mut *tc.get() }.ty_arena),
-                        ),
-                    },
-                }
-                .allocate(&mut unsafe { &mut *tc.get() }.ty_arena),
-            })),
-        };
+        // TODO: From declaration, but it will borrow self for 'a , so we cant do that rn
+        let function_symbol = Symbol::new(
+            self.name.lexeme,
+            Type {
+                data: TypeData::Function {
+                    params,
+                    ret: Box::new(
+                        Type {
+                            data: TypeData::None,
+                        }
+                        .allocate(&mut unsafe { &mut *tc.get() }.ty_arena),
+                    ),
+                },
+            }
+            .allocate(&mut unsafe { &mut *tc.get() }.ty_arena),
+            unsafe { &mut *tc.get() }.source_file,
+        );
         with.borrow_mut()
             .vars
             .insert(self.name.lexeme, function_symbol.clone());
@@ -197,13 +197,9 @@ impl<'a> LetStatement<'a> {
         let init = self.initializer.as_mut().unwrap();
         let ty = init.expr.check(unsafe { *tc.get() }, with);
         let name = &self.ident.lexeme;
-        let symbol = symbol::Symbol {
-            inner: Rc::new(RefCell::new(symbol::InnerSymbol {
-                source_file: unsafe { &**tc.get() }.source_file,
-                name,
-                ty,
-            })),
-        };
+        // TODO: From declaration, but it will borrow self for 'a , so we cant do that rn
+
+        let symbol = Symbol::new(name, ty, unsafe { &**tc.get() }.source_file);
         self.ident.symbol = Some(symbol.clone());
         with.borrow_mut().vars.insert(name, symbol);
     }

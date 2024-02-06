@@ -1,6 +1,8 @@
 use std::{
-    cell::{RefCell, UnsafeCell},
+    borrow::Borrow,
+    cell::{Ref, RefCell, UnsafeCell},
     fmt::Debug,
+    ops::Deref,
     rc::Rc,
 };
 
@@ -24,16 +26,36 @@ pub struct InnerSymbol<'a> {
     // lol , this will hopeefully not be a problem
     pub source_file: *const SourceFile<'a>,
     pub name: &'a str,
-    
+    pub declaration: Option<SymbolDeclaration<'a>>,
     pub ty: TypeRef<'a>,
 }
 impl<'a> Symbol<'a> {
+    pub fn ref_inner<'b: 'a>(&'b self) -> Ref<'b, InnerSymbol<'a>> {
+        let tmp: &RefCell<InnerSymbol<'_>> = self.inner.borrow();
+        tmp.borrow()
+    }
     pub fn new(name: &'a str, ty: TypeRef<'a>, source_file: *const SourceFile<'a>) -> Self {
         Self {
             inner: Rc::new(RefCell::new(InnerSymbol {
                 source_file,
                 name,
                 ty,
+                declaration: None,
+            })),
+        }
+    }
+    pub fn from_declaration(
+        name: &'a str,
+        ty: TypeRef<'a>,
+        source_file: *const SourceFile<'a>,
+        declaration: SymbolDeclaration<'a>,
+    ) -> Self {
+        Self {
+            inner: Rc::new(RefCell::new(InnerSymbol {
+                source_file,
+                name,
+                ty,
+                declaration: Some(declaration),
             })),
         }
     }
