@@ -1,6 +1,11 @@
 use crate::ast::prelude::*;
 
-use super::{code::IRCode, lower::Lowering, registers::RegisterRef, value::Value};
+use super::{
+    code::IRCode,
+    lower::Lowering,
+    registers::{RegisterKind, RegisterRef},
+    value::Value,
+};
 
 impl<'a> Expression<'a> {
     pub fn lower(
@@ -10,7 +15,7 @@ impl<'a> Expression<'a> {
     ) -> (Vec<IRCode>, RegisterRef) {
         let mut target_register = target_register.unwrap_or_else(|| RegisterRef {
             register: lowering.registers.allocate().unwrap(),
-            is_value: false,
+            kind: super::registers::RegisterKind::Value,
         });
         let mut code: Vec<IRCode> = vec![];
         match &self {
@@ -22,14 +27,14 @@ impl<'a> Expression<'a> {
             Expression::Identifier(identifier) => {
                 let register = lowering.vars.get(identifier.lexeme).unwrap();
                 target_register.register = *register;
-                target_register.is_value = false;
+                target_register.kind = RegisterKind::Variable;
             }
             Expression::Number(number) => {
                 code.push(IRCode::LoadValue {
                     from: Box::new(Value::Float(number.value)),
                     into: target_register.register,
                 });
-                target_register.is_value = true;
+                target_register.kind = RegisterKind::Value;
             }
             Expression::Call(call) => {
                 let Expression::Identifier(ident) = &call.callee.as_ref() else {
@@ -60,7 +65,7 @@ impl<'a> BinaryExpression<'a> {
     ) -> (Vec<IRCode>, RegisterRef) {
         let mut target_register = target_register.unwrap_or_else(|| RegisterRef {
             register: lowering.registers.allocate().unwrap(),
-            is_value: false,
+            kind: RegisterKind::Value,
         });
         let mut code: Vec<IRCode> = vec![];
         if let BinaryOperator::Eq(_) = self.operator {
@@ -68,10 +73,10 @@ impl<'a> BinaryExpression<'a> {
             let (right_code, right_register) = self.right.lower(lowering, Some(left_register));
             code.extend(left_code);
             code.extend(right_code);
-            if left_register.is_value {
+            if let RegisterKind::Value = left_register.kind {
                 lowering.registers.deallocate(left_register.register);
             }
-            if right_register.is_value {
+            if let RegisterKind::Value = right_register.kind {
                 lowering.registers.deallocate(right_register.register);
             }
             return (code, target_register);
@@ -80,10 +85,10 @@ impl<'a> BinaryExpression<'a> {
         let (right_code, right_register) = self.right.lower(lowering, None);
         code.extend(left_code);
         code.extend(right_code);
-        if left_register.is_value {
+        if let RegisterKind::Value = left_register.kind {
             lowering.registers.deallocate(left_register.register);
         }
-        if right_register.is_value {
+        if let RegisterKind::Value = right_register.kind {
             lowering.registers.deallocate(right_register.register);
         }
         match self.operator {
@@ -139,7 +144,7 @@ impl<'a> Statement<'a> {
                     lowering,
                     Some(RegisterRef {
                         register,
-                        is_value: true,
+                        kind: RegisterKind::Variable,
                     }),
                 );
                 if let Expression::Identifier(ident) = &initializer {

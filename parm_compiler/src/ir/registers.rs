@@ -61,5 +61,11 @@ pub struct Register {
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct RegisterRef {
     pub register: u8,
-    pub is_value: bool,
+    pub kind: RegisterKind,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum RegisterKind {
+    Value,
+    Variable,
 }
