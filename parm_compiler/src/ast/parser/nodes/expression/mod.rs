@@ -33,8 +33,42 @@ pub enum Expression<'a> {
     Call(Call<'a>),
     Block(Block<'a>),
     If(if_expr::IfExpr<'a>),
+    Boolean(Boolean<'a>),
 }
-
+#[derive(Debug, Clone, PartialEq, Tree, Spanned)]
+pub enum Boolean<'a> {
+    True(True<'a>),
+    False(False<'a>),
+}
+impl<'a> Boolean<'a> {
+    pub fn value(&self) -> bool {
+        match self {
+            Boolean::True(_) => true,
+            Boolean::False(_) => false,
+        }
+    }
+}
+impl<'a> Node<'a> for Boolean<'a> {
+    fn parse(parse_stream: &mut ParseStream<'a>) -> Result<Self, Box<ParseError<'a>>>
+    where
+        Self: Sized,
+    {
+        let token = parse_stream.peek()?;
+        match token {
+            Token::True(_) => Ok(Boolean::True(parse_stream.step(True::parse)?)),
+            Token::False(_) => Ok(Boolean::False(parse_stream.step(False::parse)?)),
+            _ => ParseError::err(
+                ErrorKind::ExpectedNode(ExpectedNode {
+                    expected: "a boolean",
+                    got: token.lexeme(),
+                    location: token.span(),
+                }),
+                parse_stream.tokens,
+                parse_stream.src_file,
+            ),
+        }
+    }
+}
 impl<'a> Node<'a> for Expression<'a> {
     fn parse(parser: &mut crate::ast::parser::ParseStream<'a>) -> ParseResult<'a, Self>
     where
@@ -85,6 +119,10 @@ pub fn atom<'a>(
                             arguments: call,
                         }));
                     }
+                    Token::True(_) | Token::False(_) => {
+                        let boolean = parse_stream.step(|parser| Boolean::parse(parser).clone())?;
+                        return Ok(Expression::Boolean(boolean));
+                    }
                     Token::LBrace(_) => {
                         return Ok(Expression::StructExpression(StructExpression {
                             ident: match ident {
@@ -100,6 +138,10 @@ pub fn atom<'a>(
             }
 
             Ok(ident)
+        }
+        Token::True(_) | Token::False(_) => {
+            let boolean = parse_stream.step(|parser| Boolean::parse(parser).clone())?;
+            Ok(Expression::Boolean(boolean))
         }
         Token::If(_) => {
             let if_expr = parse_stream.step(if_expr::IfExpr::parse)?;
@@ -152,6 +194,7 @@ impl Spanned for Expression<'_> {
             StringLit(string) => string.span(),
             If(if_expr) => if_expr.span(),
             Block(block) => block.span(),
+            Boolean(boolean) => boolean.span(),
         }
     }
 }

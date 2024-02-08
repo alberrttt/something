@@ -50,6 +50,13 @@ impl<'a> Expression<'a> {
                     value: arg_register.register,
                 });
             }
+            Expression::Boolean(boolean) => {
+                code.push(IRCode::LoadValue {
+                    from: Box::new(Value::Boolean(boolean.value())),
+                    into: target_register.register,
+                });
+                target_register.kind = RegisterKind::Value;
+            }
             _ => {
                 todo!()
             }

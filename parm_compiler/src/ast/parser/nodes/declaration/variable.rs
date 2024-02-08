@@ -42,9 +42,14 @@ impl<'a> Node<'a> for LetStatement<'a> {
         let ident = parser.step(Identifier::parse)?;
         let initializer = parser.step(|parser| {
             let eq = parser.step(Eq::parse)?;
+            parser.panic = true;
             let expr = parser.step(Expression::parse)?;
+            parser.panic = false;
             Ok(Initializer { eq, expr })
         });
+        if parser.panic {
+            return Err(initializer.err().unwrap());
+        }
         let semi = parser.step(SemiColon::parse)?;
         Ok(Self {
             let_tkn,

@@ -109,7 +109,6 @@ impl<'a> Expression<'a> {
                 let binding = scope.borrow_mut();
                 let symbol = binding.vars.get(ident.lexeme).unwrap();
                 ident.symbol = Some(symbol.clone());
-                dbg!(&symbol);
                 let inner = symbol.inner.as_ref().borrow();
                 inner.ty.clone()
             }

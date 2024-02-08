@@ -1,7 +1,7 @@
 
 
 fn main() {
-    let value = 23 + 34;
+    let value = 23 + true;
 
     println(value);
 }
