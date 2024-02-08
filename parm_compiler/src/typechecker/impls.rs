@@ -159,7 +159,7 @@ impl<'a> Function<'a> {
         }
         let mut s_tc = unsafe { &mut *tc.get() };
         // TODO: From declaration, but it will borrow self for 'a , so we cant do that rn
-        let function_symbol = Symbol::new(
+        let function_symbol = Symbol::from_declaration(
             self.name.lexeme,
             Type {
                 data: TypeData::Function {
@@ -174,6 +174,7 @@ impl<'a> Function<'a> {
             }
             .allocate(&mut unsafe { &mut *tc.get() }.ty_arena),
             unsafe { &mut *tc.get() }.source_file,
+            SymbolDeclaration::FunctionDeclaration(self),
         );
         with.borrow_mut()
             .vars
@@ -198,7 +199,12 @@ impl<'a> LetStatement<'a> {
         let name = &self.ident.lexeme;
         // TODO: From declaration, but it will borrow self for 'a , so we cant do that rn
 
-        let symbol = Symbol::new(name, ty, unsafe { &**tc.get() }.source_file);
+        let symbol = Symbol::from_declaration(
+            name,
+            ty,
+            unsafe { &**tc.get() }.source_file,
+            SymbolDeclaration::LetStatement(self),
+        );
         self.ident.symbol = Some(symbol.clone());
         with.borrow_mut().vars.insert(name, symbol);
     }

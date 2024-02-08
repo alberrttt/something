@@ -29,6 +29,15 @@ pub struct InnerSymbol<'a> {
     pub declaration: Option<SymbolDeclaration<'a>>,
     pub ty: TypeRef<'a>,
 }
+impl<'a> InnerSymbol<'a> {
+    pub fn represents_value(&self) -> bool {
+        matches!(
+            self.declaration,
+            Some(SymbolDeclaration::LetStatement(_)) | Some(SymbolDeclaration::Param(_))
+        )
+    }
+}
+
 impl<'a> Symbol<'a> {
     pub fn ref_inner<'b: 'a>(&'b self) -> Ref<'b, InnerSymbol<'a>> {
         let tmp: &RefCell<InnerSymbol<'_>> = self.inner.borrow();
@@ -62,7 +71,7 @@ impl<'a> Symbol<'a> {
 }
 #[derive(Debug, Clone, PartialEq)]
 pub enum SymbolDeclaration<'a> {
-    LetStatement(&'a LetStatement<'a>),
-    FunctionDeclaration(&'a Function<'a>),
-    Param(&'a Param<'a>),
+    LetStatement(*const LetStatement<'a>),
+    FunctionDeclaration(*const Function<'a>),
+    Param(*const Param<'a>),
 }
