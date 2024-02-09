@@ -1,23 +1,14 @@
 use std::{
-    cell::{RefCell, UnsafeCell},
     env, fs,
     path::{Path, PathBuf},
-    rc::Rc,
 };
 
-use parm_compiler::{
-    ast::{
-        error::ParseError,
-        parser::{nodes::item::Item, ParseStream},
-        source_file::{PreparsedSourceFile, SourceFile},
-        traits::Node,
-        tree_display::TreeDisplay,
-    },
-    ir::lower::Lowering,
-    opts::*,
-    typechecker::{scope::ScopeArena, ty, Typechecker},
+use opts::Config;
+use parm_ast::{
+    parser::nodes::item::Item, source_file::PreparsedSourceFile, traits::Node,
+    tree_display::TreeDisplay,
 };
-
+mod opts;
 fn main() {
     let parm_toml = Path::new("./example/parm.toml");
 
@@ -28,62 +19,15 @@ fn main() {
         .join(entry)
         .canonicalize()
         .unwrap();
+    let src_str = fs::read_to_string(&entry).unwrap();
+    let mut file = PreparsedSourceFile::new(entry, &src_str);
 
-    let entry_src = fs::read_to_string(entry.clone()).unwrap();
-
-    let preparsed_src_file = PreparsedSourceFile::new(entry, &entry_src);
-    let (mut src_file, errors) = {
-        let mut stream = ParseStream {
-            tokens: &preparsed_src_file.parser.tokens,
-            current: 0,
-            src_file: &preparsed_src_file,
-            panic: false,
-            attributes: Default::default(),
-            errors: Default::default(),
-        };
-        let (ast, errors) =
-            <Vec<Item<'_>> as Node<'_, (Vec<Item<'_>>, Vec<ParseError<'_>>)>>::parse(&mut stream);
-        (
-            SourceFile {
-                preparsed: &preparsed_src_file,
-                ast,
-            },
-            errors,
-        )
-    };
-    if env::var("TOKENS").is_ok() {
-        for token in &src_file.preparsed.parser.tokens {
-            println!("{:?}", token);
+    let items: Result<Vec<Item<'_>>, Box<parm_ast::prelude::ParseError<'_>>> =
+        <Vec<Item> as Node<'_>>::parse(&mut file.parser.stream(&file));
+    let items = items.unwrap();
+    if env::var("AST").is_ok() {
+        for item in items {
+            println!("{}", item.tree());
         }
-    }
-    for error in errors {
-        eprintln!("{}", error);
-    }
-
-    let mut typechecker = Typechecker {
-        source_file: &mut src_file,
-        scopes: ScopeArena::new(),
-        ty_arena: Default::default(),
-    };
-
-    let typechecker = UnsafeCell::new(typechecker);
-    unsafe {
-        (*typechecker.get()).check().unwrap();
-        let tc = &(*typechecker.get());
-        if env::var("AST").is_ok() {
-            for node in &tc.source_file.ast {
-                println!("{:#?}", node);
-            }
-        }
-    }
-
-    let mut lower = Lowering {
-        registers: Default::default(),
-        vars: Default::default(),
-        tc: unsafe { &*typechecker.get() },
-    };
-    let ir_function = lower.lower();
-    if env::var("IR").is_ok() {
-        println!("{:#?}", ir_function);
     }
 }

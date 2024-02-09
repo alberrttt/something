@@ -159,7 +159,7 @@ fn generate_struct_defs_token_items(punctuation: &List) -> StructDefsTokenItems 
             }
             impl<'a> Node<'a> for #ident<'a> {
                 fn parse(
-                    parse_stream: &mut crate::ast::parser::parse_stream::ParseStream<'a>,
+                    parse_stream: &mut crate::parser::parse_stream::ParseStream<'a>,
                 ) -> ParseResult<'a, Self>
                 where
                     Self: Sized,
@@ -306,7 +306,7 @@ pub fn gen_token(input: TokenStream) -> TokenStream {
                 }
 
                 impl<'a> Node<'a> for #group_name<'a> {
-                    fn parse(parse_stream: &mut crate::ast::parser::parse_stream::ParseStream<'a>) -> ParseResult<'a, Self>
+                    fn parse(parse_stream: &mut crate::parser::parse_stream::ParseStream<'a>) -> ParseResult<'a, Self>
                     where
                         Self: Sized,
                     {

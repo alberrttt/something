@@ -35,6 +35,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "523dc4f511e55ab87b694dc30d0f820d60906ef06413f93d4d7a1385599cc149"
 
 [[package]]
+name = "parm_ast"
+version = "0.1.0"
+dependencies = [
+ "parm_common",
+ "parm_dev_macros",
+]
+
+[[package]]
 name = "parm_common"
 version = "0.1.0"
 
@@ -42,6 +50,7 @@ version = "0.1.0"
 name = "parm_compiler"
 version = "0.1.0"
 dependencies = [
+ "parm_ast",
  "parm_common",
  "parm_dev_macros",
  "serde",
@@ -55,6 +64,14 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
+]
+
+[[package]]
+name = "parm_hlir"
+version = "0.1.0"
+dependencies = [
+ "parm_ast",
+ "parm_common",
 ]
 
 [[package]]

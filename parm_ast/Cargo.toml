@@ -1,0 +1,10 @@
+[package]
+name = "parm_ast"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+parm_dev_macros = {path = "../parm_dev_macros"}
+parm_common = {path = "../parm_common"}

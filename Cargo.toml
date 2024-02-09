@@ -3,6 +3,6 @@ members = [
     "parm_dev_macros",
     "parm_common",
     "parm_compiler",
-    "alfredo"]
+    "alfredo", "parm_ast", "parm_hlir"]
 resolver = "2"
 default-members = ["parm_compiler"]
