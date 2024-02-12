@@ -25,9 +25,18 @@ fn main() {
     let items: Result<Vec<Item<'_>>, Box<parm_ast::prelude::ParseError<'_>>> =
         <Vec<Item> as Node<'_>>::parse(&mut file.parser.stream(&file));
     let items = items.unwrap();
-    if env::var("AST").is_ok() {
-        for item in items {
-            println!("{}", item.tree());
+    let mut main = None;
+    for item in &items {
+        if let Item::Function(funct) = &item {
+            if funct.name.lexeme == "main" {
+                main = Some(funct);
+            }
         }
     }
+    let main = main.unwrap();
+
+    let mut typechecker = parm_hlir::typechecker::Typechecker::new(&file);
+    let main = typechecker.check_fn(main);
+
+    dbg!(main);
 }

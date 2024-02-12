@@ -11,3 +11,4 @@ toml = "0.8.8"
 parm_common = { path = "../parm_common" }
 parm_dev_macros = { path = "../parm_dev_macros" }
 parm_ast = { path = "../parm_ast" }
+parm_hlir = { path = "../parm_hlir" }
