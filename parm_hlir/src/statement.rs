@@ -8,10 +8,18 @@ use crate::{
     typechecker::Typechecker,
 };
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Clone, PartialEq)]
 pub enum Statement<'a, 'b> {
     Expression(Expression<'a, 'b>),
     LetStatement(LetStatement<'a, 'b>),
+}
+impl<'a, 'b> std::fmt::Debug for Statement<'a, 'b> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Statement::Expression(expr) => expr.fmt(f),
+            Statement::LetStatement(stmt) => stmt.fmt(f),
+        }
+    }
 }
 impl<'a, 'b> Statement<'a, 'b> {
     pub fn from_ast(
@@ -48,6 +56,7 @@ impl<'a, 'b> LetStatement<'a, 'b> {
             declaration: SymbolDeclaration::LetStatement(statement),
             ty: expression.get_ty(),
             lexeme: name.lexeme,
+            tc: typechecker,
         }
         .into_symbol();
         typechecker.mut_current_scope().push_symbol(symbol.clone());

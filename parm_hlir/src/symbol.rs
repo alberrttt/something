@@ -14,17 +14,33 @@ use crate::{
     typechecker::Typechecker,
 };
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Clone, PartialEq)]
 pub struct Symbol<'a, 'b> {
     pub inner: Rc<RefCell<InnerSymbol<'a, 'b>>>,
 }
-
-#[derive(Debug, Clone, PartialEq)]
+impl<'a, 'b> std::fmt::Debug for Symbol<'a, 'b> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.inner.borrow().fmt(f)
+    }
+}
+#[derive(Clone, PartialEq)]
 pub struct InnerSymbol<'a, 'b> {
     pub id: usize,
     pub declaration: SymbolDeclaration<'a, 'b>,
     pub ty: TypeRef<'a, 'b>,
     pub lexeme: &'a str,
+    pub tc: *const Typechecker<'a, 'b>,
+}
+impl<'a, 'b> std::fmt::Debug for InnerSymbol<'a, 'b> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let tc = unsafe { &*self.tc };
+        f.debug_struct("Symbol")
+            .field("id", &self.id)
+            .field("declaration", &self.declaration)
+            .field("ty", &tc.types_arena.types[self.ty.idx])
+            .field("lexeme", &self.lexeme)
+            .finish()
+    }
 }
 impl<'a, 'b> InnerSymbol<'a, 'b> {
     pub fn into_symbol(self) -> Symbol<'a, 'b> {
@@ -60,7 +76,7 @@ impl<'a, 'b> Debug for SymbolDeclaration<'a, 'b> {
         }
     }
 }
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Default)]
 pub struct SymbolArena<'a, 'b> {
     pub symbols: Vec<Symbol<'a, 'b>>,
 }

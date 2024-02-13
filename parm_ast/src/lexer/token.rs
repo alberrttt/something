@@ -165,8 +165,7 @@ gen_token!(
     CaretEq,
     #[lexeme = "#"]
     Octothorpe,
-    #[lexeme = "'"]
-    SingleQuote,
+    Lifetime,
     // keywords
     True,
     False,

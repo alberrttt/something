@@ -25,24 +25,12 @@ impl<'a, 'b> Scope<'a, 'b> {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Default)]
 pub struct ScopeArena<'a, 'b> {
     pub scopes: Vec<Scope<'a, 'b>>,
 }
 
 impl<'a, 'b> ScopeArena<'a, 'b> {
-    pub fn new() -> Self {
-        Self {
-            scopes: vec![Scope {
-                symbols: vec![],
-                children: vec![],
-
-                idx: 0,
-                parent: None,
-            }],
-        }
-    }
-
     pub fn push(&mut self, parent: Option<usize>) -> usize {
         let idx = self.scopes.len();
         let scope = Scope {

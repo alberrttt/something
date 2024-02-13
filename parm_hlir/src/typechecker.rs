@@ -43,24 +43,25 @@ impl<'a, 'b> Typechecker<'a, 'b> {
         None
     }
     pub fn new(src_file: &'b PreparsedSourceFile<'a>) -> Self {
-        Self {
+        let mut tc = Self {
             source_file: src_file,
-            symbols_arena: SymbolArena {
-                symbols: vec![Symbol {
-                    inner: Rc::new(RefCell::new(InnerSymbol {
-                        id: 0,
-                        declaration: SymbolDeclaration::None,
-                        ty: TypeRef::new(0),
-                        lexeme: "<reserved for compiler>",
-                    })),
-                }],
-            },
+            symbols_arena: SymbolArena::default(),
             types_arena: TypeArena {
                 types: Self::default_types(),
             },
-            scopes_arena: ScopeArena::new(),
+            scopes_arena: ScopeArena::default(),
             current_scope: 0,
-        }
+        };
+        tc.symbols_arena.symbols.push(Symbol {
+            inner: Rc::new(RefCell::new(InnerSymbol {
+                id: 0,
+                declaration: SymbolDeclaration::None,
+                ty: TypeRef::new(0),
+                lexeme: "<reserved for compiler>",
+                tc: &tc,
+            })),
+        });
+        tc
     }
     pub fn check_fn(&mut self, function: &'b FunctionDeclaration<'a>) -> Function<'a, 'b> {
         let symbol_idx = self.symbols_arena.symbols.len();
@@ -70,6 +71,7 @@ impl<'a, 'b> Typechecker<'a, 'b> {
             declaration: SymbolDeclaration::Function(function),
             ty: TypeRef::new(ty_id),
             lexeme: function.name.lexeme,
+            tc: self,
         };
         let symbol = Symbol {
             inner: Rc::new(RefCell::new(symbol)),
