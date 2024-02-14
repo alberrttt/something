@@ -92,6 +92,30 @@ impl<'src> Lexer<'src> {
             let char = self.peek().unwrap();
 
             match char {
+                '\'' => {
+                    let start = self.src_pos;
+                    self.advance();
+                    // assume its for a life time for noew, no chars in this lang!
+                    // lets go for a word
+                    let word_start = self.src_pos;
+
+                    loop {
+                        if self.src_pos >= self.src.len() {
+                            break;
+                        }
+                        let current = self.src.chars().nth(self.src_pos).unwrap();
+                        if ident_body(current) {
+                            self.advance();
+                        } else {
+                            break;
+                        }
+                    }
+
+                    let lexeme = &self.src[word_start..self.src_pos];
+                    let span = self.new_span(start);
+
+                    tokens.push(Token::Lifetime(token::Lifetime { lexeme, span }));
+                }
                 '"' => {
                     let start = self.src_pos;
                     self.advance();

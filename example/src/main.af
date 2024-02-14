@@ -1,14 +1,8 @@
-struct Data<'lt, %a, %b>: %a /< %b { // %a represents a region of memory different from %b
-    a: &'lt %a i32,
-    b: &'lt %b i32,
-}
+
 
 fn main() {
     let a = 1;
     let b = 2;
-    let value = Data {
-        a: &'1 a,
-        b: &'2 b,
-    };
+
 
 }

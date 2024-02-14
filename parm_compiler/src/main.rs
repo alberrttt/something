@@ -21,7 +21,9 @@ fn main() {
         .unwrap();
     let src_str = fs::read_to_string(&entry).unwrap();
     let mut file = PreparsedSourceFile::new(entry, &src_str);
-
+    if env::var("TOKENS").is_ok() {
+        println!("{:#?}", file.lexer.tokens);
+    }
     let items: Result<Vec<Item<'_>>, Box<parm_ast::prelude::ParseError<'_>>> =
         <Vec<Item> as Node<'_>>::parse(&mut file.parser.stream(&file));
     let items = items.unwrap();

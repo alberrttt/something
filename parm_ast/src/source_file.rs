@@ -19,7 +19,7 @@ impl<'a> PreparsedSourceFile<'a> {
             tokens,
             current: 0,
         };
-
+        
         Self {
             path,
             src,

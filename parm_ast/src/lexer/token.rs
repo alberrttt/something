@@ -46,8 +46,9 @@ gen_token!(
     Integer,
     Float,
     #[no_impl]
-    Identifier,
+    Lifetime,
     // syntax
+    Identifier,
     #[lexeme = "("]
     LParen,
     #[lexeme = ")"]
@@ -165,7 +166,6 @@ gen_token!(
     CaretEq,
     #[lexeme = "#"]
     Octothorpe,
-    Lifetime,
     // keywords
     True,
     False,
@@ -193,36 +193,43 @@ gen_token!(
     #[no_impl]
     StringLiteral,
 );
-#[derive(Clone, PartialEq, Debug)]
-pub struct Identifier<'a> {
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+pub struct Lifetime<'a> {
     pub lexeme: &'a str,
     pub span: Span,
 }
-impl<'a> TreeDisplay for Identifier<'a> {
+impl<'a> TreeDisplay for Lifetime<'a> {
     fn tree(&self) -> Tree {
-        Tree::new(format!("ident<\"{}\">", self.lexeme))
+        Tree::new("Lifetime").lexeme(self.lexeme)
     }
 }
-impl Default for Identifier<'_> {
+impl Default for Lifetime<'_> {
     fn default() -> Self {
         Self {
-            lexeme: "<identifier>",
+            lexeme: "lifetime",
             span: Span::default(),
         }
     }
 }
-
-impl<'a> Identifier<'a> {
-    fn spanless_eq(&self, other: &Identifier) -> bool {
+impl<'a> std::fmt::Debug for Lifetime<'a> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Lifetime")
+            .field("lexeme", &self.lexeme)
+            .field("span", &self.span)
+            .finish()
+    }
+}
+impl<'a> Lifetime<'a> {
+    fn spanless_eq(&self, other: &Lifetime) -> bool {
         self.lexeme == other.lexeme
     }
 }
-impl<'a> Spanned for Identifier<'a> {
+impl<'a> Spanned for Lifetime<'a> {
     fn span(&self) -> Span {
         self.span
     }
 }
-impl<'a> Node<'a> for Identifier<'a> {
+impl<'a> Node<'a> for Lifetime<'a> {
     fn parse(
         parse_stream: &mut crate::parser::parse_stream::ParseStream<'a>,
     ) -> ParseResult<'a, Self>
@@ -234,14 +241,14 @@ impl<'a> Node<'a> for Identifier<'a> {
             Err(err) => {
                 return ParseError::err(
                     ErrorKind::EndOfTokens(EndOfTokens {
-                        expected: Some("identifier"),
+                        expected: Some("lifetime"),
                     }),
                     parse_stream.tokens,
                     parse_stream.src_file,
                 )
             }
         };
-        if let Token::Identifier(peeked) = peeked {
+        if let Token::Lifetime(peeked) = peeked {
             let tmp = Ok(peeked.clone());
             parse_stream.advance()?;
             tmp
@@ -249,7 +256,7 @@ impl<'a> Node<'a> for Identifier<'a> {
             ParseError::err(
                 ErrorKind::ExpectedToken(ExpectedToken {
                     got: peeked.to_owned(),
-                    expected: Token::Identifier(Self::default()),
+                    expected: Token::Lifetime(Self::default()),
                     location: parse_stream.current,
                 }),
                 parse_stream.tokens,
@@ -258,9 +265,9 @@ impl<'a> Node<'a> for Identifier<'a> {
         }
     }
 }
-impl<'a> From<Identifier<'a>> for Token<'a> {
-    fn from(value: Identifier<'a>) -> Token<'a> {
-        Token::Identifier(value)
+impl<'a> From<Lifetime<'a>> for Token<'a> {
+    fn from(value: Lifetime<'a>) -> Token<'a> {
+        Token::Lifetime(value)
     }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
