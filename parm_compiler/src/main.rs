@@ -5,7 +5,7 @@ use std::{
 
 use opts::Config;
 use parm_ast::{
-    parser::nodes::item::Item, source_file::PreparsedSourceFile, traits::Node,
+    error::ParseError, parser::nodes::item::Item, source_file::PreparsedSourceFile, traits::Node,
     tree_display::TreeDisplay,
 };
 mod opts;
@@ -24,9 +24,11 @@ fn main() {
     if env::var("TOKENS").is_ok() {
         println!("{:#?}", file.lexer.tokens);
     }
-    let items: Result<Vec<Item<'_>>, Box<parm_ast::prelude::ParseError<'_>>> =
-        <Vec<Item> as Node<'_>>::parse(&mut file.parser.stream(&file));
-    let items = items.unwrap();
+    let (items, errors): (Vec<Item<'_>>, Vec<ParseError<'_>>) =
+        <Vec<Item> as Node<'_, (Vec<_>, Vec<_>)>>::parse(&mut file.parser.stream(&file));
+    for error in errors {
+        println!("{}", error);
+    }
     let mut main = None;
     for item in &items {
         if let Item::Function(funct) = &item {

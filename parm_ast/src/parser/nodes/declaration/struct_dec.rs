@@ -1,6 +1,7 @@
-use crate::prelude::*;
+use crate::{parser::nodes::visibility::Visibility, prelude::*};
 #[derive(Debug, Clone, PartialEq, Spanned, Tree)]
 pub struct StructDeclaration<'a> {
+    pub visibility: Visibility<'a>,
     pub struct_tkn: StructKeyword<'a>,
     pub ident: Identifier<'a>,
     pub body: Brace<'a, Punctuated<StructMemberDeclaration<'a>, Comma<'a>>>,
@@ -11,10 +12,14 @@ impl<'a> Node<'a> for StructDeclaration<'a> {
     where
         Self: Sized,
     {
-        let struct_tkn = parser.step(|parser| StructKeyword::parse(parser).clone())?;
-        let ident = parser.step(|parser| Identifier::parse(parser).clone())?;
+        let visibility = parser.step(Visibility::parse)?;
+        let struct_tkn = parser.step(StructKeyword::parse)?;
+        parser.panic = true;
+        let ident = parser.step(Identifier::parse)?;
         let body = parser.step(Brace::parse)?;
+        parser.panic = false;
         Ok(Self {
+            visibility,
             struct_tkn,
             ident,
             body,

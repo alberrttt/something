@@ -13,6 +13,7 @@ pub mod path;
 pub mod punctuated;
 pub mod statement;
 pub mod type_nodes;
+pub mod visibility;
 #[derive(Debug, Clone, PartialEq)]
 pub struct Empty;
 impl<'a> Spanned for Empty {

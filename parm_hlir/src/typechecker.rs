@@ -49,7 +49,7 @@ impl<'a, 'b> Typechecker<'a, 'b> {
             types_arena: TypeArena {
                 types: Self::default_types(),
             },
-            scopes_arena: ScopeArena::default(),
+            scopes_arena: ScopeArena::new(),
             current_scope: 0,
         };
         tc.symbols_arena.symbols.push(Symbol {
@@ -64,6 +64,7 @@ impl<'a, 'b> Typechecker<'a, 'b> {
         tc
     }
     pub fn check_fn(&mut self, function: &'b FunctionDeclaration<'a>) -> Function<'a, 'b> {
+        self.scopes_arena.push(Some(self.current_scope));
         let symbol_idx = self.symbols_arena.symbols.len();
         let ty_id = self.types_arena.types.len();
         let symbol = InnerSymbol {

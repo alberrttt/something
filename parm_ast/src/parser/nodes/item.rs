@@ -5,7 +5,6 @@ use parm_common::Spanned;
 use parm_dev_macros::Spanned;
 
 use super::comment::Comment;
-
 #[derive(Debug, Clone, PartialEq, Spanned, Tree)]
 pub enum Item<'a> {
     LetStatement(LetStatement<'a>),
@@ -34,31 +33,14 @@ impl<'a> Node<'a> for Item<'a> {
         if let Ok(mut attributes) = attributes {
             parse_stream.attributes.append(&mut attributes);
         }
-        let peeked = parse_stream.peek()?;
-
-        match peeked {
-            Token::Let(_) => match <LetStatement as Node>::parse(parse_stream) {
-                Ok(ok) => return Ok(Item::LetStatement(ok)),
-                Err(err) => {
-                    parse_stream.panic = true;
-                    return Err(err);
-                }
-            },
-            Token::StructKeyword(_) => {
-                let struct_dec: StructDeclaration =
-                    <StructDeclaration as Node>::parse(parse_stream)?;
-                return Ok(Item::Struct(struct_dec));
-            }
-            Token::FnKeyword(_) => {
-                let func: FunctionDeclaration = <FunctionDeclaration as Node>::parse(parse_stream)?;
-                return Ok(Item::Function(func));
-            }
-
-            Token::Use(_) => {
-                let use_stmt: UseStatement = <UseStatement as Node>::parse(parse_stream)?;
-                return Ok(Item::Use(use_stmt));
-            }
-            _ => {}
+        let mut peek_n = 0;
+        let peeked = parse_stream.peek_n(peek_n)?;
+        if let Token::Pub(_) = peeked {
+            peek_n += 1;
+            return Self::peek_and_parse(parse_stream, peek_n).unwrap();
+        }
+        if let Some(result) = Self::peek_and_parse(parse_stream, peek_n) {
+            return result;
         }
         parse_stream.panic = true;
         ParseError::err(
@@ -70,6 +52,53 @@ impl<'a> Node<'a> for Item<'a> {
             parse_stream.tokens,
             parse_stream.src_file,
         )
+    }
+}
+impl<'a> Item<'a> {
+    fn peek_and_parse(
+        parse_stream: &mut super::ParseStream<'a>,
+        peek: usize,
+    ) -> Option<ParseResult<'a, Item<'a>>> {
+        let peeked = match parse_stream.peek_n(peek) {
+            Ok(ok) => ok,
+            Err(err) => return None,
+        };
+        let res = match peeked {
+            Token::Let(_) => match <LetStatement as Node>::parse(parse_stream) {
+                Ok(ok) => Ok(Item::LetStatement(ok)),
+                Err(err) => {
+                    parse_stream.panic = true;
+                    Err(err)
+                }
+            },
+
+            Token::StructKeyword(_) => {
+                let struct_dec: StructDeclaration =
+                    match <StructDeclaration as Node>::parse(parse_stream) {
+                        Ok(ok) => ok,
+                        Err(err) => return Some(Err(err)),
+                    };
+                Ok(Item::Struct(struct_dec))
+            }
+            Token::FnKeyword(_) => {
+                let func: FunctionDeclaration =
+                    match <FunctionDeclaration as Node>::parse(parse_stream) {
+                        Ok(ok) => ok,
+                        Err(err) => return Some(Err(err)),
+                    };
+                Ok(Item::Function(func))
+            }
+
+            Token::Use(_) => {
+                let use_stmt: UseStatement = match <UseStatement as Node>::parse(parse_stream) {
+                    Ok(ok) => ok,
+                    Err(err) => return Some(Err(err)),
+                };
+                Ok(Item::Use(use_stmt))
+            }
+            _ => return None,
+        };
+        Some(res)
     }
 }
 #[derive(Debug, Clone, PartialEq, Spanned, Tree)]

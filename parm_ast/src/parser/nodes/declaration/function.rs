@@ -43,6 +43,7 @@ impl<'a> Node<'a> for ReturnType<'a> {
 }
 #[derive(Debug, Clone, PartialEq, Spanned, Tree)]
 pub struct FunctionDeclaration<'a> {
+    
     pub attributes: Vec<Attribute<'a>>,
     pub fn_tkn: FnKeyword<'a>,
     pub name: Identifier<'a>,

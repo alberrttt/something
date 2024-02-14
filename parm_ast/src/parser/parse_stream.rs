@@ -84,28 +84,20 @@ impl<'a> ParseStream<'a> {
             ),
         }
     }
-    pub fn peek<'b: 'a>(&self) -> ParseResult<'a, &'b Token<'a>> {
-        match self.tokens.get(self.current) {
+    pub fn peek_n<'b: 'a>(&self, n: usize) -> ParseResult<'a, &'a Token<'a>> {
+        match self.tokens.get(self.current + n) {
             Some(some) => Ok(some),
-            None => {
-                (ParseError::err(
-                    ErrorKind::EndOfTokens(EndOfTokens { expected: None }),
-                    self.tokens,
-                    self.src_file,
-                ))
-            }
+            None => ParseError::err(
+                ErrorKind::EndOfTokens(EndOfTokens { expected: None }),
+                self.tokens,
+                self.src_file,
+            ),
         }
     }
+    pub fn peek<'b: 'a>(&self) -> ParseResult<'a, &'b Token<'a>> {
+        self.peek_n(0)
+    }
     pub fn peek_next<'b: 'a>(&self) -> ParseResult<'a, &'b Token<'a>> {
-        match self.tokens.get(self.current + 1) {
-            Some(some) => Ok(some),
-            None => {
-                (ParseError::err(
-                    ErrorKind::EndOfTokens(EndOfTokens { expected: None }),
-                    self.tokens,
-                    self.src_file,
-                ))
-            }
-        }
+        self.peek_n(1)
     }
 }
