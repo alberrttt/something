@@ -3,6 +3,8 @@ pub mod struct_ty;
 use crate::prelude::*;
 use std::{fmt::Debug, marker::PhantomData, rc::Rc};
 
+use self::struct_ty::StructTy;
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct TypeArena<'a, 'b> {
     pub types: Vec<Type<'a, 'b>>,
@@ -30,6 +32,7 @@ pub enum Type<'a, 'b: 'a> {
     Number,
     StringLiteral,
     Boolean,
+    Struct(Rc<StructTy<'a, 'b>>),
     Function(Rc<FunctionTy<'a, 'b>>),
     None(PhantomData<&'b &'a ()>),
 }

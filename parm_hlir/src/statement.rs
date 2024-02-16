@@ -7,6 +7,7 @@ use crate::{
     symbol::{InnerSymbol, Symbol, SymbolDeclaration},
     traits::Check,
     typechecker::Typechecker,
+    AST,
 };
 
 #[derive(Clone, PartialEq)]
@@ -57,10 +58,9 @@ impl<'a, 'b> Check<'a, 'b> for LetStatement<'a, 'b> {
         let expression = Expression::check(typechecker, expr);
         let name: &parm_ast::prelude::Identifier<'_> = &statement.ident;
         let symbol = InnerSymbol {
-            declaration: SymbolDeclaration::LetStatement(statement),
+            declaration: SymbolDeclaration::LetStatement(AST(statement)),
             ty: expression.get_ty(),
             lexeme: name.lexeme,
-            
         }
         .into_symbol();
         typechecker.mut_current_scope().push_symbol(symbol.clone());
@@ -70,11 +70,11 @@ impl<'a, 'b> Check<'a, 'b> for LetStatement<'a, 'b> {
 impl<'a, 'b> LetStatement<'a, 'b> {
     pub fn get_declaration(
         &self,
-    ) -> Option<&parm_ast::parser::nodes::declaration::variable::LetStatement<'a>> {
+    ) -> Option<AST<&parm_ast::parser::nodes::declaration::variable::LetStatement<'a>>> {
         let inner = self.symbol.inner.borrow();
-        let SymbolDeclaration::LetStatement(stmt) = inner.declaration else {
+        let SymbolDeclaration::LetStatement(ref stmt) = inner.declaration else {
             return None;
         };
-        Some(stmt)
+        Some(AST(stmt))
     }
 }

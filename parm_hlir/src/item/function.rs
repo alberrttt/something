@@ -33,7 +33,7 @@ impl<'a, 'b> Check<'a, 'b> for Function<'a, 'b> {
         scopes_arena.push(Some(tyc.current_scope));
 
         let symbol = InnerSymbol {
-            declaration: SymbolDeclaration::Function(function),
+            declaration: SymbolDeclaration::Function(AST(function)),
             ty: Type::None(PhantomData),
             lexeme: function.name.lexeme,
         };

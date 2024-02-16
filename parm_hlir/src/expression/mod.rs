@@ -1,9 +1,10 @@
 pub mod binary;
 pub mod identifier;
-use identifier::Identifier;
+use crate::prelude::*;
 use parm_ast::{
     lexer::token::StringLiteral,
     parser::nodes::{expression::Boolean, statement::use_stmt::Number},
+    prelude,
 };
 
 use crate::{
@@ -19,6 +20,7 @@ pub enum Expression<'a, 'b> {
     Identifier(Identifier<'a, 'b>),
     StringLiteral(&'b StringLiteral<'a>),
     StructExpression(StructExpression<'a, 'b>),
+    BinaryExpression(BinaryExpression<'a, 'b>),
     Number(&'b Number<'a>),
     Boolean(&'b Boolean<'a>),
 }
@@ -27,21 +29,31 @@ impl<'a, 'b> Check<'a, 'b> for Expression<'a, 'b> {
     type Ast = parm_ast::prelude::Expression<'a>;
     fn check(tc: &mut Typechecker<'a, 'b>, ast: &'b Self::Ast) -> Self::Output {
         match &ast {
-            parm_ast::prelude::Expression::StringLit(string_literal) => {
-                Expression::StringLiteral(string_literal)
+            ast::Expression::StringLit(string_literal) => Expression::StringLiteral(string_literal),
+            ast::Expression::Number(number) => Expression::Number(number),
+            ast::Expression::Boolean(boolean) => Expression::Boolean(boolean),
+            ast::Expression::StructExpression(struct_expression) => {
+                Expression::StructExpression(StructExpression::check(tc, struct_expression))
             }
-            parm_ast::prelude::Expression::Number(number) => Expression::Number(number),
-            parm_ast::prelude::Expression::Boolean(boolean) => Expression::Boolean(boolean),
-            parm_ast::prelude::Expression::StructExpression(struct_expression) => {
-                Expression::StructExpression(StructExpression::check(tc, &struct_expression))
+            ast::Expression::Identifier(identifier) => {
+                Expression::Identifier(Identifier::check(tc, identifier))
             }
-            expression => todo!("{:#?}", expression),
+            ast::Expression::BinaryExpression(bin) => {
+                Expression::BinaryExpression(BinaryExpression::check(tc, bin))
+            }
+            ast::Expression::Group(_) => todo!(),
+            ast::Expression::Call(_) => todo!(),
+            ast::Expression::Block(_) => todo!(),
+            ast::Expression::If(_) => todo!(),
         }
     }
 }
 impl<'a, 'b> Expression<'a, 'b> {
     pub fn get_ty(&self) -> Type<'a, 'b> {
         match self {
+            Expression::BinaryExpression(binary_expression) => {
+                todo!()
+            }
             Expression::Identifier(identifier) => identifier.symbol.inner.borrow().ty.clone(),
             Expression::StringLiteral(_) => Type::StringLiteral,
             Expression::Number(_) => Type::Number,

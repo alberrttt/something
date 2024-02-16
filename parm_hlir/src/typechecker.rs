@@ -23,6 +23,7 @@ pub struct Typechecker<'a, 'b> {
 }
 
 impl<'a, 'b> Typechecker<'a, 'b> {
+    
     pub fn current_scope(&self) -> &Scope<'a, 'b> {
         &self.scopes_arena.scopes[self.current_scope]
     }

@@ -13,6 +13,7 @@ use parm_ast::parser::nodes::{
 use crate::{
     ty::{Type, TypeRef},
     typechecker::Typechecker,
+    AST,
 };
 
 #[derive(Clone, PartialEq)]
@@ -32,10 +33,9 @@ pub struct InnerSymbol<'a, 'b> {
 }
 impl<'a, 'b> std::fmt::Debug for InnerSymbol<'a, 'b> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("Symbol")
+        f.debug_struct(&format!("Symbol<{}>", self.lexeme))
             .field("ty", &self.ty)
             .field("declaration", &self.declaration)
-            .field("lexeme", &self.lexeme)
             .finish()
     }
 }
@@ -46,31 +46,12 @@ impl<'a, 'b> InnerSymbol<'a, 'b> {
         }
     }
 }
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Debug)]
 pub enum SymbolDeclaration<'a, 'b> {
-    Function(&'b FunctionDeclaration<'a>),
-    Struct(&'b StructDeclaration<'a>),
-    LetStatement(&'b LetStatement<'a>),
-    StructMemberDeclaration(&'b StructMemberDeclaration<'a>),
-    Param(&'b Param<'a>),
+    Function(AST<&'b FunctionDeclaration<'a>>),
+    Struct(AST<&'b StructDeclaration<'a>>),
+    LetStatement(AST<&'b LetStatement<'a>>),
+    StructMemberDeclaration(AST<&'b StructMemberDeclaration<'a>>),
+    Param(AST<&'b Param<'a>>),
     None,
-}
-
-impl<'a, 'b> Debug for SymbolDeclaration<'a, 'b> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::Function(arg0) => f.debug_tuple("Function").field(&arg0.name.lexeme).finish(),
-            Self::Struct(arg0) => f.debug_tuple("Struct").field(&arg0.ident.lexeme).finish(),
-            Self::LetStatement(arg0) => f
-                .debug_tuple("LetStatement")
-                .field(&arg0.ident.lexeme)
-                .finish(),
-            Self::Param(arg0) => f.debug_tuple("Param").field(&arg0.name).finish(),
-            Self::StructMemberDeclaration(arg0) => f
-                .debug_tuple("StructMemberDeclaration")
-                .field(&arg0.ident.lexeme)
-                .finish(),
-            Self::None => write!(f, "None"),
-        }
-    }
 }
