@@ -1,9 +1,7 @@
 pub mod function_ty;
+pub mod struct_ty;
+use crate::prelude::*;
 use std::{fmt::Debug, marker::PhantomData, rc::Rc};
-
-use crate::{function::Function, typechecker::Typechecker};
-
-use self::function_ty::FunctionTy;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct TypeArena<'a, 'b> {
@@ -33,13 +31,13 @@ pub enum Type<'a, 'b: 'a> {
     StringLiteral,
     Boolean,
     Function(Rc<FunctionTy<'a, 'b>>),
-    __(PhantomData<&'b &'a ()>),
+    None(PhantomData<&'b &'a ()>),
 }
 
 impl<'a, 'b> Typechecker<'a, 'b> {
     pub fn default_types() -> Vec<Type<'a, 'b>> {
         vec![
-            Type::__(PhantomData),
+            Type::None(PhantomData),
             Type::Number,
             Type::StringLiteral,
             Type::Boolean,

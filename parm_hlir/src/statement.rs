@@ -5,6 +5,7 @@ use parm_ast::parser::nodes::declaration::variable::Initializer;
 use crate::{
     expression::Expression,
     symbol::{InnerSymbol, Symbol, SymbolDeclaration},
+    traits::Check,
     typechecker::Typechecker,
 };
 
@@ -29,9 +30,11 @@ impl<'a, 'b> Statement<'a, 'b> {
         use parm_ast::prelude::Statement as ASTStatement;
         match statement {
             ASTStatement::Let(stmt) => {
-                Statement::LetStatement(LetStatement::from_ast(typechecker, stmt))
+                Statement::LetStatement(LetStatement::check(typechecker, stmt))
             }
-            ASTStatement::Expression(expr) => Statement::Expression(Expression::check_ast(expr)),
+            ASTStatement::Expression(expr) => {
+                Statement::Expression(Expression::check(typechecker, expr))
+            }
             _ => todo!(),
         }
     }
@@ -42,27 +45,29 @@ pub struct LetStatement<'a, 'b> {
     pub expression: Expression<'a, 'b>,
 }
 
-impl<'a, 'b> LetStatement<'a, 'b> {
-    pub fn from_ast(
+impl<'a, 'b> Check<'a, 'b> for LetStatement<'a, 'b> {
+    type Output = Self;
+
+    type Ast = parm_ast::prelude::LetStatement<'a>;
+    fn check(
         typechecker: &mut Typechecker<'a, 'b>,
         statement: &'b parm_ast::prelude::LetStatement<'a>,
     ) -> Self {
         let Initializer { eq: _, expr } = statement.initializer.as_ref().unwrap();
-        let expression = Expression::check_ast(expr);
+        let expression = Expression::check(typechecker, expr);
         let name: &parm_ast::prelude::Identifier<'_> = &statement.ident;
-        let id = typechecker.symbols_arena.symbols.len();
         let symbol = InnerSymbol {
-            id,
             declaration: SymbolDeclaration::LetStatement(statement),
             ty: expression.get_ty(),
             lexeme: name.lexeme,
-            tc: typechecker,
+            
         }
         .into_symbol();
         typechecker.mut_current_scope().push_symbol(symbol.clone());
         Self { symbol, expression }
     }
-
+}
+impl<'a, 'b> LetStatement<'a, 'b> {
     pub fn get_declaration(
         &self,
     ) -> Option<&parm_ast::parser::nodes::declaration::variable::LetStatement<'a>> {

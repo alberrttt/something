@@ -1,17 +1,17 @@
-use std::rc::Rc;
+use std::{collections::HashMap, rc::Rc};
 
 use crate::symbol::Symbol;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Scope<'a, 'b> {
-    pub symbols: Vec<Symbol<'a, 'b>>,
+    pub symbols: HashMap<&'a str, Symbol<'a, 'b>>,
     pub children: Vec<usize>,
     pub parent: Option<usize>,
     pub idx: usize,
 }
 impl<'a, 'b> Scope<'a, 'b> {
     pub fn get_symbol(&self, lex: &str) -> Option<Symbol<'a, 'b>> {
-        for symbol in &self.symbols {
+        for (idx, symbol) in &self.symbols {
             let inner = symbol.inner.borrow();
             if inner.lexeme == lex {
                 return Some(symbol.clone());
@@ -21,7 +21,8 @@ impl<'a, 'b> Scope<'a, 'b> {
     }
 
     pub fn push_symbol(&mut self, symbol: Symbol<'a, 'b>) {
-        self.symbols.push(symbol);
+        let key = symbol.inner.borrow_mut().lexeme;
+        self.symbols.insert(key, symbol);
     }
 }
 
@@ -34,7 +35,7 @@ impl<'a, 'b> ScopeArena<'a, 'b> {
     pub fn new() -> Self {
         Self {
             scopes: vec![Scope {
-                symbols: vec![],
+                symbols: HashMap::new(),
                 children: vec![],
                 idx: 0,
                 parent: None,
@@ -46,7 +47,7 @@ impl<'a, 'b> ScopeArena<'a, 'b> {
     pub fn push(&mut self, parent: Option<usize>) -> usize {
         let idx = self.scopes.len();
         let scope = Scope {
-            symbols: vec![],
+            symbols: HashMap::new(),
             children: vec![],
             idx,
             parent,
@@ -59,7 +60,8 @@ impl<'a, 'b> ScopeArena<'a, 'b> {
     }
 
     pub fn push_symbol(&mut self, symbol: Symbol<'a, 'b>, scope: usize) {
-        self.scopes[scope].symbols.push(symbol);
+        let key = symbol.inner.borrow().lexeme;
+        self.scopes[scope].symbols.insert(key, symbol);
     }
 
     pub fn get(&self, idx: usize) -> &Scope<'a, 'b> {

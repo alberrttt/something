@@ -19,12 +19,22 @@ impl<'a> PreparsedSourceFile<'a> {
             tokens,
             current: 0,
         };
-        
+
         Self {
             path,
             src,
             lexer,
             parser,
+        }
+    }
+    pub fn parse<'b: 'a>(&'b self) -> SourceFile<'b> {
+        let mut stream = self.parser.stream(&self);
+        let (ast, errors) = <Vec<Item> as Node<'_, (Vec<_>, Vec<_>)>>::parse(&mut stream);
+
+        SourceFile {
+            preparsed: &self,
+            ast,
+            errors,
         }
     }
 }
@@ -33,4 +43,5 @@ impl<'a> PreparsedSourceFile<'a> {
 pub struct SourceFile<'a> {
     pub preparsed: &'a PreparsedSourceFile<'a>,
     pub ast: Vec<Item<'a>>,
+    pub errors: Vec<ParseError<'a>>,
 }

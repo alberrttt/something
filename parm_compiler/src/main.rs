@@ -8,6 +8,7 @@ use parm_ast::{
     error::ParseError, parser::nodes::item::Item, source_file::PreparsedSourceFile, traits::Node,
     tree_display::TreeDisplay,
 };
+use parm_hlir::{item::function::Function, traits::Check, ty};
 mod opts;
 fn main() {
     let parm_toml = Path::new("./example/parm.toml");
@@ -20,27 +21,23 @@ fn main() {
         .canonicalize()
         .unwrap();
     let src_str = fs::read_to_string(&entry).unwrap();
-    let mut file = PreparsedSourceFile::new(entry, &src_str);
+    let mut preparsed_file = PreparsedSourceFile::new(entry, &src_str);
     if env::var("TOKENS").is_ok() {
-        println!("{:#?}", file.lexer.tokens);
+        println!("{:#?}", preparsed_file.lexer.tokens);
     }
-    let (items, errors): (Vec<Item<'_>>, Vec<ParseError<'_>>) =
-        <Vec<Item> as Node<'_, (Vec<_>, Vec<_>)>>::parse(&mut file.parser.stream(&file));
-    for error in errors {
-        println!("{}", error);
-    }
-    let mut main = None;
-    for item in &items {
-        if let Item::Function(funct) = &item {
-            if funct.name.lexeme == "main" {
-                main = Some(funct);
-            }
+    let mut parsed_file = preparsed_file.parse();
+    if env::var("AST").is_ok() {
+        for item in &parsed_file.ast {
+            println!("{}", item.tree());
         }
     }
-    let main = main.unwrap();
+    for error in &parsed_file.errors {
+        println!("{}", error);
+    }
+    let mut typechecker = parm_hlir::typechecker::Typechecker::new(&parsed_file);
 
-    let mut typechecker = parm_hlir::typechecker::Typechecker::new(&file);
-    let main = typechecker.check_fn(main);
-
-    dbg!(main);
+    for item in &parsed_file.ast {
+        let item = parm_hlir::item::Item::check(&mut typechecker, item);
+        dbg!(&item);
+    }
 }

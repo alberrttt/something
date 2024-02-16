@@ -1,8 +1,10 @@
+#![feature(pointer_is_aligned)]
 pub mod expression;
-pub mod function;
+pub mod item;
+pub mod prelude;
 pub mod scope;
 pub mod statement;
-pub mod struct_declaration;
 pub mod symbol;
+pub mod traits;
 pub mod ty;
 pub mod typechecker;

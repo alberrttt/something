@@ -57,15 +57,15 @@ impl<'a> Parser<'a> {
             Err(ErrorKind::EndOfTokens(EndOfTokens::default()))
         } else {
             self.current += 1;
-            Ok(unsafe { self.tokens.get_unchecked(self.current) })
+            Ok(self.tokens.get(self.current).unwrap())
         }
     }
-    pub fn peek<'b: 'a>(&self) -> Result<&'b Token<'a>, ErrorKind<'b>> {
+    pub fn peek<'b: 'a>(&self) -> Result<&Token<'a>, ErrorKind<'b>> {
         if self.current > self.tokens.len() {
             Err(ErrorKind::EndOfTokens(EndOfTokens::default()))
         } else {
             // as long as it compiles 🙂😀
-            Ok(unsafe { ::std::mem::transmute(self.tokens.get_unchecked(self.current)) })
+            Ok(self.tokens.get(self.current).unwrap())
         }
     }
 }

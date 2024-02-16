@@ -5,8 +5,9 @@ use std::{
     rc::Rc,
 };
 
-use parm_ast::parser::nodes::statement::use_stmt::{
-    FunctionDeclaration, LetStatement, Param, StructDeclaration,
+use parm_ast::parser::nodes::{
+    declaration::struct_dec::StructMemberDeclaration,
+    statement::use_stmt::{FunctionDeclaration, LetStatement, Param, StructDeclaration},
 };
 
 use crate::{
@@ -25,19 +26,15 @@ impl<'a, 'b> std::fmt::Debug for Symbol<'a, 'b> {
 }
 #[derive(Clone, PartialEq)]
 pub struct InnerSymbol<'a, 'b> {
-    pub id: usize,
     pub declaration: SymbolDeclaration<'a, 'b>,
-    pub ty: TypeRef<'a, 'b>,
+    pub ty: Type<'a, 'b>,
     pub lexeme: &'a str,
-    pub tc: *const Typechecker<'a, 'b>,
 }
 impl<'a, 'b> std::fmt::Debug for InnerSymbol<'a, 'b> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let tc = unsafe { &*self.tc };
         f.debug_struct("Symbol")
-            .field("id", &self.id)
+            .field("ty", &self.ty)
             .field("declaration", &self.declaration)
-            .field("ty", &tc.types_arena.types[self.ty.idx])
             .field("lexeme", &self.lexeme)
             .finish()
     }
@@ -54,14 +51,11 @@ pub enum SymbolDeclaration<'a, 'b> {
     Function(&'b FunctionDeclaration<'a>),
     Struct(&'b StructDeclaration<'a>),
     LetStatement(&'b LetStatement<'a>),
+    StructMemberDeclaration(&'b StructMemberDeclaration<'a>),
     Param(&'b Param<'a>),
     None,
 }
-impl<'a, 'b> InnerSymbol<'a, 'b> {
-    pub fn get_ty(&self, typechecker: &Typechecker<'a, 'b>) -> Type<'a, 'b> {
-        typechecker.types_arena.types[self.id].clone()
-    }
-}
+
 impl<'a, 'b> Debug for SymbolDeclaration<'a, 'b> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -72,11 +66,11 @@ impl<'a, 'b> Debug for SymbolDeclaration<'a, 'b> {
                 .field(&arg0.ident.lexeme)
                 .finish(),
             Self::Param(arg0) => f.debug_tuple("Param").field(&arg0.name).finish(),
+            Self::StructMemberDeclaration(arg0) => f
+                .debug_tuple("StructMemberDeclaration")
+                .field(&arg0.ident.lexeme)
+                .finish(),
             Self::None => write!(f, "None"),
         }
     }
-}
-#[derive(Debug, Clone, PartialEq, Default)]
-pub struct SymbolArena<'a, 'b> {
-    pub symbols: Vec<Symbol<'a, 'b>>,
 }
