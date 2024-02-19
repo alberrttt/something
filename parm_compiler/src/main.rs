@@ -37,7 +37,14 @@ fn main() {
     let mut typechecker = parm_hlir::typechecker::Typechecker::new(&parsed_file);
 
     for item in &parsed_file.ast {
-        let item = parm_hlir::item::Item::check(&mut typechecker, item);
-        dbg!(&item);
+        let item = item.check(&mut typechecker);
+        match item {
+            Ok(item) => {
+                println!("{:#?}", item);
+            }
+            Err(err) => {
+                println!("{}", err);
+            }
+        }
     }
 }

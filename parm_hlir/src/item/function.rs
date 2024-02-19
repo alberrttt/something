@@ -10,6 +10,8 @@ use crate::{
     typechecker::Typechecker,
 };
 
+use self::traits::TypeCheckResult;
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct Function<'a, 'b> {
     pub symbol: Symbol<'a, 'b>,
@@ -17,13 +19,8 @@ pub struct Function<'a, 'b> {
     pub statements: Vec<crate::statement::Statement<'a, 'b>>,
 }
 
-impl<'a, 'b> Check<'a, 'b> for Function<'a, 'b> {
-    type Output = Self;
-    type Ast = parm_ast::prelude::FunctionDeclaration<'a>;
-    fn check(
-        tyc: &mut Typechecker<'a, 'b>,
-        function: &'b parm_ast::prelude::FunctionDeclaration<'a>,
-    ) -> Self {
+impl<'a, 'b> Check<'a, 'b, Function<'a, 'b>> for parm_ast::prelude::FunctionDeclaration<'a> {
+    fn check(&'b self, tyc: &mut Typechecker<'a, 'b>) -> TypeCheckResult<'a, 'b, Function<'a, 'b>> {
         let Typechecker {
             source_file: _,
             scopes_arena,
@@ -32,9 +29,9 @@ impl<'a, 'b> Check<'a, 'b> for Function<'a, 'b> {
         scopes_arena.push(Some(tyc.current_scope));
 
         let symbol = InnerSymbol {
-            declaration: SymbolDeclaration::Function(AST(function)),
+            declaration: SymbolDeclaration::Function(AST(self)),
             ty: Type::None(PhantomData),
-            lexeme: function.name.lexeme,
+            lexeme: self.name.lexeme,
         };
 
         let symbol = Symbol {
@@ -46,13 +43,13 @@ impl<'a, 'b> Check<'a, 'b> for Function<'a, 'b> {
             return_ty: Type::None(PhantomData),
         });
         let mut statements = vec![];
-        for statement in &function.body.statements.inner {
-            statements.push(Statement::from_ast(tyc, statement))
+        for statement in &self.body.statements.inner {
+            statements.push(statement.check(tyc)?)
         }
 
-        Function {
+        Ok(Function {
             symbol: symbol.clone(),
             statements,
-        }
+        })
     }
 }

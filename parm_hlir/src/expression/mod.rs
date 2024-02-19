@@ -9,7 +9,7 @@ use parm_ast::{
 
 use crate::{traits::Check, ty::Type, typechecker::Typechecker};
 
-use self::struct_expression::StructExpression;
+use self::{struct_expression::StructExpression, traits::TypeCheckResult};
 pub mod struct_expression;
 #[derive(Debug, Clone, PartialEq)]
 pub enum Expression<'a, 'b> {
@@ -20,28 +20,27 @@ pub enum Expression<'a, 'b> {
     Number(&'b Number<'a>),
     Boolean(&'b Boolean<'a>),
 }
-impl<'a, 'b> Check<'a, 'b> for Expression<'a, 'b> {
-    type Output = Self;
-    type Ast = parm_ast::prelude::Expression<'a>;
-    fn check(tc: &mut Typechecker<'a, 'b>, ast: &'b Self::Ast) -> Self::Output {
-        match &ast {
+impl<'a, 'b> Check<'a, 'b, Expression<'a, 'b>> for parm_ast::prelude::Expression<'a> {
+    fn check(
+        &'b self,
+        tc: &mut Typechecker<'a, 'b>,
+    ) -> TypeCheckResult<'a, 'b, Expression<'a, 'b>> {
+        Ok(match &self {
             ast::Expression::StringLit(string_literal) => Expression::StringLiteral(string_literal),
             ast::Expression::Number(number) => Expression::Number(number),
             ast::Expression::Boolean(boolean) => Expression::Boolean(boolean),
             ast::Expression::StructExpression(struct_expression) => {
-                Expression::StructExpression(StructExpression::check(tc, struct_expression))
+                Expression::StructExpression(struct_expression.check(tc)?)
             }
             ast::Expression::Identifier(identifier) => {
-                Expression::Identifier(Identifier::check(tc, identifier))
+                Expression::Identifier(identifier.check(tc)?)
             }
-            ast::Expression::BinaryExpression(bin) => {
-                Expression::BinaryExpression(BinaryExpression::check(tc, bin))
-            }
+            ast::Expression::BinaryExpression(bin) => Expression::BinaryExpression(bin.check(tc)?),
             ast::Expression::Group(_) => todo!(),
             ast::Expression::Call(_) => todo!(),
             ast::Expression::Block(_) => todo!(),
             ast::Expression::If(_) => todo!(),
-        }
+        })
     }
 }
 impl<'a, 'b> Expression<'a, 'b> {

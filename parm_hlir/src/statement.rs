@@ -5,7 +5,7 @@ use parm_ast::parser::nodes::declaration::variable::Initializer;
 use crate::{
     expression::Expression,
     symbol::{InnerSymbol, Symbol, SymbolDeclaration},
-    traits::Check,
+    traits::{Check, TypeCheckResult},
     typechecker::Typechecker,
     AST,
 };
@@ -23,19 +23,12 @@ impl<'a, 'b> std::fmt::Debug for Statement<'a, 'b> {
         }
     }
 }
-impl<'a, 'b> Statement<'a, 'b> {
-    pub fn from_ast(
-        typechecker: &mut Typechecker<'a, 'b>,
-        statement: &'b parm_ast::prelude::Statement<'a>,
-    ) -> Self {
+impl<'a, 'b> Check<'a, 'b, Statement<'a, 'b>> for parm_ast::prelude::Statement<'a> {
+    fn check(&'b self, tc: &mut Typechecker<'a, 'b>) -> TypeCheckResult<'a, 'b, Statement<'a, 'b>> {
         use parm_ast::prelude::Statement as ASTStatement;
-        match statement {
-            ASTStatement::Let(stmt) => {
-                Statement::LetStatement(LetStatement::check(typechecker, stmt))
-            }
-            ASTStatement::Expression(expr) => {
-                Statement::Expression(Expression::check(typechecker, expr))
-            }
+        match self {
+            ASTStatement::Let(stmt) => Ok(Statement::LetStatement(stmt.check(tc)?)),
+            ASTStatement::Expression(expr) => Ok(Statement::Expression(expr.check(tc)?)),
             _ => todo!(),
         }
     }
@@ -45,26 +38,22 @@ pub struct LetStatement<'a, 'b> {
     pub symbol: Symbol<'a, 'b>,
     pub expression: Expression<'a, 'b>,
 }
-
-impl<'a, 'b> Check<'a, 'b> for LetStatement<'a, 'b> {
-    type Output = Self;
-
-    type Ast = parm_ast::prelude::LetStatement<'a>;
+impl<'a, 'b> Check<'a, 'b, LetStatement<'a, 'b>> for parm_ast::prelude::LetStatement<'a> {
     fn check(
+        &'b self,
         typechecker: &mut Typechecker<'a, 'b>,
-        statement: &'b parm_ast::prelude::LetStatement<'a>,
-    ) -> Self {
-        let Initializer { eq: _, expr } = statement.initializer.as_ref().unwrap();
-        let expression = Expression::check(typechecker, expr);
-        let name: &parm_ast::prelude::Identifier<'_> = &statement.ident;
+    ) -> TypeCheckResult<'a, 'b, LetStatement<'a, 'b>> {
+        let Initializer { eq: _, expr } = self.initializer.as_ref().unwrap();
+        let expression = expr.check(typechecker)?;
+        let name: &parm_ast::prelude::Identifier<'_> = &self.ident;
         let symbol = InnerSymbol {
-            declaration: SymbolDeclaration::LetStatement(AST(statement)),
+            declaration: SymbolDeclaration::LetStatement(AST(self)),
             ty: expression.get_ty(),
             lexeme: name.lexeme,
         }
         .into_symbol();
         typechecker.mut_current_scope().push_symbol(symbol.clone());
-        Self { symbol, expression }
+        Ok(LetStatement { symbol, expression })
     }
 }
 impl<'a, 'b> LetStatement<'a, 'b> {

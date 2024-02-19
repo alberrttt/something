@@ -2,6 +2,8 @@ use parm_ast::lexer::token::BinaryOperator;
 
 use crate::prelude::*;
 
+use self::traits::TypeCheckResult;
+
 use super::Expression;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -11,17 +13,17 @@ pub struct BinaryExpression<'a, 'b> {
     pub right: Box<Expression<'a, 'b>>,
 }
 
-impl<'a, 'b> Check<'a, 'b> for BinaryExpression<'a, 'b> {
-    type Output = Self;
-    type Ast = ast::BinaryExpression<'a>;
-
-    fn check(tc: &mut Typechecker<'a, 'b>, ast: &'b Self::Ast) -> Self::Output {
-        let left = Box::new(Expression::check(tc, &ast.left));
-        let right = Box::new(Expression::check(tc, &ast.right));
-        Self {
+impl<'a, 'b> Check<'a, 'b, BinaryExpression<'a, 'b>> for ast::BinaryExpression<'a> {
+    fn check(
+        &'b self,
+        tc: &mut Typechecker<'a, 'b>,
+    ) -> TypeCheckResult<'a, 'b, BinaryExpression<'a, 'b>> {
+        let left = Box::new(self.left.check(tc)?);
+        let right = Box::new(self.right.check(tc)?);
+        Ok(BinaryExpression {
             left,
-            operator: AST(&ast.operator),
+            operator: AST(&self.operator),
             right,
-        }
+        })
     }
 }

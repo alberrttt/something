@@ -3,9 +3,9 @@ pub mod struct_ty;
 use parm_ast::parser::nodes::type_nodes::TypeExpression;
 
 use crate::prelude::*;
-use std::{fmt::Debug, marker::PhantomData, path::Display, rc::Rc};
+use std::{fmt::Debug, fmt::Display, marker::PhantomData, process::Output, rc::Rc};
 
-use self::struct_ty::StructTy;
+use self::{struct_ty::StructTy, traits::TypeCheckResult};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct TypeArena<'a, 'b> {
@@ -13,7 +13,7 @@ pub struct TypeArena<'a, 'b> {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum Type<'a, 'b: 'a> {
+pub enum Type<'a, 'b> {
     Uint(UintTy),
     Int(IntTy),
     Float(FloatTy),
@@ -22,6 +22,20 @@ pub enum Type<'a, 'b: 'a> {
     Struct(Rc<StructTy<'a, 'b>>),
     Function(Rc<FunctionTy<'a, 'b>>),
     None(PhantomData<&'b &'a ()>),
+}
+impl<'a, 'b> Display for Type<'a, 'b> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Type::Uint(ty) => write!(f, "{}", ty),
+            Type::Int(ty) => write!(f, "{}", ty),
+            Type::Float(ty) => write!(f, "{}", ty),
+            Type::StringLiteral => write!(f, "stringlit"),
+            Type::Boolean => write!(f, "boolean"),
+            Type::Struct(ty) => write!(f, "{}", ty.symbol.inner.borrow().lexeme),
+            Type::Function(ty) => write!(f, "{}", ty.symbol.inner.borrow().lexeme),
+            Type::None(_) => write!(f, "None"),
+        }
+    }
 }
 impl<'a, 'b> Type<'a, 'b> {
     pub fn is_ambigious_int(&self) -> bool {
@@ -105,20 +119,23 @@ pub enum FloatTy {
     F32,
     F64,
 }
-
-impl<'a, 'b> Check<'a, 'b> for Type<'a, 'b> {
-    type Output = Self;
-
-    type Ast = TypeExpression<'a>;
-
-    fn check(tc: &mut Typechecker<'a, 'b>, ast: &'b Self::Ast) -> Self::Output {
-        let segment = ast.path.segments.elements();
+impl Display for FloatTy {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            FloatTy::F32 => write!(f, "f32"),
+            FloatTy::F64 => write!(f, "f64"),
+        }
+    }
+}
+impl<'a, 'b> Check<'a, 'b, Type<'a, 'b>> for TypeExpression<'a> {
+    fn check(&self, tc: &mut Typechecker<'a, 'b>) -> TypeCheckResult<'a, 'b, Type<'a, 'b>> {
+        let segment = self.path.segments.elements();
         let first = segment.first().unwrap();
         assert_eq!(segment.len(), 1); // for now
 
         let ty = first.ident.lexeme;
 
-        match ty {
+        Ok(match ty {
             "u8" => Type::Uint(UintTy::U8),
             "u16" => Type::Uint(UintTy::U16),
             "u32" => Type::Uint(UintTy::U32),
@@ -133,6 +150,6 @@ impl<'a, 'b> Check<'a, 'b> for Type<'a, 'b> {
             "f64" => Type::Float(FloatTy::F64),
 
             _ => panic!(),
-        }
+        })
     }
 }

@@ -1,21 +1,22 @@
 use crate::prelude::*;
+
+use self::traits::TypeCheckResult;
 #[derive(Debug, Clone, PartialEq)]
 pub struct Identifier<'a, 'b> {
     pub symbol: Symbol<'a, 'b>,
     pub ast: AST<&'b ast::Identifier<'a>>,
 }
 
-impl<'a, 'b> Check<'a, 'b> for Identifier<'a, 'b> {
-    type Output = Self;
+impl<'a, 'b> Check<'a, 'b, Identifier<'a, 'b>> for ast::Identifier<'a> {
+    fn check(
+        &'b self,
+        tc: &mut crate::typechecker::Typechecker<'a, 'b>,
+    ) -> TypeCheckResult<'a, 'b, Identifier<'a, 'b>> {
+        let symbol = tc.get_symbol(self.lexeme).unwrap();
 
-    type Ast = ast::Identifier<'a>;
-
-    fn check(tc: &mut crate::typechecker::Typechecker<'a, 'b>, ast: &'b Self::Ast) -> Self::Output {
-        let symbol = tc.get_symbol(ast.lexeme).unwrap();
-
-        Self {
+        Ok(Identifier {
             symbol,
-            ast: AST(ast),
-        }
+            ast: AST(self),
+        })
     }
 }

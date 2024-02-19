@@ -1,8 +1,11 @@
 use std::{cell::RefCell, marker::PhantomData, rc::Rc};
 
+use parm_common::Spanned;
+
 use crate::{
+    error::TypeError,
     symbol::{self, InnerSymbol, Symbol, SymbolDeclaration},
-    traits::Check,
+    traits::{Check, TypeCheckResult},
     ty::Type,
     AST,
 };
@@ -18,43 +21,49 @@ pub struct StructMemberInitialization<'a, 'b> {
     pub symbol: Symbol<'a, 'b>,
     pub expression: crate::expression::Expression<'a, 'b>,
 }
-impl<'a, 'b> Check<'a, 'b> for StructExpression<'a, 'b> {
-    type Output = Self;
-
-    type Ast = parm_ast::parser::nodes::expression::expr_struct::StructExpression<'a>;
-
-    fn check(tc: &mut crate::typechecker::Typechecker<'a, 'b>, ast: &'b Self::Ast) -> Self::Output {
-        let symbol = tc.get_symbol(ast.ident.lexeme).unwrap();
+impl<'a, 'b> Check<'a, 'b, StructExpression<'a, 'b>>
+    for parm_ast::parser::nodes::expression::expr_struct::StructExpression<'a>
+{
+    fn check(
+        &'b self,
+        tc: &mut crate::typechecker::Typechecker<'a, 'b>,
+    ) -> TypeCheckResult<'a, 'b, StructExpression<'a, 'b>> {
+        let symbol = tc.get_symbol(self.ident.lexeme).unwrap();
         let Type::Struct(ref struct_ty) = &symbol.inner.as_ref().borrow().ty else {
-            panic!("Struct {} not found", ast.ident.lexeme);
+            panic!("Struct {} not found", self.ident.lexeme);
         };
         let mut members = vec![];
-        for field in ast.body.elements() {
+        for field in self.body.elements() {
             let name = &field.ident;
-            let expr = &field.expr;
+            let ast_expr = &field.expr;
 
             let field = struct_ty
                 .fields
                 .iter()
                 .find(|f| f.inner.borrow().lexeme == name.lexeme)
                 .unwrap();
-            let expr = crate::expression::Expression::check(tc, expr);
-            if !expr.get_ty().eq_amb(&field.inner.borrow().ty) {
-                panic!(
-                    "Type mismatch {:?} != {:?}",
-                    expr.get_ty(),
-                    field.inner.borrow().ty
-                );
+            let expr = ast_expr.check(tc)?;
+            let field_ty = &field.inner.borrow().ty;
+            let expr_ty = expr.get_ty();
+            if !field_ty.eq_amb(&expr_ty) {
+                return Err(TypeError::new(
+                    crate::error::TypeErrorKind::MismatchedTypes {
+                        expected: field_ty.clone(),
+                        got: expr_ty.clone(),
+                        location: ast_expr.span(),
+                    },
+                    tc.source_file.preparsed,
+                ));
             }
             members.push(StructMemberInitialization {
                 symbol: field.clone(),
                 expression: expr,
             });
         }
-        Self {
+        Ok(StructExpression {
             symbol: symbol.clone(),
             members,
-            ast: AST(ast),
-        }
+            ast: AST(self),
+        })
     }
 }
