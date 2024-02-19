@@ -11,7 +11,7 @@ use parm_ast::parser::nodes::{
 };
 
 use crate::{
-    ty::{Type, TypeRef},
+    ty::{Type, },
     typechecker::Typechecker,
     AST,
 };

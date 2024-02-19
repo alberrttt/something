@@ -6,7 +6,7 @@ use crate::prelude::*;
 use crate::{
     statement::Statement,
     symbol::Symbol,
-    ty::{function_ty::FunctionTy, Type, TypeRef},
+    ty::{function_ty::FunctionTy, Type},
     typechecker::Typechecker,
 };
 
@@ -27,7 +27,6 @@ impl<'a, 'b> Check<'a, 'b> for Function<'a, 'b> {
         let Typechecker {
             source_file: _,
             scopes_arena,
-            types_arena,
             current_scope: _,
         } = tyc;
         scopes_arena.push(Some(tyc.current_scope));
@@ -46,7 +45,6 @@ impl<'a, 'b> Check<'a, 'b> for Function<'a, 'b> {
             symbol: symbol.clone(),
             return_ty: Type::None(PhantomData),
         });
-        tyc.types_arena.types.push(Type::Function(ty.clone()));
         let mut statements = vec![];
         for statement in &function.body.statements.inner {
             statements.push(Statement::from_ast(tyc, statement))

@@ -18,12 +18,10 @@ use crate::{
 pub struct Typechecker<'a, 'b> {
     pub source_file: &'b SourceFile<'a>,
     pub scopes_arena: ScopeArena<'a, 'b>,
-    pub types_arena: TypeArena<'a, 'b>,
     pub current_scope: usize,
 }
 
 impl<'a, 'b> Typechecker<'a, 'b> {
-    
     pub fn current_scope(&self) -> &Scope<'a, 'b> {
         &self.scopes_arena.scopes[self.current_scope]
     }
@@ -44,13 +42,11 @@ impl<'a, 'b> Typechecker<'a, 'b> {
     pub fn new(src_file: &'b SourceFile<'a>) -> Self {
         let mut tc = Self {
             source_file: src_file,
-            types_arena: TypeArena {
-                types: Self::default_types(),
-            },
+
             scopes_arena: ScopeArena::new(),
             current_scope: 0,
         };
-       
+
         tc
     }
 }

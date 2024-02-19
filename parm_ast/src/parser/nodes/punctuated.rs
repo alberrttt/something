@@ -4,14 +4,14 @@ use crate::prelude::*;
 use parm_common::Spanned;
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct Punctuated<T, P> {
-    pub inner: Vec<(T, P)>,
-    pub last: Option<Box<T>>,
+pub struct Punctuated<Element, Seperator> {
+    pub inner: Vec<(Element, Seperator)>,
+    pub last: Option<Box<Element>>,
 }
 impl<'a, T: TreeDisplay + Node<'a> + Debug, P: Node<'a>> TreeDisplay for Punctuated<T, P> {
     fn tree(&self) -> Tree {
         let mut tree = Tree::new("Punctuated::");
-        for t in self.collect_t() {
+        for t in self.elements() {
             tree = tree.child(t.tree());
         }
         tree
@@ -52,7 +52,7 @@ impl<'a, T: Node<'a> + Debug, P: Node<'a>> Node<'a> for Punctuated<T, P> {
     }
 }
 impl<'a, T: Node<'a> + Debug, P: Node<'a>> Punctuated<T, P> {
-    pub fn collect_t(&self) -> Vec<&T> {
+    pub fn elements(&self) -> Vec<&T> {
         let mut iter = self.inner.iter().map(|(t, _)| t).collect::<Vec<_>>();
         if let Some(last) = self.last.as_ref() {
             iter.push(last)

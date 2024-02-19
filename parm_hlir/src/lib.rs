@@ -4,8 +4,10 @@ use std::{
     fmt::Debug,
     ops::{Deref, DerefMut},
 };
+pub mod error;
 pub mod expression;
 pub mod item;
+pub mod path;
 pub mod prelude;
 pub mod scope;
 pub mod statement;

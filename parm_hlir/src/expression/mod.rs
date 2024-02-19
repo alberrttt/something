@@ -7,11 +7,7 @@ use parm_ast::{
     prelude,
 };
 
-use crate::{
-    traits::Check,
-    ty::{Type, TypeRef},
-    typechecker::Typechecker,
-};
+use crate::{traits::Check, ty::Type, typechecker::Typechecker};
 
 use self::struct_expression::StructExpression;
 pub mod struct_expression;
@@ -56,7 +52,7 @@ impl<'a, 'b> Expression<'a, 'b> {
             }
             Expression::Identifier(identifier) => identifier.symbol.inner.borrow().ty.clone(),
             Expression::StringLiteral(_) => Type::StringLiteral,
-            Expression::Number(_) => Type::Number,
+            Expression::Number(_) => Type::Int(ty::IntTy::Ambiguous),
             Expression::Boolean(_) => Type::Boolean,
             Expression::StructExpression(struct_expression) => {
                 struct_expression.symbol.inner.borrow().ty.clone()

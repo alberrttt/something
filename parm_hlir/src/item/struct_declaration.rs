@@ -26,11 +26,14 @@ impl<'a, 'b> Check<'a, 'b> for StructDeclaration<'a, 'b> {
         };
 
         let mut fields = vec![];
-        for field in &ast.body.collect_t() {
+        for field in &ast.body.elements() {
+            let name = &field.ident;
+            let ty = &field.ty;
+            let ty: Type<'_, '_> = Type::check(tc, ty);
             let symbol = InnerSymbol {
                 declaration: SymbolDeclaration::StructMemberDeclaration(AST(field)),
-                ty: Type::None(PhantomData),
-                lexeme: field.ident.lexeme,
+                ty,
+                lexeme: name.lexeme,
             };
             let symbol = Symbol {
                 inner: Rc::new(RefCell::new(symbol)),
