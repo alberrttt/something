@@ -1,8 +1,9 @@
 pub mod function_ty;
 pub mod struct_ty;
 use parm_ast::parser::nodes::type_nodes::TypeExpression;
+use parm_common::Spanned;
 
-use crate::prelude::*;
+use crate::{error::TypeError, prelude::*};
 use std::{fmt::Debug, fmt::Display, marker::PhantomData, process::Output, rc::Rc};
 
 use self::{struct_ty::StructTy, traits::TypeCheckResult};
@@ -21,7 +22,7 @@ pub enum Type<'a, 'b> {
     Boolean,
     Struct(Rc<StructTy<'a, 'b>>),
     Function(Rc<FunctionTy<'a, 'b>>),
-    None(PhantomData<&'b &'a ()>),
+    Unknown,
 }
 impl<'a, 'b> Display for Type<'a, 'b> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -33,7 +34,7 @@ impl<'a, 'b> Display for Type<'a, 'b> {
             Type::Boolean => write!(f, "boolean"),
             Type::Struct(ty) => write!(f, "{}", ty.symbol.inner.borrow().lexeme),
             Type::Function(ty) => write!(f, "{}", ty.symbol.inner.borrow().lexeme),
-            Type::None(_) => write!(f, "None"),
+            Type::Unknown => write!(f, "Unknown"),
         }
     }
 }
@@ -51,8 +52,13 @@ impl<'a, 'b> Type<'a, 'b> {
     /// eq, accounting for ambigious types
     pub fn eq_amb(&self, other: &Self) -> bool {
         self == other
-            || self.is_ambigious_int() && matches!(other, Type::Int(_))
-            || self.is_ambigious_uint() && matches!(other, Type::Uint(_))
+            || (self.is_ambigious_int() && matches!(other, Type::Int(_)))
+            || (self.is_ambigious_uint() && matches!(other, Type::Uint(_)))
+            || (other.is_ambigious_uint() && matches!(self, Type::Uint(_)))
+            || (other.is_ambigious_int() && matches!(self, Type::Int(_)))
+            // if any are unknown, we will assume the programmer intended for the correct type.
+            || matches!(self, Type::Unknown)
+            || matches!(other, Type::Unknown)
     }
 }
 
@@ -73,7 +79,7 @@ impl std::fmt::Display for UintTy {
             UintTy::U32 => write!(f, "u32"),
             UintTy::U64 => write!(f, "u64"),
             UintTy::U128 => write!(f, "u128"),
-            UintTy::Ambiguous => write!(f, "Ambiguous"),
+            UintTy::Ambiguous => write!(f, "{{natural number}}"),
         }
     }
 }
@@ -103,7 +109,7 @@ impl std::fmt::Display for IntTy {
             IntTy::I32 => write!(f, "i32"),
             IntTy::I64 => write!(f, "i64"),
             IntTy::I128 => write!(f, "i128"),
-            IntTy::Ambiguous => write!(f, "Ambiguous"),
+            IntTy::Ambiguous => write!(f, "{{integer}}"),
         }
     }
 }
@@ -148,8 +154,17 @@ impl<'a, 'b> Check<'a, 'b, Type<'a, 'b>> for TypeExpression<'a> {
             "i128" => Type::Int(IntTy::I128),
             "f32" => Type::Float(FloatTy::F32),
             "f64" => Type::Float(FloatTy::F64),
+            "bool" => Type::Boolean,
 
-            _ => panic!(),
+            ty => {
+                return Err(TypeError::new(
+                    error::TypeErrorKind::TypeNameNotFound {
+                        name: ty,
+                        location: self.span(),
+                    },
+                    tc.source_file.preparsed,
+                ))
+            }
         })
     }
 }

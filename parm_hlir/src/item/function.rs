@@ -25,12 +25,14 @@ impl<'a, 'b> Check<'a, 'b, Function<'a, 'b>> for parm_ast::prelude::FunctionDecl
             source_file: _,
             scopes_arena,
             current_scope: _,
+            errs: _,
+            none_symbol: _,
         } = tyc;
         scopes_arena.push(Some(tyc.current_scope));
 
         let symbol = InnerSymbol {
             declaration: SymbolDeclaration::Function(AST(self)),
-            ty: Type::None(PhantomData),
+            ty: Type::Unknown,
             lexeme: self.name.lexeme,
         };
 
@@ -40,7 +42,7 @@ impl<'a, 'b> Check<'a, 'b, Function<'a, 'b>> for parm_ast::prelude::FunctionDecl
 
         let ty = Rc::new(FunctionTy {
             symbol: symbol.clone(),
-            return_ty: Type::None(PhantomData),
+            return_ty: Type::Unknown,
         });
         let mut statements = vec![];
         for statement in &self.body.statements.inner {

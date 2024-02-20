@@ -1,5 +1,5 @@
 #![feature(pointer_is_aligned)]
-
+#![feature(lazy_cell)]
 use std::{
     fmt::Debug,
     ops::{Deref, DerefMut},

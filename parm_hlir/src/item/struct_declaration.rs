@@ -16,7 +16,7 @@ impl<'a, 'b> Check<'a, 'b, StructDeclaration<'a, 'b>> for ast::StructDeclaration
     ) -> TypeCheckResult<'a, 'b, StructDeclaration<'a, 'b>> {
         let symbol = InnerSymbol {
             declaration: SymbolDeclaration::Struct(AST(self)),
-            ty: Type::None(PhantomData),
+            ty: Type::Unknown,
             lexeme: self.ident.lexeme,
         };
 
@@ -28,7 +28,13 @@ impl<'a, 'b> Check<'a, 'b, StructDeclaration<'a, 'b>> for ast::StructDeclaration
         for field in &self.body.elements() {
             let name = &field.ident;
             let ty = &field.ty;
-            let ty: Type<'_, '_> = ty.check(tc)?;
+            let ty: Type<'_, '_> = match ty.check(tc) {
+                Ok(ty) => ty,
+                Err(err) => {
+                    tc.errs.push(err);
+                    Type::Unknown
+                }
+            };
             let symbol = InnerSymbol {
                 declaration: SymbolDeclaration::StructMemberDeclaration(AST(field)),
                 ty,

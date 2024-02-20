@@ -30,8 +30,15 @@ pub enum TypeErrorKind<'a, 'b: 'a> {
         got: Type<'a, 'b>,
         location: Span,
     },
+    TypeNameNotFound {
+        name: &'b str,
+        location: Span,
+    },
+    SymbolNotFound {
+        name: &'b str,
+        location: Span,
+    },
 }
-
 impl<'a, 'b: 'a> std::fmt::Display for TypeError<'a, 'b> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut map = HashMap::new();
@@ -45,6 +52,18 @@ impl<'a, 'b: 'a> std::fmt::Display for TypeError<'a, 'b> {
                     *location,
                     Annotation::new(format!("Type Mismatch: expected {}, got {}", expected, got,))
                         .auto(),
+                );
+            }
+            TypeErrorKind::TypeNameNotFound { name, location } => {
+                map.insert(
+                    *location,
+                    Annotation::new(format!("Type name `{}` not found", name)).auto(),
+                );
+            }
+            TypeErrorKind::SymbolNotFound { name, location } => {
+                map.insert(
+                    *location,
+                    Annotation::new(format!("Symbol `{}` not found", name)).auto(),
                 );
             }
         }

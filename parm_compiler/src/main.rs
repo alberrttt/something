@@ -47,4 +47,8 @@ fn main() {
             }
         }
     }
+
+    for errs in &typechecker.errs {
+        println!("{}", errs);
+    }
 }

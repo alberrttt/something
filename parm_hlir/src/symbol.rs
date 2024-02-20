@@ -1,5 +1,5 @@
 use std::{
-    cell::{Ref, RefCell},
+    cell::{LazyCell, Ref, RefCell},
     fmt::Debug,
     marker::PhantomData,
     rc::Rc,
@@ -10,16 +10,13 @@ use parm_ast::parser::nodes::{
     statement::use_stmt::{FunctionDeclaration, LetStatement, Param, StructDeclaration},
 };
 
-use crate::{
-    ty::{Type, },
-    typechecker::Typechecker,
-    AST,
-};
+use crate::{ty::Type, typechecker::Typechecker, AST};
 
 #[derive(Clone, PartialEq)]
 pub struct Symbol<'a, 'b> {
     pub inner: Rc<RefCell<InnerSymbol<'a, 'b>>>,
 }
+
 impl<'a, 'b> std::fmt::Debug for Symbol<'a, 'b> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         self.inner.borrow().fmt(f)

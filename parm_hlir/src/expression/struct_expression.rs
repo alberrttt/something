@@ -46,7 +46,7 @@ impl<'a, 'b> Check<'a, 'b, StructExpression<'a, 'b>>
             let field_ty = &field.inner.borrow().ty;
             let expr_ty = expr.get_ty();
             if !field_ty.eq_amb(&expr_ty) {
-                return Err(TypeError::new(
+                tc.errs.push(TypeError::new(
                     crate::error::TypeErrorKind::MismatchedTypes {
                         expected: field_ty.clone(),
                         got: expr_ty.clone(),

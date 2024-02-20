@@ -15,10 +15,14 @@ use crate::{
     statement::Statement,
 };
 
+use self::error::TypeError;
+
 pub struct Typechecker<'a, 'b> {
     pub source_file: &'b SourceFile<'a>,
     pub scopes_arena: ScopeArena<'a, 'b>,
     pub current_scope: usize,
+    pub errs: Vec<TypeError<'a, 'b>>,
+    pub none_symbol: Symbol<'a, 'b>,
 }
 
 impl<'a, 'b> Typechecker<'a, 'b> {
@@ -42,9 +46,16 @@ impl<'a, 'b> Typechecker<'a, 'b> {
     pub fn new(src_file: &'b SourceFile<'a>) -> Self {
         let mut tc = Self {
             source_file: src_file,
-
+            errs: vec![],
             scopes_arena: ScopeArena::new(),
             current_scope: 0,
+            none_symbol: Symbol {
+                inner: Rc::new(RefCell::new(InnerSymbol {
+                    declaration: SymbolDeclaration::None,
+                    ty: Type::Unknown,
+                    lexeme: "",
+                })),
+            },
         };
 
         tc
