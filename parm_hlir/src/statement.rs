@@ -29,6 +29,9 @@ impl<'a, 'b> Check<'a, 'b, Statement<'a, 'b>> for parm_ast::prelude::Statement<'
         match self {
             ASTStatement::Let(stmt) => Ok(Statement::LetStatement(stmt.check(tc)?)),
             ASTStatement::Expression(expr) => Ok(Statement::Expression(expr.check(tc)?)),
+            ASTStatement::ExpressionWithSemi(expr) => {
+                Ok(Statement::Expression(expr.expression.check(tc)?))
+            }
             _ => todo!(),
         }
     }

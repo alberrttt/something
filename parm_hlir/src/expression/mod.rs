@@ -1,4 +1,5 @@
 pub mod binary;
+pub mod call;
 pub mod identifier;
 use crate::prelude::*;
 use parm_ast::{
@@ -18,6 +19,7 @@ pub enum Expression<'a, 'b> {
     StructExpression(StructExpression<'a, 'b>),
     BinaryExpression(BinaryExpression<'a, 'b>),
     Number(&'b Number<'a>),
+    Call(call::Call<'a, 'b>),
     Boolean(&'b Boolean<'a>),
 }
 impl<'a, 'b> Check<'a, 'b, Expression<'a, 'b>> for parm_ast::prelude::Expression<'a> {
@@ -37,7 +39,7 @@ impl<'a, 'b> Check<'a, 'b, Expression<'a, 'b>> for parm_ast::prelude::Expression
             }
             ast::Expression::BinaryExpression(bin) => Expression::BinaryExpression(bin.check(tc)?),
             ast::Expression::Group(_) => todo!(),
-            ast::Expression::Call(_) => todo!(),
+            ast::Expression::Call(call) => Expression::Call(call.check(tc)?),
             ast::Expression::Block(_) => todo!(),
             ast::Expression::If(_) => todo!(),
         })
@@ -55,6 +57,9 @@ impl<'a, 'b> Expression<'a, 'b> {
             Expression::Boolean(_) => Type::Boolean,
             Expression::StructExpression(struct_expression) => {
                 struct_expression.symbol.inner.borrow().ty.clone()
+            }
+            Expression::Call(call) => {
+                todo!()
             }
         }
     }

@@ -38,11 +38,20 @@ pub enum TypeErrorKind<'a, 'b: 'a> {
         name: &'b str,
         location: Span,
     },
+    NotCallable {
+        location: Span,
+    },
 }
 impl<'a, 'b: 'a> std::fmt::Display for TypeError<'a, 'b> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut map = HashMap::new();
         match &self.kind {
+            TypeErrorKind::NotCallable { location } => {
+                map.insert(
+                    *location,
+                    Annotation::new("Expression is not callable").auto(),
+                );
+            }
             TypeErrorKind::MismatchedTypes {
                 expected,
                 got,
