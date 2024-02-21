@@ -21,6 +21,8 @@ pub enum Expression<'a, 'b> {
     Number(&'b Number<'a>),
     Call(call::Call<'a, 'b>),
     Boolean(&'b Boolean<'a>),
+    /// to be used for error recovery and handling only, the user should never be able to create this
+    None,
 }
 impl<'a, 'b> Check<'a, 'b, Expression<'a, 'b>> for parm_ast::prelude::Expression<'a> {
     fn check(
@@ -61,6 +63,7 @@ impl<'a, 'b> Expression<'a, 'b> {
             Expression::Call(call) => {
                 todo!()
             }
+            Expression::None => Type::Unknown { err: true },
         }
     }
 }

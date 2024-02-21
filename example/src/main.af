@@ -5,5 +5,6 @@ pub struct Point {
 
 fn main() {
     let p = Point { x: 2, y: true };
-    call(p);
+    println(1);
+    1 + false;
 }

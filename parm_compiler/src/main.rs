@@ -1,6 +1,8 @@
 use std::{
+    cell::RefCell,
     env, fs,
     path::{Path, PathBuf},
+    rc::Rc,
 };
 
 use opts::Config;
@@ -8,7 +10,12 @@ use parm_ast::{
     error::ParseError, parser::nodes::item::Item, source_file::PreparsedSourceFile, traits::Node,
     tree_display::TreeDisplay,
 };
-use parm_hlir::{item::function::Function, traits::Check, ty};
+use parm_hlir::{
+    item::function::Function,
+    symbol::{InnerSymbol, Symbol, SymbolDeclaration},
+    traits::Check,
+    ty::{self, function_ty::FunctionTy, Type},
+};
 mod opts;
 fn main() {
     let parm_toml = Path::new("./example/parm.toml");
@@ -35,7 +42,20 @@ fn main() {
         println!("{}", error);
     }
     let mut typechecker = parm_hlir::typechecker::Typechecker::new(&parsed_file);
-
+    let x = typechecker.none_symbol.clone();
+    typechecker.mut_current_scope().push_symbol({
+        let symbol = Symbol::new(
+            SymbolDeclaration::None,
+            ty::Type::Unknown { err: false },
+            "println",
+        );
+        symbol.set_ty(Type::Function(Rc::new(FunctionTy {
+            symbol: symbol.clone(),
+            params: vec![x],
+            return_ty: ty::Type::Unknown { err: false },
+        })));
+        symbol
+    });
     for item in &parsed_file.ast {
         let item = item.check(&mut typechecker);
         match item {

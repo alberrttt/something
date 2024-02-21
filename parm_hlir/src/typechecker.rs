@@ -32,6 +32,7 @@ impl<'a, 'b> Typechecker<'a, 'b> {
     pub fn mut_current_scope<'c>(&'c mut self) -> &'c mut Scope<'a, 'b> {
         &mut self.scopes_arena.scopes[self.current_scope]
     }
+
     /// O(n)
     pub fn get_symbol(&self, lex: &str) -> Option<Symbol<'a, 'b>> {
         let scope = self.current_scope();
@@ -52,7 +53,7 @@ impl<'a, 'b> Typechecker<'a, 'b> {
             none_symbol: Symbol {
                 inner: Rc::new(RefCell::new(InnerSymbol {
                     declaration: SymbolDeclaration::None,
-                    ty: Type::Unknown,
+                    ty: Type::Unknown { err: true },
                     lexeme: "",
                 })),
             },

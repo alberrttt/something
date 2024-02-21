@@ -22,7 +22,7 @@ pub enum Type<'a, 'b> {
     Boolean,
     Struct(Rc<StructTy<'a, 'b>>),
     Function(Rc<FunctionTy<'a, 'b>>),
-    Unknown,
+    Unknown { err: bool },
 }
 impl<'a, 'b> Display for Type<'a, 'b> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -34,11 +34,15 @@ impl<'a, 'b> Display for Type<'a, 'b> {
             Type::Boolean => write!(f, "boolean"),
             Type::Struct(ty) => write!(f, "{}", ty.symbol.inner.borrow().lexeme),
             Type::Function(ty) => write!(f, "{}", ty.symbol.inner.borrow().lexeme),
-            Type::Unknown => write!(f, "Unknown"),
+            Type::Unknown { err } => write!(f, "Unknown"),
         }
     }
 }
 impl<'a, 'b> Type<'a, 'b> {
+    pub fn function(ty: FunctionTy<'a, 'b>) -> Self {
+        Type::Function(Rc::new(ty))
+    }
+
     pub fn is_ambigious_int(&self) -> bool {
         matches!(
             self,
@@ -57,8 +61,8 @@ impl<'a, 'b> Type<'a, 'b> {
             || (other.is_ambigious_uint() && matches!(self, Type::Uint(_)))
             || (other.is_ambigious_int() && matches!(self, Type::Int(_)))
             // if any are unknown, we will assume the programmer intended for the correct type.
-            || matches!(self, Type::Unknown)
-            || matches!(other, Type::Unknown)
+            || matches!(self, Type::Unknown { err })
+            || matches!(other, Type::Unknown { err})
     }
 }
 

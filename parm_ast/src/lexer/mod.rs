@@ -28,7 +28,7 @@ impl<'src> From<&'src str> for Lexer<'src> {
             src,
             src_pos: 0,
             line_pos: 0,
-            line: 0,
+            line: 1,
             tokens: Vec::new(),
         }
     }

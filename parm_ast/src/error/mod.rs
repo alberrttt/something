@@ -50,6 +50,7 @@ impl Annotation {
     }
 }
 
+/// this function is NOT readable at all
 pub fn display_annotations<'a>(
     source: &'a PreparsedSourceFile<'a>,
     annotations: HashMap<Span, Annotation>,
@@ -262,8 +263,8 @@ impl<'a> Display for ParseError<'a> {
             f,
             "{}:{}:{}",
             self.file.path.to_str().unwrap(),
-            span.line + 1,
-            span.line_start + 1 + (span.src_end - span.src_start)
+            span.line,
+            span.line_start
         )
         .unwrap();
         writeln!(f, "{display}",)

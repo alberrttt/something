@@ -7,6 +7,7 @@ use super::Type;
 #[derive(Clone, PartialEq)]
 pub struct FunctionTy<'a, 'b> {
     pub symbol: Symbol<'a, 'b>,
+    pub params: Vec<Symbol<'a, 'b>>,
     pub return_ty: Type<'a, 'b>,
 }
 impl<'a, 'b> Debug for FunctionTy<'a, 'b> {

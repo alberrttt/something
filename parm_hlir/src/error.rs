@@ -8,7 +8,7 @@ use parm_ast::{
     lexer::token::Token,
     source_file::PreparsedSourceFile,
 };
-use parm_common::Span;
+use parm_common::{Span, Spanned};
 
 use crate::prelude::Type;
 
@@ -39,6 +39,11 @@ pub enum TypeErrorKind<'a, 'b: 'a> {
         location: Span,
     },
     NotCallable {
+        location: Span,
+    },
+    IncorrectArgs {
+        expected: u8,
+        got: u8,
         location: Span,
     },
 }
@@ -75,11 +80,32 @@ impl<'a, 'b: 'a> std::fmt::Display for TypeError<'a, 'b> {
                     Annotation::new(format!("Symbol `{}` not found", name)).auto(),
                 );
             }
+            TypeErrorKind::IncorrectArgs {
+                expected,
+                got,
+                location,
+            } => {
+                map.insert(
+                    *location,
+                    Annotation::new(format!(
+                        "Incorrect amount of argument(s): expected {}, got {}",
+                        expected, got
+                    ))
+                    .auto(),
+                );
+            }
         }
         let Ok((result, token)) = display_annotations(self.file, map) else {
             return Err(Error);
         };
-
+        let span = token.span();
+        writeln!(
+            f,
+            "{}:{}:{}",
+            self.file.path.to_str().unwrap(),
+            span.line,
+            span.line_start
+        )?;
         write!(f, "{}", result)
     }
 }

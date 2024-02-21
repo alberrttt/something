@@ -32,7 +32,7 @@ impl<'a, 'b> Check<'a, 'b, Function<'a, 'b>> for parm_ast::prelude::FunctionDecl
 
         let symbol = InnerSymbol {
             declaration: SymbolDeclaration::Function(AST(self)),
-            ty: Type::Unknown,
+            ty: Type::Unknown { err: false },
             lexeme: self.name.lexeme,
         };
 
@@ -42,7 +42,8 @@ impl<'a, 'b> Check<'a, 'b, Function<'a, 'b>> for parm_ast::prelude::FunctionDecl
 
         let ty = Rc::new(FunctionTy {
             symbol: symbol.clone(),
-            return_ty: Type::Unknown,
+            params: vec![],
+            return_ty: Type::Unknown { err: false },
         });
         let mut statements = vec![];
         for statement in &self.body.statements.inner {

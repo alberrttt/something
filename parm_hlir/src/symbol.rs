@@ -16,12 +16,30 @@ use crate::{ty::Type, typechecker::Typechecker, AST};
 pub struct Symbol<'a, 'b> {
     pub inner: Rc<RefCell<InnerSymbol<'a, 'b>>>,
 }
+impl<'a, 'b> Symbol<'a, 'b> {
+    pub fn ty(&self) -> Type<'a, 'b> {
+        self.inner.borrow().ty.clone()
+    }
+    pub fn new(decl: SymbolDeclaration<'a, 'b>, ty: Type<'a, 'b>, lexeme: &'a str) -> Self {
+        Symbol {
+            inner: Rc::new(RefCell::new(InnerSymbol {
+                declaration: decl,
+                ty,
+                lexeme,
+            })),
+        }
+    }
+    pub fn set_ty(&self, ty: Type<'a, 'b>) {
+        self.inner.borrow_mut().ty = ty;
+    }
+}
 
 impl<'a, 'b> std::fmt::Debug for Symbol<'a, 'b> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         self.inner.borrow().fmt(f)
     }
 }
+
 #[derive(Clone, PartialEq)]
 pub struct InnerSymbol<'a, 'b> {
     pub declaration: SymbolDeclaration<'a, 'b>,

@@ -16,7 +16,9 @@ impl<'a, 'b> Check<'a, 'b, StructDeclaration<'a, 'b>> for ast::StructDeclaration
     ) -> TypeCheckResult<'a, 'b, StructDeclaration<'a, 'b>> {
         let symbol = InnerSymbol {
             declaration: SymbolDeclaration::Struct(AST(self)),
-            ty: Type::Unknown,
+            ty: Type::Unknown {
+                err: false,
+            },
             lexeme: self.ident.lexeme,
         };
 
@@ -32,7 +34,7 @@ impl<'a, 'b> Check<'a, 'b, StructDeclaration<'a, 'b>> for ast::StructDeclaration
                 Ok(ty) => ty,
                 Err(err) => {
                     tc.errs.push(err);
-                    Type::Unknown
+                    Type::Unknown { err: true }
                 }
             };
             let symbol = InnerSymbol {
