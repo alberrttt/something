@@ -1,7 +1,10 @@
-use crate::{parser::nodes::declaration::struct_dec::StructMemberDeclaration, prelude::*};
+use crate::{
+    parser::nodes::{declaration::struct_dec::StructMemberDeclaration, path::SimplePath},
+    prelude::*,
+};
 #[derive(Debug, Clone, PartialEq, Spanned, Tree)]
 pub struct StructExpression<'a> {
-    pub ident: Identifier<'a>,
+    pub name: SimplePath<'a>,
     pub body: Brace<'a, Punctuated<StructMemberInitialization<'a>, Comma<'a>>>,
 }
 

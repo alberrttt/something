@@ -4,7 +4,7 @@ pub mod identifier;
 use crate::prelude::*;
 use parm_ast::{
     lexer::token::StringLiteral,
-    parser::nodes::{expression::Boolean, statement::use_stmt::Number},
+    parser::nodes::{expression::Boolean, path::SimpleSegment, statement::use_stmt::Number},
     prelude,
 };
 
@@ -44,6 +44,25 @@ impl<'a, 'b> Check<'a, 'b, Expression<'a, 'b>> for parm_ast::prelude::Expression
             ast::Expression::Call(call) => Expression::Call(call.check(tc)?),
             ast::Expression::Block(_) => todo!(),
             ast::Expression::If(_) => todo!(),
+            ast::Expression::Path(path) => {
+                let msg = format!(
+                    "todo, path become its own expression and not coerced to an identifier {}:{}",
+                    file!(),
+                    line!(),
+                );
+                println!("{msg}");
+
+                Expression::Identifier(
+                    {
+                        let tmp = path.first_segment();
+                        let SimpleSegment::Identifier(identifier) = tmp else {
+                            panic!()
+                        };
+                        identifier
+                    }
+                    .check(tc)?,
+                )
+            }
         })
     }
 }

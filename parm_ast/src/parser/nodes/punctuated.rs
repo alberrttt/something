@@ -48,7 +48,8 @@ impl<'a, T: Node<'a> + Debug, P: Node<'a>> Node<'a> for Punctuated<T, P> {
     where
         Self: Sized,
     {
-        Self::parse_terminated(parser)
+        let punct = Self::default();
+        punct.parse_terminated(parser)
     }
 }
 impl<'a, T: Node<'a> + Debug, P: Node<'a>> Punctuated<T, P> {
@@ -59,6 +60,12 @@ impl<'a, T: Node<'a> + Debug, P: Node<'a>> Punctuated<T, P> {
         }
 
         iter
+    }
+    pub fn from_single(element: T) -> Self {
+        Self {
+            inner: Vec::new(),
+            last: Some(Box::new(element)),
+        }
     }
 
     pub fn new(inner: Vec<(T, P)>, last: Option<Box<T>>) -> Self {
@@ -102,16 +109,18 @@ impl<'a, T: Node<'a> + Debug, P: Node<'a>> Punctuated<T, P> {
         }
         Ok(punctuated)
     }
-
-    pub fn parse_terminated(parser: &mut crate::parser::ParseStream<'a>) -> ParseResult<'a, Self> {
-        let mut punctuated = Self::default();
+    
+    pub fn parse_terminated(
+        mut self,
+        parser: &mut crate::parser::ParseStream<'a>,
+    ) -> ParseResult<'a, Self> {
         loop {
             if parser.at_end() {
                 break;
             }
 
             let value = T::parse(parser)?;
-            punctuated.push_value(value);
+            self.push_value(value);
             if parser.at_end() {
                 break;
             }
@@ -121,9 +130,9 @@ impl<'a, T: Node<'a> + Debug, P: Node<'a>> Punctuated<T, P> {
                     break;
                 }
             };
-            punctuated.push_punc(punct);
+            self.push_punc(punct);
         }
-        Ok(punctuated)
+        Ok(self)
     }
 }
 

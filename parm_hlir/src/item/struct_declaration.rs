@@ -16,10 +16,8 @@ impl<'a, 'b> Check<'a, 'b, StructDeclaration<'a, 'b>> for ast::StructDeclaration
     ) -> TypeCheckResult<'a, 'b, StructDeclaration<'a, 'b>> {
         let symbol = InnerSymbol {
             declaration: SymbolDeclaration::Struct(AST(self)),
-            ty: Type::Unknown {
-                err: false,
-            },
-            lexeme: self.ident.lexeme,
+            ty: Type::Unknown { err: false },
+            lexeme: self.name.lexeme,
         };
 
         let symbol = Symbol {

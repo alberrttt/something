@@ -66,7 +66,7 @@ impl<'a, 'b> Check<'a, 'b, Call<'a, 'b>> for crate::prelude::ast::Call<'a> {
             .zip(arguments.iter())
             .enumerate()
         {
-            if param.ty().eq_amb(&arg.get_ty()) {
+            if !param.ty().eq_amb(&arg.get_ty()) {
                 tc.errs.push(TypeError::new(
                     crate::error::TypeErrorKind::MismatchedTypes {
                         expected: param.ty(),

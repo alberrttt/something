@@ -101,27 +101,7 @@ impl<'a> Item<'a> {
         Some(res)
     }
 }
-#[derive(Debug, Clone, PartialEq, Spanned, Tree)]
-pub struct ReturnStatement<'a> {
-    pub return_tkn: Return<'a>,
-    pub expr: Expression<'a>,
-    pub semi: SemiColon<'a>,
-}
-impl<'a> Node<'a> for ReturnStatement<'a> {
-    fn parse(parser: &mut ParseStream<'a>) -> ParseResult<'a, Self>
-    where
-        Self: Sized,
-    {
-        let return_tkn = parser.step(|parser| Return::parse(parser).clone())?;
-        let expr = parser.step(|parser| Expression::parse(parser).clone())?;
-        let semi = parser.step(|parser| SemiColon::parse(parser).clone())?;
-        Ok(Self {
-            return_tkn,
-            expr,
-            semi,
-        })
-    }
-}
+
 // #[test]
 // fn test_var() {
 //     let pre = PreparsedSourceFile::new("test".into(), "let x = 1;");

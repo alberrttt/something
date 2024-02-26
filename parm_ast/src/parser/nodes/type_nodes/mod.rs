@@ -14,8 +14,12 @@ impl<'a> Node<'a> for TypeIdent<'a> {
         Self: Sized,
     {
         let ident = Identifier::parse(parser)?;
-        let generics =
-            parser.step(|parser| Angle::parse_manual(parser, Punctuated::parse_terminated));
+        let generics = parser.step(|parser| {
+            Angle::parse_manual(parser, |parser| {
+                let punct = Punctuated::default();
+                punct.parse_terminated(parser)
+            })
+        });
         Ok(Self {
             ident,
             generics: generics.ok(),

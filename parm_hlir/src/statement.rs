@@ -1,6 +1,6 @@
 use std::io::IntoInnerError;
 
-use parm_ast::parser::nodes::declaration::variable::Initializer;
+use parm_ast::parser::nodes::statement::variable::Initializer;
 
 use crate::{
     expression::Expression,
@@ -46,6 +46,7 @@ impl<'a, 'b> Check<'a, 'b, LetStatement<'a, 'b>> for parm_ast::prelude::LetState
         &'b self,
         typechecker: &mut Typechecker<'a, 'b>,
     ) -> TypeCheckResult<'a, 'b, LetStatement<'a, 'b>> {
+        
         let Initializer { eq: _, expr } = self.initializer.as_ref().unwrap();
         let expression = expr.check(typechecker)?;
         let name: &parm_ast::prelude::Identifier<'_> = &self.ident;
@@ -62,7 +63,7 @@ impl<'a, 'b> Check<'a, 'b, LetStatement<'a, 'b>> for parm_ast::prelude::LetState
 impl<'a, 'b> LetStatement<'a, 'b> {
     pub fn get_declaration(
         &self,
-    ) -> Option<AST<&parm_ast::parser::nodes::declaration::variable::LetStatement<'a>>> {
+    ) -> Option<AST<&parm_ast::parser::nodes::statement::variable::LetStatement<'a>>> {
         let inner = self.symbol.inner.borrow();
         let SymbolDeclaration::LetStatement(ref stmt) = inner.declaration else {
             return None;

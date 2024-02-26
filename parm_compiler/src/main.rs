@@ -44,11 +44,7 @@ fn main() {
     let mut typechecker = parm_hlir::typechecker::Typechecker::new(&parsed_file);
     let x = typechecker.none_symbol.clone();
     typechecker.mut_current_scope().push_symbol({
-        let symbol = Symbol::new(
-            SymbolDeclaration::None,
-            ty::Type::Unknown { err: false },
-            "println",
-        );
+        let symbol = Symbol::new(SymbolDeclaration::None, ty::Type::Any, "println");
         symbol.set_ty(Type::Function(Rc::new(FunctionTy {
             symbol: symbol.clone(),
             params: vec![x],

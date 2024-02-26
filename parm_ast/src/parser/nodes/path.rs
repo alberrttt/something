@@ -35,6 +35,43 @@ pub struct SimplePath<'a> {
     pub prefix: Option<ColonColon<'a>>,
     pub segments: Punctuated<SimpleSegment<'a>, ColonColon<'a>>,
 }
+impl<'a> SimplePath<'a> {
+    pub fn first_segment(&self) -> &SimpleSegment<'a> {
+        let eles = self.segments.elements();
+        assert_eq!(eles.len(), 1);
+        eles.first().unwrap()
+    }
+    pub fn from_ident(ident: Identifier<'a>) -> Self {
+        Self {
+            prefix: None,
+            segments: Punctuated::from_single(SimpleSegment::Identifier(ident)),
+        }
+    }
+    pub fn from_pair(segment: SimpleSegment<'a>, sep: ColonColon<'a>) -> Self {
+        Self {
+            prefix: None,
+            segments: Punctuated {
+                inner: vec![(segment, sep)],
+                last: None,
+            },
+        }
+    }
+    pub fn parse_more(self, stream: &mut ParseStream<'a>) -> ParseResult<'a, Self> {
+        let punct = self.segments;
+
+        let segments = punct.parse_terminated(stream)?;
+        Ok(Self {
+            prefix: self.prefix,
+            segments,
+        })
+    }
+    pub fn start_with_ident(ident: Identifier<'a>, parse_stream: &mut ParseStream) -> Self {
+        Self {
+            prefix: None,
+            segments: Punctuated::from_single(SimpleSegment::Identifier(ident)),
+        }
+    }
+}
 impl<'a> Node<'a> for SimplePath<'a> {
     fn parse(parser: &mut ParseStream<'a>) -> ParseResult<'a, Self>
     where

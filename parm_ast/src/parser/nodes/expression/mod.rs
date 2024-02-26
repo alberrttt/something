@@ -6,7 +6,7 @@ pub mod group;
 pub mod if_expr;
 pub mod number;
 
-use std::{cell::UnsafeCell, error::Error};
+use std::{cell::UnsafeCell, error::Error, hint::unreachable_unchecked};
 
 use parm_common::Spanned;
 mod precedence;
@@ -22,6 +22,8 @@ use self::{
     number::Number, precedence::Precedence,
 };
 
+use super::path::{SimplePath, SimpleSegment};
+
 #[derive(Debug, Clone, PartialEq, Tree)]
 pub enum Expression<'a> {
     Identifier(Identifier<'a>),
@@ -34,6 +36,7 @@ pub enum Expression<'a> {
     Block(Block<'a>),
     If(if_expr::IfExpr<'a>),
     Boolean(Boolean<'a>),
+    Path(SimplePath<'a>),
 }
 #[derive(Debug, Clone, PartialEq, Tree, Spanned)]
 pub enum Boolean<'a> {
@@ -101,43 +104,72 @@ pub fn expr<'a>(
 
     Ok(left)
 }
+pub fn parsed_delimited<'a>(
+    mut expr: Expression<'a>,
+    parse_stream: &mut crate::parser::ParseStream<'a>,
+) -> ParseResult<'a, Expression<'a>> {
+    if let Ok(token) = parse_stream.peek() {
+        parse_stream.panic = true;
+        match token {
+            Token::LParen(_) => {
+                let call = parse_stream.step(call::Call::args)?;
+                return Ok(Expression::Call(Call {
+                    callee: Box::new(expr),
+                    arguments: call,
+                }));
+            }
+            Token::ColonColon(_) => {
+                let Expression::Path(mut path) = expr else {
+                    panic!()
+                };
+                let cc = ColonColon::parse(parse_stream)?;
+                path.segments.push_punc(cc);
+                let path = path.parse_more(parse_stream)?;
+                let expr = {
+                    let start = parse_stream.current;
+                    let result = parsed_delimited(Expression::Path(path), parse_stream);
+                    match result {
+                        Ok(ok) => Ok(ok),
+                        Err(err) => {
+                            parse_stream.current = start;
+
+                            Err(err)
+                        }
+                    }
+                };
+                return expr;
+            }
+            Token::LBrace(_) => {
+                return Ok(Expression::StructExpression(StructExpression {
+                    name: if let Expression::Path(path) = expr {
+                        path
+                    } else {
+                        panic!()
+                    },
+                    body: parse_stream.step(|parser| parser.parse())?,
+                }))
+            }
+            _ => {}
+        }
+        parse_stream.panic = false;
+    }
+    return Ok(expr);
+}
 pub fn atom<'a>(
     parse_stream: &mut crate::parser::ParseStream<'a>,
 ) -> ParseResult<'a, Expression<'a>> {
     let token = parse_stream.peek()?;
-    match token {
+    let result = match token {
         Token::Identifier(_) => {
             let ident = parse_stream.step(|parser| Identifier::parse(parser).clone())?;
-            let ident = Expression::Identifier(ident);
             if let Ok(token) = parse_stream.peek() {
-                parse_stream.panic = true;
-                match token {
-                    Token::LParen(_) => {
-                        let call = parse_stream.step(call::Call::args)?;
-                        return Ok(Expression::Call(Call {
-                            callee: Box::new(ident),
-                            arguments: call,
-                        }));
-                    }
-                    Token::True(_) | Token::False(_) => {
-                        let boolean = parse_stream.step(|parser| Boolean::parse(parser).clone())?;
-                        return Ok(Expression::Boolean(boolean));
-                    }
-                    Token::LBrace(_) => {
-                        return Ok(Expression::StructExpression(StructExpression {
-                            ident: match ident {
-                                Expression::Identifier(ident) => ident,
-                                _ => unreachable!(),
-                            },
-                            body: parse_stream.step(|parser| parser.parse())?,
-                        }))
-                    }
-                    _ => {}
-                }
-                parse_stream.panic = false;
-            }
+                let path = SimplePath::from_ident(ident);
+                let expr = parsed_delimited(Expression::Path(path), parse_stream);
 
-            Ok(ident)
+                expr
+            } else {
+                Ok(Expression::Identifier(ident))
+            }
         }
         Token::True(_) | Token::False(_) => {
             let boolean = parse_stream.step(|parser| Boolean::parse(parser).clone())?;
@@ -179,12 +211,17 @@ pub fn atom<'a>(
                 parse_stream.src_file,
             );
         }
-    }
+    };
+    let delimited = parsed_delimited(result?, parse_stream);
+    parse_stream.panic = false;
+
+    delimited
 }
 impl Spanned for Expression<'_> {
     fn span(&self) -> parm_common::Span {
         use Expression::*;
         match self {
+            Path(path) => path.span(),
             StructExpression(struct_expr) => struct_expr.span(),
             Identifier(ident) => ident.span(),
             Number(number) => number.span(),

@@ -53,7 +53,7 @@ impl<'a, 'b> Typechecker<'a, 'b> {
             none_symbol: Symbol {
                 inner: Rc::new(RefCell::new(InnerSymbol {
                     declaration: SymbolDeclaration::None,
-                    ty: Type::Unknown { err: true },
+                    ty: Type::Any,
                     lexeme: "",
                 })),
             },

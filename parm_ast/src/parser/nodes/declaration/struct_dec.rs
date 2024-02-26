@@ -3,7 +3,7 @@ use crate::{parser::nodes::visibility::Visibility, prelude::*};
 pub struct StructDeclaration<'a> {
     pub visibility: Visibility<'a>,
     pub struct_tkn: StructKeyword<'a>,
-    pub ident: Identifier<'a>,
+    pub name: Identifier<'a>,
     pub body: Brace<'a, Punctuated<StructMemberDeclaration<'a>, Comma<'a>>>,
 }
 
@@ -21,7 +21,7 @@ impl<'a> Node<'a> for StructDeclaration<'a> {
         Ok(Self {
             visibility,
             struct_tkn,
-            ident,
+            name: ident,
             body,
         })
     }

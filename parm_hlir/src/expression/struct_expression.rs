@@ -1,5 +1,6 @@
 use std::{cell::RefCell, marker::PhantomData, rc::Rc};
 
+use parm_ast::parser::nodes::path::SimpleSegment;
 use parm_common::Spanned;
 
 use crate::{
@@ -28,9 +29,14 @@ impl<'a, 'b> Check<'a, 'b, StructExpression<'a, 'b>>
         &'b self,
         tc: &mut crate::typechecker::Typechecker<'a, 'b>,
     ) -> TypeCheckResult<'a, 'b, StructExpression<'a, 'b>> {
-        let symbol = tc.get_symbol(self.ident.lexeme).unwrap();
+        let name = &self.name;
+        let name = name.first_segment();
+        let SimpleSegment::Identifier(name) = name else {
+            panic!()
+        };
+        let symbol = tc.get_symbol(name.lexeme).unwrap();
         let Type::Struct(ref struct_ty) = &symbol.inner.as_ref().borrow().ty else {
-            panic!("Struct {} not found", self.ident.lexeme);
+            panic!("Struct {} not found", name.lexeme);
         };
         let mut members = vec![];
         for field in self.body.elements() {

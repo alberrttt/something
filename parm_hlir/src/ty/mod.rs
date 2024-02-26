@@ -23,6 +23,7 @@ pub enum Type<'a, 'b> {
     Struct(Rc<StructTy<'a, 'b>>),
     Function(Rc<FunctionTy<'a, 'b>>),
     Unknown { err: bool },
+    Any,
 }
 impl<'a, 'b> Display for Type<'a, 'b> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -35,6 +36,7 @@ impl<'a, 'b> Display for Type<'a, 'b> {
             Type::Struct(ty) => write!(f, "{}", ty.symbol.inner.borrow().lexeme),
             Type::Function(ty) => write!(f, "{}", ty.symbol.inner.borrow().lexeme),
             Type::Unknown { err } => write!(f, "Unknown"),
+            Type::Any => write!(f, "Any"),
         }
     }
 }
@@ -63,6 +65,8 @@ impl<'a, 'b> Type<'a, 'b> {
             // if any are unknown, we will assume the programmer intended for the correct type.
             || matches!(self, Type::Unknown { err })
             || matches!(other, Type::Unknown { err})
+            || matches!(self, Type::Any)
+            || matches!(other, Type::Any)
     }
 }
 
