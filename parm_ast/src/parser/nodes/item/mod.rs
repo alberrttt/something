@@ -1,4 +1,5 @@
 pub mod function;
+pub mod mod_dec;
 pub mod struct_dec;
 pub mod trait_dec;
 pub mod use_stmt;
@@ -8,7 +9,7 @@ use crate::prelude::*;
 use parm_common::Spanned;
 use parm_dev_macros::Spanned;
 
-use self::trait_dec::TraitDeclaration;
+use self::{mod_dec::ModDeclaration, trait_dec::TraitDeclaration};
 
 use super::comment::Comment;
 #[derive(Debug, Clone, PartialEq, Spanned, Tree)]
@@ -17,6 +18,7 @@ pub enum Item<'a> {
     Use(UseStatement<'a>),
     Struct(StructDeclaration<'a>),
     Trait(TraitDeclaration<'a>),
+    Mod(ModDeclaration<'a>),
 }
 
 impl<'a> Node<'a> for Item<'a> {
@@ -102,6 +104,13 @@ impl<'a> Item<'a> {
                 };
 
                 Ok(Item::Trait(trait_dec))
+            }
+            Token::ModKw(_) => {
+                let mod_dec = match ModDeclaration::parse(parse_stream) {
+                    Ok(ok) => ok,
+                    Err(err) => return Some(Err(err)),
+                };
+                Ok(Item::Mod(mod_dec))
             }
             _ => return None,
         };

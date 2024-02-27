@@ -187,6 +187,7 @@ gen_token!(
     ImplKw,
     TypeKw,
     TraitKw,
+    ModKw,
     LSelf,
     USelf,
     Pub,

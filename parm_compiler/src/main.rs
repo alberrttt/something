@@ -22,11 +22,8 @@ fn main() {
 
     let file = fs::read_to_string(parm_toml).unwrap();
     let config: Config = toml::from_str(file.as_ref()).unwrap();
-    let entry = PathBuf::from(config.package.bin.entry);
-    let entry = PathBuf::from("./example")
-        .join(entry)
-        .canonicalize()
-        .unwrap();
+    let entry = PathBuf::from("./example/src/main.af");
+
     let src_str = fs::read_to_string(&entry).unwrap();
     let mut preparsed_file = PreparsedSourceFile::new(entry, &src_str);
     if env::var("TOKENS").is_ok() {

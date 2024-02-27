@@ -10,9 +10,4 @@ pub struct Config {
 #[derive(Debug, Clone, Deserialize)]
 pub struct Package {
     pub name: String,
-    pub bin: Bin,
-}
-#[derive(Debug, Clone, Deserialize)]
-pub struct Bin {
-    pub entry: String,
 }

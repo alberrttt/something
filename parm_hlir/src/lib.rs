@@ -35,4 +35,3 @@ impl<T> DerefMut for AST<T> {
         &mut self.0
     }
 }
-fn x() {}

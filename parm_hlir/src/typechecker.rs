@@ -13,7 +13,6 @@ use crate::{
 };
 
 use self::error::TypeError;
-
 pub struct Typechecker<'a, 'b> {
     pub source_file: &'b SourceFile<'a>,
     pub scopes_arena: ScopeArena<'a, 'b>,
