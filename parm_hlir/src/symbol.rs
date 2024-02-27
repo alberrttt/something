@@ -6,8 +6,12 @@ use std::{
 };
 
 use parm_ast::parser::nodes::{
-    declaration::struct_dec::StructMemberDeclaration,
-    statement::use_stmt::{FunctionDeclaration, LetStatement, Param, StructDeclaration},
+    item::{
+        function::{FunctionDeclaration, Param},
+        struct_dec::{StructDeclaration, StructMemberDeclaration},
+        use_stmt::LetStatement,
+    },
+    statement,
 };
 
 use crate::{ty::Type, typechecker::Typechecker, AST};

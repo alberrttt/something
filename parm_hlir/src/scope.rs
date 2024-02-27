@@ -9,7 +9,11 @@ pub struct Scope<'a, 'b> {
     pub parent: Option<usize>,
     pub idx: usize,
 }
+
 impl<'a, 'b> Scope<'a, 'b> {
+    pub fn is_file_scope(&self) -> bool {
+        self.parent.is_none()
+    }
     pub fn get_symbol(&self, lex: &str) -> Option<Symbol<'a, 'b>> {
         for (idx, symbol) in &self.symbols {
             let inner = symbol.inner.borrow();

@@ -1,16 +1,22 @@
+pub mod function;
+pub mod struct_dec;
+pub mod trait_dec;
+pub mod use_stmt;
 use std::{fmt::Error, mem};
 
 use crate::prelude::*;
 use parm_common::Spanned;
 use parm_dev_macros::Spanned;
 
+use self::trait_dec::TraitDeclaration;
+
 use super::comment::Comment;
 #[derive(Debug, Clone, PartialEq, Spanned, Tree)]
 pub enum Item<'a> {
-    LetStatement(LetStatement<'a>),
     Function(FunctionDeclaration<'a>),
     Use(UseStatement<'a>),
     Struct(StructDeclaration<'a>),
+    Trait(TraitDeclaration<'a>),
 }
 
 impl<'a> Node<'a> for Item<'a> {
@@ -63,16 +69,8 @@ impl<'a> Item<'a> {
             Ok(ok) => ok,
             Err(err) => return None,
         };
-        let res = match peeked {
-            Token::Let(_) => match <LetStatement as Node>::parse(parse_stream) {
-                Ok(ok) => Ok(Item::LetStatement(ok)),
-                Err(err) => {
-                    parse_stream.panic = true;
-                    Err(err)
-                }
-            },
-
-            Token::StructKeyword(_) => {
+        let res: Result<Item<'_>, Box<ParseError<'_>>> = match peeked {
+            Token::StructKw(_) => {
                 let struct_dec: StructDeclaration =
                     match <StructDeclaration as Node>::parse(parse_stream) {
                         Ok(ok) => ok,
@@ -80,7 +78,7 @@ impl<'a> Item<'a> {
                     };
                 Ok(Item::Struct(struct_dec))
             }
-            Token::FnKeyword(_) => {
+            Token::FnKw(_) => {
                 let func: FunctionDeclaration =
                     match <FunctionDeclaration as Node>::parse(parse_stream) {
                         Ok(ok) => ok,
@@ -89,30 +87,24 @@ impl<'a> Item<'a> {
                 Ok(Item::Function(func))
             }
 
-            Token::Use(_) => {
+            Token::UseKw(_) => {
                 let use_stmt: UseStatement = match <UseStatement as Node>::parse(parse_stream) {
                     Ok(ok) => ok,
                     Err(err) => return Some(Err(err)),
                 };
                 Ok(Item::Use(use_stmt))
             }
+
+            Token::TraitKw(_) => {
+                let trait_dec = match TraitDeclaration::parse(parse_stream) {
+                    Ok(ok) => ok,
+                    Err(err) => return Some(Err(err)),
+                };
+
+                Ok(Item::Trait(trait_dec))
+            }
             _ => return None,
         };
         Some(res)
     }
 }
-
-// #[test]
-// fn test_var() {
-//     let pre = PreparsedSourceFile::new("test".into(), "let x = 1;");
-//     let mut parser = Parser::new("let x = 1;");
-//     let var: Item = <Item as Node>::parse(&mut parser.stream()).unwrap();
-//     dbg!(var);
-// }
-
-// #[test]
-// fn test_fn() {
-//     let mut parser = Parser::new("fn x() {}");
-//     let var: Item = <Item as Node>::parse(&mut parser.stream()).unwrap();
-//     dbg!(var);
-// }

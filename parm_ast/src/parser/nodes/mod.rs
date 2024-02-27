@@ -5,7 +5,6 @@ use crate::prelude::{Node, ParseResult};
 use super::ParseStream;
 pub mod attribute;
 pub mod comment;
-pub mod declaration;
 pub mod delimiter;
 pub mod expression;
 pub mod item;

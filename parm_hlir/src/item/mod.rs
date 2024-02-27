@@ -19,7 +19,7 @@ impl<'a, 'b> Check<'a, 'b, Item<'a, 'b>> for ASTItem<'a> {
         match self {
             ASTItem::Function(f) => return Ok(Item::Function(f.check(tc)?)),
             ASTItem::Struct(s) => return Ok(Item::StructDeclaration(s.check(tc)?)),
-
+            
             _ => {}
         };
         panic!()

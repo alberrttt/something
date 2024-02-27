@@ -7,7 +7,7 @@ use crate::prelude::*;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct LetStatement<'a> {
-    pub let_tkn: Let<'a>,
+    pub let_tkn: LetKw<'a>,
     pub ident: Identifier<'a>,
     pub initializer: Option<Initializer<'a>>,
     pub semi: SemiColon<'a>,
@@ -38,7 +38,7 @@ impl<'a> Node<'a> for LetStatement<'a> {
     where
         Self: Sized,
     {
-        let let_tkn = parser.step(Let::parse)?;
+        let let_tkn = parser.step(LetKw::parse)?;
         let ident = parser.step(Identifier::parse)?;
         let initializer = parser.step(|parser| {
             let eq = parser.step(Eq::parse)?;

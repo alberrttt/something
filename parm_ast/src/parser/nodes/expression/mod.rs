@@ -40,8 +40,8 @@ pub enum Expression<'a> {
 }
 #[derive(Debug, Clone, PartialEq, Tree, Spanned)]
 pub enum Boolean<'a> {
-    True(True<'a>),
-    False(False<'a>),
+    True(TrueKw<'a>),
+    False(FalseKw<'a>),
 }
 impl<'a> Boolean<'a> {
     pub fn value(&self) -> bool {
@@ -58,8 +58,8 @@ impl<'a> Node<'a> for Boolean<'a> {
     {
         let token = parse_stream.peek()?;
         match token {
-            Token::True(_) => Ok(Boolean::True(parse_stream.step(True::parse)?)),
-            Token::False(_) => Ok(Boolean::False(parse_stream.step(False::parse)?)),
+            Token::TrueKw(_) => Ok(Boolean::True(parse_stream.step(TrueKw::parse)?)),
+            Token::FalseKw(_) => Ok(Boolean::False(parse_stream.step(FalseKw::parse)?)),
             _ => ParseError::err(
                 ErrorKind::ExpectedNode(ExpectedNode {
                     expected: "a boolean",
@@ -171,11 +171,11 @@ pub fn atom<'a>(
                 Ok(Expression::Identifier(ident))
             }
         }
-        Token::True(_) | Token::False(_) => {
+        Token::TrueKw(_) | Token::FalseKw(_) => {
             let boolean = parse_stream.step(|parser| Boolean::parse(parser).clone())?;
             Ok(Expression::Boolean(boolean))
         }
-        Token::If(_) => {
+        Token::IfKw(_) => {
             let if_expr = parse_stream.step(if_expr::IfExpr::parse)?;
             Ok(Expression::If(if_expr))
         }

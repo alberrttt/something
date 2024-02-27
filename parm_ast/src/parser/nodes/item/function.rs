@@ -44,7 +44,7 @@ impl<'a> Node<'a> for ReturnType<'a> {
 #[derive(Debug, Clone, PartialEq, Spanned, Tree)]
 pub struct FunctionDeclaration<'a> {
     pub attributes: Vec<Attribute<'a>>,
-    pub fn_tkn: FnKeyword<'a>,
+    pub fn_tkn: FnKw<'a>,
     pub name: Identifier<'a>,
     pub params: Paren<'a, Punctuated<Param<'a>, Comma<'a>>>,
     pub body: Block<'a>,
@@ -55,7 +55,7 @@ impl<'a> Node<'a> for FunctionDeclaration<'a> {
     where
         Self: Sized,
     {
-        let fn_token = parser.step(|parser| FnKeyword::parse(parser).clone())?;
+        let fn_token = parser.step(|parser| FnKw::parse(parser).clone())?;
         let name = Identifier::parse(parser)?;
         let params: Paren<'_, Punctuated<Param<'_>, Comma<'_>>> = parser.step(|parser| {
             Paren::parse_manual(parser, |parser| {

@@ -4,10 +4,7 @@ use std::{
     rc::Rc,
 };
 
-use parm_ast::{
-    parser::nodes::statement::use_stmt::FunctionDeclaration,
-    source_file::{PreparsedSourceFile, SourceFile},
-};
+use parm_ast::source_file::{PreparsedSourceFile, SourceFile};
 
 use crate::{
     prelude::*,

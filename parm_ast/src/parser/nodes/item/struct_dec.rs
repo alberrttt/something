@@ -2,7 +2,7 @@ use crate::{parser::nodes::visibility::Visibility, prelude::*};
 #[derive(Debug, Clone, PartialEq, Spanned, Tree)]
 pub struct StructDeclaration<'a> {
     pub visibility: Visibility<'a>,
-    pub struct_tkn: StructKeyword<'a>,
+    pub struct_tkn: StructKw<'a>,
     pub name: Identifier<'a>,
     pub body: Brace<'a, Punctuated<StructMemberDeclaration<'a>, Comma<'a>>>,
 }
@@ -13,7 +13,7 @@ impl<'a> Node<'a> for StructDeclaration<'a> {
         Self: Sized,
     {
         let visibility = parser.step(Visibility::parse)?;
-        let struct_tkn = parser.step(StructKeyword::parse)?;
+        let struct_tkn = parser.step(StructKw::parse)?;
         parser.panic = true;
         let ident = parser.step(Identifier::parse)?;
         let body = parser.step(Brace::parse)?;

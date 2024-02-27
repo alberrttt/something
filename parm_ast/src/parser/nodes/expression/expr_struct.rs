@@ -1,5 +1,5 @@
 use crate::{
-    parser::nodes::{declaration::struct_dec::StructMemberDeclaration, path::SimplePath},
+    parser::nodes::{item::struct_dec::StructMemberDeclaration, path::SimplePath},
     prelude::*,
 };
 #[derive(Debug, Clone, PartialEq, Spanned, Tree)]

@@ -21,7 +21,7 @@ impl<'a> Node<'a> for Block<'a> {
                         Err(err) => {
                             eprintln!("{}", err);
                             match peeked {
-                                Token::If(_) => {
+                                Token::IfKw(_) => {
                                     loop {
                                         if let Ok(_) =
                                             parser.step(|parser| RBrace::parse(parser).clone())
@@ -33,7 +33,7 @@ impl<'a> Node<'a> for Block<'a> {
                                     }
                                     parser.panic = false
                                 }
-                                Token::For(_) => {
+                                Token::ForKw(_) => {
                                     loop {
                                         if let Ok(_) =
                                             parser.step(|parser| RBrace::parse(parser).clone())
@@ -46,10 +46,10 @@ impl<'a> Node<'a> for Block<'a> {
                                     }
                                     parser.panic = false
                                 }
-                                Token::Return(_)
-                                | Token::FnKeyword(_)
+                                Token::ReturnKw(_)
+                                | Token::FnKw(_)
                                 | Token::Identifier(_)
-                                | Token::Let(_) => loop {
+                                | Token::LetKw(_) => loop {
                                     if let Ok(_semicolon) =
                                         parser.step(|parser| SemiColon::parse(parser).clone())
                                     {

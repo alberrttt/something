@@ -3,7 +3,7 @@ use crate::prelude::*;
 use super::block::Block;
 #[derive(Debug, Clone, PartialEq, Tree, Spanned)]
 pub struct IfExpr<'a> {
-    pub if_tkn: If<'a>,
+    pub if_tkn: IfKw<'a>,
     pub condition: Box<Expression<'a>>,
     pub body: Block<'a>,
     pub else_branch: Option<ElseBranch<'a>>,
@@ -13,13 +13,13 @@ impl<'a> Node<'a> for IfExpr<'a> {
     where
         Self: Sized,
     {
-        let if_tkn = parse_stream.step(If::parse)?;
+        let if_tkn = parse_stream.step(IfKw::parse)?;
         parse_stream.panic = true;
         let condition = parse_stream.step(Expression::parse)?;
         let body = parse_stream.step(Block::parse)?;
 
         let mut else_branch = None;
-        if let Ok(Token::Else(_)) = parse_stream.peek() {
+        if let Ok(Token::ElseKw(_)) = parse_stream.peek() {
             else_branch = Some(parse_stream.step(ElseBranch::parse)?);
         }
 
@@ -34,7 +34,7 @@ impl<'a> Node<'a> for IfExpr<'a> {
 }
 #[derive(Debug, Clone, PartialEq, Tree, Spanned)]
 pub struct ElseBranch<'a> {
-    pub else_tkn: Else<'a>,
+    pub else_tkn: ElseKw<'a>,
     pub body: Block<'a>,
 }
 impl<'a> Node<'a> for ElseBranch<'a> {
@@ -42,7 +42,7 @@ impl<'a> Node<'a> for ElseBranch<'a> {
     where
         Self: Sized,
     {
-        let else_tkn = parse_stream.step(|parse_stream| Else::parse(parse_stream))?;
+        let else_tkn = parse_stream.step(|parse_stream| ElseKw::parse(parse_stream))?;
 
         let body = Block::parse(parse_stream)?;
 

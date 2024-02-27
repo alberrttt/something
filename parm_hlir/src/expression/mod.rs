@@ -4,7 +4,7 @@ pub mod identifier;
 use crate::prelude::*;
 use parm_ast::{
     lexer::token::StringLiteral,
-    parser::nodes::{expression::Boolean, path::SimpleSegment, statement::use_stmt::Number},
+    parser::nodes::{expression::Boolean, item::use_stmt::Number, path::SimpleSegment},
     prelude,
 };
 

@@ -4,7 +4,6 @@ use super::expression::Expression;
 
 pub mod expression_statement;
 pub mod ret;
-pub mod use_stmt;
 pub mod variable;
 
 use crate::prelude::*;
@@ -29,11 +28,11 @@ impl<'a> Node<'a> for Statement<'a> {
     {
         let peek = parse_stream.peek()?;
         match peek {
-            Token::Let(_) => {
+            Token::LetKw(_) => {
                 let let_stmt = parse_stream.step(LetStatement::parse)?;
                 return Ok(Self::Let(let_stmt));
             }
-            Token::Return(_) => {
+            Token::ReturnKw(_) => {
                 let return_stmt = parse_stream.step(ReturnStatement::parse)?;
                 return Ok(Self::Return(return_stmt));
             }

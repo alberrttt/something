@@ -29,7 +29,7 @@ impl<'a> Node<'a> for TypeIdent<'a> {
 #[derive(Debug, Clone, PartialEq, Spanned, Tree)]
 pub struct Borrow<'a> {
     pub ampersand: Amper<'a>,
-    pub mutable: Option<Mut<'a>>,
+    pub mutable: Option<MutKw<'a>>,
 }
 impl<'a> Node<'a> for Borrow<'a> {
     fn parse(parser: &mut crate::parser::ParseStream<'a>) -> ParseResult<'a, Self>
@@ -37,7 +37,7 @@ impl<'a> Node<'a> for Borrow<'a> {
         Self: Sized,
     {
         let ampersand = parser.step(|parser| Amper::parse(parser).clone())?;
-        let mutable = parser.step(|parser| Mut::parse(parser).clone());
+        let mutable = parser.step(|parser| MutKw::parse(parser).clone());
         Ok(Self {
             ampersand,
             mutable: mutable.ok(),
